@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Cherenkov — A multidisciplinary design firm.">
+  <meta name="theme-color" content="#f5f5f5">
+
+  <title>Cherenkov</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+
+
+
+  <link rel="stylesheet" href="styles/index.css">
+</head>
+
+<body>
+
+  <div id="landing-page">
+    <!-- Liminal Veil: block-mosaic video canvas -->
+    <canvas id="veil-canvas"></canvas>
+
+    <!-- Rotating Background Patterns (layered over veil) -->
+    <div class="background-pattern pattern-1"></div>
+    <div class="background-pattern pattern-2"></div>
+    <div class="background-pattern pattern-3"></div>
+    <div class="background-pattern pattern-4"></div>
+
+    <!-- Placeholder for future multimodal animation responses -->
+
+
+    <!-- Wordmark -->
+    <div class="wordmark-container">
+      <h1 class="wordmark" id="wordmark">
+        <span class="letter">C</span>
+        <span class="letter">H</span>
+        <span class="letter">E</span>
+        <span class="letter">R</span>
+        <span class="letter">E</span>
+        <span class="letter">N</span>
+        <span class="letter">K</span>
+        <span class="letter">O</span>
+        <span class="letter">V</span>
+        <span class="cursor" id="cursor" style="display: none;"></span>
+      </h1>
+    </div>
+
+
+  </div>
+
+  <!-- Input Bar -->
+  <div class="input-bar" id="input-bar">
+    <input type="text" id="user-input" placeholder="type here..." autocomplete="off" />
+  </div>
+
+
+
+
+
+  <script src="scripts/interaction.js"></script>
+
+  <!-- Background Elements (Three.js) -->
+  <script type="module" src="scripts/background_elements.js"></script>
+
+  <!-- Liminal Veil: block-mosaic video renderer -->
+  <script src="scripts/veil_mosaic.js"></script>
+
+  <!-- Concierge API Config -->
+  <script>
+    // Vercel routes /api to the Python backend based on vercel.json
+    window.CONCIERGE_API_URL = '/api';
+  </script>
+</body>
+
+</html>
