@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patroclus Concierge Integration</title>
+    
+    <!-- 
+    GEMINI CONCIERGE INTEGRATION TEMPLATE
+    ====================================
+    
+    Add these elements to your main HTML file to enable the Gemini-powered concierge:
+    
+    1. Include the script files
+    2. Add the API key meta tag (for production)
+    3. Add the initialization script
+    
+    This maintains full compatibility with existing B-12 styling and functionality
+    while adding professional Gemini intelligence.
+    -->
+    
+    <!-- API Key Configuration (Production) -->
+    <meta name="gemini-api-key" content="AIzaSyDtM2ZYPsXWFJ59-NFoxNgChT5rXkNDf1E">
+    
+    <!-- Concierge System Scripts -->
+    <script src="concierge-config.js"></script>
+    <script src="gemini-concierge.js"></script>
+    
+    <style>
+        /* Enhanced styling for professional concierge interactions */
+        
+        /* Typing indicator animation */
+        .chat-message.gemini-typing {
+            animation: typing-pulse 1.5s ease-in-out infinite;
+            font-style: italic;
+            opacity: 0.7;
+        }
+        
+        @keyframes typing-pulse {
+            0%, 100% { 
+                opacity: 0.5; 
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 1; 
+                transform: scale(1.02);
+            }
+        }
+        
+        /* Professional response styling */
+        .chat-message.gemini {
+            background: rgba(41, 98, 255, 0.15);
+            border-left: 3px solid rgba(41, 98, 255, 0.5);
+            position: relative;
+        }
+        
+        /* Concierge badge for professional identification */
+        .chat-message.gemini::before {
+            content: "🏛️";
+            position: absolute;
+            left: -8px;
+            top: -2px;
+            font-size: 12px;
+            background: rgba(41, 98, 255, 0.2);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Enhanced chat header for concierge mode */
+        #gemini-chat-header.concierge-active {
+            background: linear-gradient(135deg, rgba(41, 98, 255, 0.2), rgba(41, 98, 255, 0.3));
+        }
+        
+        #gemini-chat-header.concierge-active::after {
+            content: " Concierge";
+            font-size: 10px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Status indicator */
+        .concierge-status {
+            position: absolute;
+            top: 10px;
+            right: 50px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+            animation: pulse-green 2s ease-in-out infinite;
+        }
+        
+        .concierge-status.fallback {
+            background: #FF9800;
+        }
+        
+        .concierge-status.error {
+            background: #F44336;
+        }
+        
+        @keyframes pulse-green {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        /* Welcome message styling */
+        .chat-message.gemini.welcome {
+            background: rgba(41, 98, 255, 0.08);
+            border: 1px solid rgba(41, 98, 255, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .chat-message.gemini.welcome::before {
+            content: "🏛️ Welcome";
+            font-size: 10px;
+            position: absolute;
+            top: -8px;
+            left: 10px;
+            background: rgba(41, 98, 255, 0.9);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Integration Instructions -->
+    <div style="padding: 20px; background: #f5f5f5; margin: 20px; border-radius: 8px;">
+        <h2>🏛️ Patroclus Concierge Integration Guide</h2>
+        
+        <h3>Step 1: Add Scripts to Your Main HTML</h3>
+        <pre><code>&lt;!-- Add before closing &lt;/body&gt; tag --&gt;
+&lt;script src="concierge-config.js"&gt;&lt;/script&gt;
+&lt;script src="gemini-concierge.js"&gt;&lt;/script&gt;</code></pre>
+        
+        <h3>Step 2: Configure API Key</h3>
+        <p><strong>For Production:</strong></p>
+        <pre><code>&lt;!-- Add to &lt;head&gt; section --&gt;
+&lt;meta name="gemini-api-key" content="YOUR_ACTUAL_GEMINI_API_KEY"&gt;</code></pre>
+        
+        <p><strong>For Development:</strong></p>
+        <p>The system will prompt for the API key on localhost and store it securely.</p>
+        
+        <h3>Step 3: Test the Integration</h3>
+        <ol>
+            <li>Load your website with the new scripts</li>
+            <li>Press 'C' to open the chat (existing B-12 functionality)</li>
+            <li>Type a message to test the Gemini concierge response</li>
+            <li>Check browser console for initialization status</li>
+        </ol>
+        
+        <h3>Features</h3>
+        <ul>
+            <li>✅ Professional Gemini-powered responses</li>
+            <li>✅ Graceful fallback to intelligent responses if API unavailable</li>
+            <li>✅ Context-aware navigation assistance</li>
+            <li>✅ Maintains existing B-12 UI/UX</li>
+            <li>✅ Professional typing indicators</li>
+            <li>✅ Security-first API key management</li>
+            <li>✅ Error handling with dignity preservation</li>
+        </ul>
+        
+        <h3>Debugging</h3>
+        <p>Open browser console and type: <code>getConciergeStatus()</code></p>
+    </div>
+    
+    <!-- Demo Chat Interface (for testing) -->
+    <div id="gemini-chat-container" style="position: fixed; bottom: 30px; right: 30px; width: 350px; height: 500px; background: rgba(0, 0, 0, 0.9); border-radius: 12px; color: white; display: flex; flex-direction: column; font-family: 'Courier New', monospace; border: 1px solid rgba(41, 98, 255, 0.5);">
+        <div id="gemini-chat-header" style="background: rgba(41, 98, 255, 0.2); padding: 10px 15px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; color: #ffffff; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(41, 98, 255, 0.5);">
+            <span>Patroclus Concierge</span>
+            <div class="concierge-status"></div>
+        </div>
+        <div id="gemini-chat-messages" style="flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;">
+            <div class="chat-message gemini welcome">
+                Welcome to Patroclus Industries! I'm your professional concierge, powered by advanced AI and trained in our principles of Dimensional Permanence and Compassionate Precision. How may I assist you in exploring our temple-themed mathematical visualizations and immersive experiences?
+            </div>
+        </div>
+        <div id="gemini-chat-input-container" style="display: flex; padding: 10px; border-top: 1px solid rgba(41, 98, 255, 0.5);">
+            <input type="text" id="gemini-chat-input" placeholder="Ask about our temple scenes, math models..." style="flex-grow: 1; background: transparent; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 5px; color: white; padding: 8px 12px; font-family: inherit;">
+            <button id="gemini-chat-send" style="background: rgba(41, 98, 255, 0.7); border: none; color: white; font-size: 20px; width: 40px; border-radius: 5px; margin-left: 10px; cursor: pointer;">➤</button>
+        </div>
+    </div>
+    
+    <script>
+        // Demo initialization for testing
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🏛️ Patroclus Concierge Integration Demo');
+            
+            // Simulate existing B-12 functions for testing
+            window.addMessage = function(text, sender) {
+                const messagesDiv = document.getElementById('gemini-chat-messages');
+                const messageElement = document.createElement('div');
+                messageElement.className = `chat-message ${sender}`;
+                messageElement.textContent = text;
+                messagesDiv.appendChild(messageElement);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            };
+            
+            // Basic send message handler for demo
+            const sendButton = document.getElementById('gemini-chat-send');
+            const input = document.getElementById('gemini-chat-input');
+            
+            function sendMessage() {
+                const text = input.value.trim();
+                if (text) {
+                    addMessage(text, 'user');
+                    input.value = '';
+                    
+                    // The Gemini concierge will handle the response
+                    if (window.PatroclusConcierge) {
+                        window.PatroclusConcierge.handleMessage(text);
+                    }
+                }
+            }
+            
+            sendButton.addEventListener('click', sendMessage);
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Status indicator update
+            setTimeout(() => {
+                const status = window.PatroclusConcierge?.getStatus();
+                const indicator = document.querySelector('.concierge-status');
+                if (status?.hasApiKey) {
+                    indicator.style.background = '#4CAF50'; // Green
+                } else {
+                    indicator.classList.add('fallback');
+                    indicator.style.background = '#FF9800'; // Orange
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

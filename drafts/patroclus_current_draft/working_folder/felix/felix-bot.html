@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Felix - Desktop Mate Concierge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            overflow: hidden;
+            color: #fff;
+        }
+
+        /* Felix Container - Desktop Mate Position */
+        #felix-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 200px;
+            height: 250px;
+            z-index: 9999;
+            cursor: move;
+            transition: transform 0.3s ease;
+        }
+
+        #felix-container:hover {
+            transform: scale(1.05);
+        }
+
+        /* Three.js Canvas for Felix 3D Model */
+        #felix-canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Felix Status Indicator */
+        .felix-status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 255, 136, 0.2);
+            border: 2px solid #00ff88;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.5);
+            animation: statusPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* Chat Interface */
+        #chat-container {
+            position: fixed;
+            bottom: 290px;
+            right: 20px;
+            width: 400px;
+            height: 500px;
+            background: rgba(30, 30, 46, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            display: none;
+            flex-direction: column;
+            z-index: 9998;
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        #chat-container.active {
+            display: flex;
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title {
+            font-size: 18px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .chat-close {
+            background: rgba(255, 59, 59, 0.2);
+            border: 2px solid #ff3b3b;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #ff3b3b;
+            transition: all 0.2s ease;
+        }
+
+        .chat-close:hover {
+            background: rgba(255, 59, 59, 0.4);
+            transform: rotate(90deg);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 15px;
+            max-width: 80%;
+            animation: messageSlide 0.3s ease;
+        }
+
+        @keyframes messageSlide {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.felix {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2) 0%, rgba(0, 212, 255, 0.2) 100%);
+            border: 2px solid rgba(0, 255, 136, 0.3);
+            align-self: flex-start;
+        }
+
+        .message.user {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            align-self: flex-end;
+        }
+
+        .message-meta {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-bottom: 5px;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 10px;
+        }
+
+        #chat-input {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        #chat-input:focus {
+            border-color: #00ff88;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        #send-btn {
+            background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 24px;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 255, 136, 0.4);
+        }
+
+        /* Agent Capabilities Indicator */
+        .capabilities {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .capability-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .capability-dot.active {
+            background: #00ff88;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+            animation: capabilityPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes capabilityPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
+
+        /* Thinking Indicator */
+        .thinking {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            padding: 10px;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .thinking.active {
+            display: flex;
+        }
+
+        .thinking-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: thinkingBounce 1.4s ease-in-out infinite;
+        }
+
+        .thinking-dot:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes thinkingBounce {
+            0%, 80%, 100% { transform: scale(1); opacity: 0.5; }
+            40% { transform: scale(1.3); opacity: 1; }
+        }
+
+        /* Scrollbar Styling */
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 136, 0.3);
+            border-radius: 10px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 136, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- Felix Desktop Mate -->
+    <div id="felix-container">
+        <div class="felix-status">ONLINE</div>
+        <canvas id="felix-canvas"></canvas>
+        <div class="capabilities">
+            <div class="capability-dot" data-capability="web-scraping" title="Web Scraping"></div>
+            <div class="capability-dot" data-capability="database" title="Database Ops"></div>
+            <div class="capability-dot" data-capability="api" title="API Integration"></div>
+            <div class="capability-dot" data-capability="files" title="File Operations"></div>
+            <div class="capability-dot active" data-capability="memory" title="Context Memory"></div>
+        </div>
+    </div>
+
+    <!-- Chat Interface -->
+    <div id="chat-container">
+        <div class="chat-header">
+            <div class="chat-title">Felix Concierge</div>
+            <div class="chat-close" onclick="toggleChat()">×</div>
+        </div>
+        <div class="chat-messages" id="messages">
+            <div class="message felix">
+                <div class="message-meta">Felix • Just now</div>
+                <div>Hello! I'm Felix, your desktop concierge. I'm inspired by BT-7274's tactical precision and WALL-E's curiosity. How can I assist you today?</div>
+            </div>
+        </div>
+        <div class="thinking" id="thinking">
+            <div class="thinking-dot"></div>
+            <div class="thinking-dot"></div>
+            <div class="thinking-dot"></div>
+            <span style="margin-left: 10px; font-size: 12px; opacity: 0.8;">Felix is thinking...</span>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="chat-input" placeholder="Ask Felix anything..." onkeypress="handleKeyPress(event)">
+            <button id="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- GLTFLoader for loading GLB models -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <script>
+        // ============================================
+        // FELIX 3D MODEL - CARL.GLB CUSTOM MODEL
+        // ============================================
+
+        let scene, camera, renderer, felix;
+        let animationState = 'idle';
+        let animationTime = 0;
+        let mixer, modelAnimations = [];
+        let loadingComplete = false;
+        let specialAnimationActive = false;
+        let specialAnimationTimer = 0;
+        let paintingWalkPhase = 0;
+
+        function initFelix() {
+            const canvas = document.getElementById('felix-canvas');
+            const container = document.getElementById('felix-container');
+
+            // Scene setup
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            camera.position.set(0, 2, 5);
+            camera.lookAt(0, 1, 0);
+
+            renderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                alpha: true,
+                antialias: true
+            });
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+            renderer.setClearColor(0x000000, 0);
+            renderer.shadowMap.enabled = true;
+
+            // Lighting - Enhanced for GLB model
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const spotLight = new THREE.SpotLight(0x00ff88, 1.2);
+            spotLight.position.set(5, 10, 5);
+            spotLight.castShadow = true;
+            scene.add(spotLight);
+
+            const fillLight = new THREE.PointLight(0x00d4ff, 0.6);
+            fillLight.position.set(-5, 5, -5);
+            scene.add(fillLight);
+
+            const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
+            backLight.position.set(0, 5, -10);
+            scene.add(backLight);
+
+            // Load Carl GLB Model
+            loadCarlModel();
+
+            // Make Felix draggable
+            makeDraggable(container);
+
+            // Click to open chat
+            container.addEventListener('click', (e) => {
+                if (!e.target.closest('.capabilities')) {
+                    toggleChat();
+                }
+            });
+
+            // Animation loop
+            animate();
+        }
+
+        function loadCarlModel() {
+            const loader = new THREE.GLTFLoader();
+
+            // Show loading indicator
+            console.log('[Felix] Loading Carl.glb model...');
+
+            loader.load(
+                './Carl.glb',
+                function (gltf) {
+                    console.log('[Felix] Carl.glb loaded successfully!');
+
+                    felix = gltf.scene;
+
+                    // Auto-scale and center the model
+                    const box = new THREE.Box3().setFromObject(felix);
+                    const size = box.getSize(new THREE.Vector3());
+                    const center = box.getCenter(new THREE.Vector3());
+
+                    // Scale to fit in view (adjust 2.5 to make larger/smaller)
+                    const maxDimension = Math.max(size.x, size.y, size.z);
+                    const scale = 2.5 / maxDimension;
+                    felix.scale.set(scale, scale, scale);
+
+                    // Center the model
+                    felix.position.x = -center.x * scale;
+                    felix.position.y = -center.y * scale + 0.5;
+                    felix.position.z = -center.z * scale;
+
+                    // Enable shadows
+                    felix.traverse((node) => {
+                        if (node.isMesh) {
+                            node.castShadow = true;
+                            node.receiveShadow = true;
+                        }
+                    });
+
+                    // Setup animations if the model has them
+                    felix.userData = {
+                        originalPosition: felix.position.clone(),
+                        originalRotation: felix.rotation.clone(),
+                        originalScale: felix.scale.clone(),
+                        animations: {},
+                        currentAnimation: null
+                    };
+
+                    if (gltf.animations && gltf.animations.length > 0) {
+                        mixer = new THREE.AnimationMixer(felix);
+
+                        gltf.animations.forEach((clip, index) => {
+                            const action = mixer.clipAction(clip);
+                            const name = clip.name.toLowerCase();
+
+                            // Map animations to behavior states
+                            if (name.includes('idle') || name.includes('wait')) {
+                                felix.userData.animations.idle = action;
+                                console.log(`[Felix] ✓ Mapped "${clip.name}" to IDLE state`);
+                            } else if (name.includes('active') || name.includes('talk') || name.includes('wave') || name.includes('excit')) {
+                                felix.userData.animations.active = action;
+                                console.log(`[Felix] ✓ Mapped "${clip.name}" to ACTIVE state`);
+                            } else if (name.includes('think') || name.includes('ponder') || name.includes('contemplat')) {
+                                felix.userData.animations.thinking = action;
+                                console.log(`[Felix] ✓ Mapped "${clip.name}" to THINKING state`);
+                            } else {
+                                // Store unmapped animations by index
+                                felix.userData.animations[`animation_${index}`] = action;
+                                console.log(`[Felix] ? Animation "${clip.name}" stored as animation_${index}`);
+                            }
+
+                            // Configure animation
+                            action.setLoop(THREE.LoopRepeat);
+                            action.clampWhenFinished = true;
+
+                            modelAnimations.push(action);
+                        });
+
+                        console.log(`[Felix] Found ${gltf.animations.length} animations in model`);
+                        console.log(`[Felix] Animation states available:`, Object.keys(felix.userData.animations));
+
+                        // Play idle animation if available, otherwise first animation
+                        if (felix.userData.animations.idle) {
+                            felix.userData.animations.idle.play();
+                            felix.userData.currentAnimation = felix.userData.animations.idle;
+                            console.log('[Felix] Playing IDLE animation');
+                        } else if (modelAnimations.length > 0) {
+                            modelAnimations[0].play();
+                            felix.userData.currentAnimation = modelAnimations[0];
+                            console.log('[Felix] Playing first animation as default');
+                        }
+                    } else {
+                        console.log('[Felix] No built-in animations found - using procedural animations');
+                    }
+
+                    scene.add(felix);
+                    loadingComplete = true;
+
+                    console.log('[Felix] Carl is ready! Size:', size, 'Scale:', scale);
+                },
+                function (xhr) {
+                    const percentComplete = (xhr.loaded / xhr.total) * 100;
+                    console.log(`[Felix] Loading: ${Math.round(percentComplete)}%`);
+                },
+                function (error) {
+                    console.error('[Felix] Error loading Carl.glb:', error);
+                    // Fallback: create simple placeholder
+                    createFallbackModel();
+                }
+            );
+        }
+
+        function createFallbackModel() {
+            // Simple fallback if GLB fails to load
+            const geometry = new THREE.BoxGeometry(1, 1.5, 0.8);
+            const material = new THREE.MeshPhongMaterial({ color: 0x00ff88 });
+            felix = new THREE.Mesh(geometry, material);
+            felix.position.y = 1;
+            felix.userData = {
+                originalPosition: felix.position.clone(),
+                originalRotation: felix.rotation.clone(),
+                originalScale: felix.scale.clone()
+            };
+            scene.add(felix);
+            loadingComplete = true;
+            console.log('[Felix] Using fallback model');
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = 0.016; // ~60fps
+            animationTime += delta;
+
+            // Update animation mixer if model has animations
+            if (mixer && loadingComplete) {
+                mixer.update(delta);
+            }
+
+            // Check for special animations first
+            if (specialAnimationActive) {
+                specialAnimationTimer += delta;
+                paintingWalkAnimation();
+            }
+            // Apply custom animations based on state
+            else if (loadingComplete && felix) {
+                if (animationState === 'idle') {
+                    idleAnimation();
+                } else if (animationState === 'active') {
+                    activeAnimation();
+                } else if (animationState === 'thinking') {
+                    thinkingAnimation();
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        // Switch animation with smooth blending
+        function switchToAnimation(stateName) {
+            if (!felix.userData.animations) return;
+
+            const newAnimation = felix.userData.animations[stateName];
+            const currentAnimation = felix.userData.currentAnimation;
+
+            // If we have a built-in animation for this state
+            if (newAnimation && newAnimation !== currentAnimation) {
+                // Fade out current animation
+                if (currentAnimation) {
+                    currentAnimation.fadeOut(0.5);
+                }
+
+                // Fade in new animation
+                newAnimation.reset().fadeIn(0.5).play();
+                felix.userData.currentAnimation = newAnimation;
+
+                console.log(`[Felix] Switched to ${stateName} animation`);
+            }
+        }
+
+        function idleAnimation() {
+            if (!felix || !felix.userData.originalScale) return;
+
+            // Try to use built-in animation first
+            if (felix.userData.animations.idle || felix.userData.animations.stargazer) {
+                switchToAnimation('idle');
+                return;
+            }
+
+            // PROCEDURAL: Quantum Stargazer animation
+            // Head tilted back like looking at stars, contemplative wonder
+            const scale = felix.userData.originalScale;
+            const originalY = felix.userData.originalPosition.y;
+
+            // Gentle breathing
+            const breathe = Math.sin(animationTime * 0.6) * 0.015;
+            felix.scale.y = scale.y + scale.y * breathe;
+
+            // Head tilt back (stargazing)
+            const stargazeTilt = -0.3 + Math.sin(animationTime * 0.4) * 0.05;
+            felix.rotation.x = stargazeTilt;
+
+            // Subtle side-to-side wonder
+            felix.rotation.z = Math.sin(animationTime * 0.25) * 0.03;
+
+            // Slight upward float (cosmic feeling)
+            felix.position.y = originalY + Math.sin(animationTime * 0.4) * 0.04 + 0.02;
+
+            // Very subtle rotation (gazing at different stars)
+            felix.rotation.y = Math.sin(animationTime * 0.15) * 0.04;
+        }
+
+        function activeAnimation() {
+            if (!felix || !felix.userData.originalRotation) return;
+
+            // Try to use built-in animation first
+            if (felix.userData.animations.active || felix.userData.animations.curious) {
+                switchToAnimation('active');
+                return;
+            }
+
+            // PROCEDURAL: Curious Look-Around animation
+            // Face comes toward screen, shifting and dipping, catching user's eyes
+            const scale = felix.userData.originalScale;
+            const originalY = felix.userData.originalPosition.y;
+            const originalZ = felix.userData.originalPosition.z;
+
+            // Lean forward toward camera (Z-axis movement)
+            const leanForward = Math.sin(animationTime * 0.8) * 0.3;
+            felix.position.z = originalZ + leanForward;
+
+            // Head shifting side-to-side (looking around)
+            const lookAround = Math.sin(animationTime * 1.5) * 0.3;
+            felix.rotation.y = lookAround;
+
+            // Dipping head (looking at different things)
+            const dipCycle = animationTime * 1.2;
+            let dipAngle = 0;
+
+            // Create a sequence: center → down → up → side
+            const dipPhase = (dipCycle % (Math.PI * 2)) / (Math.PI * 2);
+            if (dipPhase < 0.25) {
+                // Look down (at desk)
+                dipAngle = Math.sin(dipPhase * 4 * Math.PI) * 0.25;
+            } else if (dipPhase < 0.5) {
+                // Look up (at user)
+                dipAngle = -Math.sin((dipPhase - 0.25) * 4 * Math.PI) * 0.15;
+            } else {
+                // Return to neutral with slight tilt
+                dipAngle = Math.sin((dipPhase - 0.5) * 2 * Math.PI) * 0.08;
+            }
+            felix.rotation.x = dipAngle;
+
+            // Playful head tilt
+            felix.rotation.z = Math.sin(animationTime * 1.1) * 0.1;
+
+            // Slight bounce (engagement)
+            const bounce = Math.abs(Math.sin(animationTime * 2)) * 0.08;
+            felix.position.y = originalY + bounce;
+
+            // Scale pulse (alertness)
+            const pulse = 1 + Math.sin(animationTime * 2.5) * 0.02;
+            felix.scale.set(
+                scale.x * pulse,
+                scale.y * pulse,
+                scale.z * pulse
+            );
+        }
+
+        function thinkingAnimation() {
+            if (!felix || !felix.userData.originalRotation) return;
+
+            // Try to use built-in animation first
+            if (felix.userData.animations.thinking) {
+                switchToAnimation('thinking');
+                // Add subtle procedural enhancement
+                const sway = Math.sin(animationTime * 0.5) * 0.02;
+                felix.rotation.z += sway;
+                return;
+            }
+
+            // Fallback: Procedural animation
+            // Contemplative tilting
+            felix.rotation.y = Math.sin(animationTime * 0.6) * 0.2;
+            felix.rotation.z = Math.cos(animationTime * 0.5) * 0.1;
+            felix.rotation.x = Math.sin(animationTime * 0.4) * 0.08;
+
+            // Slow floating while thinking
+            const originalY = felix.userData.originalPosition.y;
+            felix.position.y = originalY + Math.sin(animationTime * 0.7) * 0.08;
+
+            // Subtle scale breathing
+            const breathe = Math.sin(animationTime * 0.9) * 0.015;
+            const scale = felix.userData.originalScale;
+            felix.scale.set(
+                scale.x + scale.x * breathe,
+                scale.y + scale.y * breathe,
+                scale.z + scale.z * breathe
+            );
+        }
+
+        // ============================================
+        // SPECIAL ANIMATIONS
+        // ============================================
+
+        function paintingWalkAnimation() {
+            // Harry Potter painting-style: walk off screen, reappear on other side
+            if (!felix || !loadingComplete) return;
+
+            const container = document.getElementById('felix-container');
+            const containerWidth = container.offsetWidth;
+            const screenWidth = window.innerWidth;
+
+            // Get current container position (before any transform)
+            const containerStyle = window.getComputedStyle(container);
+            const currentLeft = container.offsetLeft;
+
+            // Animation duration: 10 seconds
+            const duration = 10;
+            const progress = (specialAnimationTimer % duration) / duration;
+
+            if (progress < 0.25) {
+                // Phase 1: Walk off screen to the right
+                const walkProgress = progress / 0.25;
+                // Calculate distance to right edge of screen
+                const distanceToEdge = screenWidth - currentLeft;
+                const offsetX = walkProgress * (distanceToEdge + containerWidth);
+                container.style.transform = `translateX(${offsetX}px)`;
+                container.style.opacity = '1';
+                felix.rotation.y = -0.2; // Slight turn right
+
+            } else if (progress < 0.35) {
+                // Phase 2: Off-screen (invisible)
+                container.style.opacity = '0';
+                // Keep at right edge momentarily
+                const distanceToEdge = screenWidth - currentLeft;
+                container.style.transform = `translateX(${distanceToEdge + containerWidth}px)`;
+
+            } else if (progress < 0.4) {
+                // Phase 3: Teleport to left side (still invisible)
+                container.style.opacity = '0';
+                // Position completely off left edge
+                const offsetX = -(currentLeft + containerWidth);
+                container.style.transform = `translateX(${offsetX}px)`;
+
+            } else if (progress < 0.65) {
+                // Phase 4: Walk in from left
+                const walkProgress = (progress - 0.4) / 0.25;
+                container.style.opacity = '1';
+                // Calculate distance from off-screen left to original position
+                const startX = -(currentLeft + containerWidth);
+                const endX = 0;
+                const offsetX = startX + (endX - startX) * walkProgress;
+                container.style.transform = `translateX(${offsetX}px)`;
+                felix.rotation.y = 0.2; // Slight turn left
+
+            } else {
+                // Phase 5: Return to normal position and settle
+                const returnProgress = (progress - 0.65) / 0.35;
+                container.style.transform = `translateX(0)`;
+                container.style.opacity = '1';
+                felix.rotation.y = 0.2 * (1 - returnProgress);
+
+                // End animation
+                if (progress > 0.98) {
+                    specialAnimationActive = false;
+                    specialAnimationTimer = 0;
+                    container.style.transform = '';
+                    container.style.opacity = '1';
+                    felix.rotation.y = 0;
+                    console.log('[Felix] Painting walk complete!');
+                }
+            }
+
+            // Simple walk cycle (bob up and down) during walking phases
+            if (progress < 0.25 || (progress >= 0.4 && progress < 0.65)) {
+                const walkCycle = Math.sin(specialAnimationTimer * 8) * 0.05;
+                felix.position.y += walkCycle;
+
+                // Swing arms slightly (simulate walking if Carl has limbs)
+                felix.rotation.z = Math.sin(specialAnimationTimer * 4) * 0.05;
+            }
+        }
+
+        function triggerPaintingWalk() {
+            if (!specialAnimationActive && loadingComplete) {
+                specialAnimationActive = true;
+                specialAnimationTimer = 0;
+                console.log('[Felix] Starting painting walk animation!');
+            }
+        }
+
+        // Randomly trigger painting walk every 2-5 minutes when idle
+        setInterval(() => {
+            if (!specialAnimationActive &&
+                animationState === 'idle' &&
+                Math.random() < 0.4) {
+                triggerPaintingWalk();
+            }
+        }, 180000); // 3 minutes
+
+        // ============================================
+        // DESKTOP MATE BEHAVIOR
+        // ============================================
+
+        function makeDraggable(element) {
+            let isDragging = false;
+            let currentX, currentY, initialX, initialY;
+
+            element.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+
+            function dragStart(e) {
+                if (e.target.closest('.felix-status') || e.target.closest('.capabilities')) {
+                    return;
+                }
+
+                initialX = e.clientX - element.offsetLeft;
+                initialY = e.clientY - element.offsetTop;
+                isDragging = true;
+                element.style.cursor = 'grabbing';
+            }
+
+            function drag(e) {
+                if (!isDragging) return;
+
+                e.preventDefault();
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+
+                element.style.left = currentX + 'px';
+                element.style.top = currentY + 'px';
+                element.style.right = 'auto';
+                element.style.bottom = 'auto';
+            }
+
+            function dragEnd() {
+                isDragging = false;
+                element.style.cursor = 'move';
+            }
+        }
+
+        // ============================================
+        // CHAT INTERFACE
+        // ============================================
+
+        function toggleChat() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.classList.toggle('active');
+
+            if (chatContainer.classList.contains('active')) {
+                animationState = 'active';
+                document.getElementById('chat-input').focus();
+            } else {
+                animationState = 'idle';
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            // Add user message
+            addMessage(message, 'user');
+            input.value = '';
+
+            // Show thinking state
+            animationState = 'thinking';
+            document.getElementById('thinking').classList.add('active');
+
+            // Simulate agent response (replace with actual N8n backend integration)
+            setTimeout(() => {
+                const response = processMessage(message);
+                addMessage(response, 'felix');
+                document.getElementById('thinking').classList.remove('active');
+                animationState = 'active';
+            }, 1500);
+        }
+
+        function addMessage(text, sender) {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const meta = document.createElement('div');
+            meta.className = 'message-meta';
+            meta.textContent = sender === 'felix' ? 'Felix • Just now' : 'You • Just now';
+
+            const content = document.createElement('div');
+            content.textContent = text;
+
+            messageDiv.appendChild(meta);
+            messageDiv.appendChild(content);
+            messagesContainer.appendChild(messageDiv);
+
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function processMessage(message) {
+            // Basic command processing (will be replaced with N8n integration)
+            const lower = message.toLowerCase();
+
+            // Easter egg: trigger painting walk
+            if (lower.includes('walk') || lower.includes('painting')) {
+                triggerPaintingWalk();
+                return "Watch me! I'm walking like a Harry Potter painting... 🎨✨";
+            }
+
+            if (lower.includes('hello') || lower.includes('hi')) {
+                return "Hello! I'm Felix, combining BT-7274's tactical precision with WALL-E's curious nature. I'm here to assist with web scraping, database operations, API integrations, and more. What would you like to explore?";
+            }
+
+            if (lower.includes('capabilities') || lower.includes('what can you do')) {
+                activateCapability('all');
+                return "I have access to:\n• Web scraping & research\n• Database operations (CRUD, analysis)\n• API integrations (external services)\n• File operations (upload, process, analyze)\n• Contextual memory (I remember our conversations)\n\nI'm also self-aware - I can explain my reasoning and adapt based on our interactions.";
+            }
+
+            if (lower.includes('status') || lower.includes('how are you')) {
+                return "All systems operational! My enrichment module is active, maintaining context awareness. I'm currently in an attentive state, ready to assist.";
+            }
+
+            return "Interesting question! Once integrated with the N8n backend, I'll be able to provide comprehensive responses using my full agent capabilities. For now, I'm demonstrating my desktop mate behavior and UI.";
+        }
+
+        function activateCapability(capability) {
+            const dots = document.querySelectorAll('.capability-dot');
+
+            if (capability === 'all') {
+                dots.forEach(dot => dot.classList.add('active'));
+                setTimeout(() => {
+                    dots.forEach((dot, i) => {
+                        if (i !== dots.length - 1) {
+                            dot.classList.remove('active');
+                        }
+                    });
+                }, 2000);
+            } else {
+                const dot = document.querySelector(`[data-capability="${capability}"]`);
+                if (dot) {
+                    dot.classList.add('active');
+                    setTimeout(() => dot.classList.remove('active'), 2000);
+                }
+            }
+        }
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initFelix();
+
+            // Auto-open chat after 2 seconds as demo
+            setTimeout(() => {
+                addMessage("Click me anytime to chat! I'm draggable too - you can move me anywhere on your screen.", 'felix');
+            }, 2000);
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('felix-canvas');
+            camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        });
+    </script>
+</body>
+</html>

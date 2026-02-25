@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Mosaic Laboratory</title>
+    <style>
+        body {
+            background: #111;
+            color: #eee;
+            font-family: monospace;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        #drop-zone {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            height: 80px;
+            border: 2px dashed #444;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            transition: all 0.2s;
+            z-index: 10;
+            background: rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+        }
+
+        #drop-zone.hover {
+            border-color: #0f0;
+            color: #0f0;
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 10;
+            display: flex;
+            gap: 20px;
+        }
+
+        label {
+            display: flex;
+            flex-direction: column;
+            font-size: 12px;
+            gap: 4px;
+        }
+
+        input[type=range] {
+            width: 120px;
+        }
+
+        #stats {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 12px;
+            color: #666;
+            text-align: right;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="drop-zone">Drag & Drop Video File Here</div>
+
+    <div id="canvas-container">
+        <canvas id="mosaic"></canvas>
+    </div>
+
+    <div id="controls">
+        <label>
+            Block Size: <span id="val-block">20</span>px
+            <input type="range" id="block-size" min="5" max="100" value="20">
+        </label>
+        <label>
+            Lift (Brightness): <span id="val-lift">155</span>
+            <input type="range" id="lift" min="0" max="255" value="155">
+        </label>
+        <label>
+            Desaturation: <span id="val-sat">0.6</span>
+            <input type="range" id="desat" min="0" max="1" step="0.1" value="0.6">
+        </label>
+        <label>
+            Opacity Cap: <span id="val-op">0.45</span>
+            <input type="range" id="op-cap" min="0.1" max="1" step="0.05" value="0.45">
+        </label>
+    </div>
+
+    <div id="stats">
+        Resolution: <span id="res">0x0</span><br>
+        FPS: <span id="fps">0</span>
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const canvas = document.getElementById('mosaic');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        // Controls
+        const inputs = {
+            block: document.getElementById('block-size'),
+            lift: document.getElementById('lift'),
+            desat: document.getElementById('desat'),
+            op: document.getElementById('op-cap')
+        };
+
+        // Update labels
+        Object.keys(inputs).forEach(k => {
+            inputs[k].addEventListener('input', (e) => {
+                document.getElementById(`val-${k}`).textContent = e.target.value;
+            });
+        });
+
+        // Hidden video element
+        const video = document.createElement('video');
+        video.playsInline = true;
+        video.muted = true;
+        video.loop = true;
+        video.crossOrigin = "anonymous";
+        video.style.display = 'none'; // hide actual video
+        document.body.appendChild(video);
+
+        // Initial Resize
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            document.getElementById('res').textContent = `${canvas.width}x${canvas.height}`;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Loop
+        let lastTime = 0;
+        function render(time) {
+            if (video.readyState >= 2 && !video.paused) {
+                const BLOCK_SIZE = parseInt(inputs.block.value);
+                const LIFT = parseInt(inputs.lift.value);
+                const DESAT = parseFloat(inputs.desat.value);
+                const OP_CAP = parseFloat(inputs.op.value);
+
+                // Canvas dimensions
+                const cw = canvas.width;
+                const ch = canvas.height;
+
+                // Video dimensions & scaling to cover
+                const vw = video.videoWidth;
+                const vh = video.videoHeight;
+                const scale = Math.max(cw / vw, ch / vh);
+                const dw = vw * scale;
+                const dh = vh * scale;
+                const dx = (cw - dw) / 2;
+                const dy = (ch - dh) / 2;
+
+                // 1. Draw video to offscreen canvas to sample data
+                if (!window.tempCv) {
+                    window.tempCv = document.createElement('canvas');
+                    window.tempCtx = window.tempCv.getContext('2d', { willReadFrequently: true });
+                }
+                const tempCv = window.tempCv;
+                const tempCtx = window.tempCtx;
+
+                if (tempCv.width !== cw || tempCv.height !== ch) {
+                    tempCv.width = cw;
+                    tempCv.height = ch;
+                }
+
+                tempCtx.clearRect(0, 0, cw, ch);
+                tempCtx.drawImage(video, dx, dy, dw, dh);
+
+                // 2. Clear main canvas
+                ctx.fillStyle = '#f5f5f5';
+                ctx.fillRect(0, 0, cw, ch);
+
+                // 3. Sample and Draw Blocks
+                const cols = Math.ceil(cw / BLOCK_SIZE);
+                const rows = Math.ceil(ch / BLOCK_SIZE);
+
+                let frameData;
+                try {
+                    frameData = tempCtx.getImageData(0, 0, cw, ch).data;
+                } catch (e) {
+                    console.error("Frame data error:", e);
+                    // Request next frame even on error to keep trying (e.g., if it's a temporary video load issue)
+                    requestAnimationFrame(render);
+                    return;
+                }
+
+                for (let r = 0; r < rows; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        // Sample center of block
+                        const cx = Math.floor(c * BLOCK_SIZE + BLOCK_SIZE / 2);
+                        const cy = Math.floor(r * BLOCK_SIZE + BLOCK_SIZE / 2);
+
+                        if (cx >= cw || cy >= ch) continue;
+
+                        const i = (cy * cw + cx) * 4;
+                        let R = frameData[i];
+                        let G = frameData[i + 1];
+                        let B = frameData[i + 2];
+
+                        // --- COLOR MATH Matching Homepage ---
+                        const grey = R * 0.299 + G * 0.587 + B * 0.114;
+                        R = R * (1 - DESAT) + grey * DESAT;
+                        G = G * (1 - DESAT) + grey * DESAT;
+                        B = B * (1 - DESAT) + grey * DESAT;
+
+                        // Lift checks
+                        R = Math.min(255, R * 0.35 + LIFT);
+                        G = Math.min(255, G * 0.35 + LIFT);
+                        B = Math.min(255, B * 0.35 + (LIFT + 7)); // bluish tint
+
+                        // Draw block
+                        ctx.fillStyle = `rgba(${R | 0}, ${G | 0}, ${B | 0}, ${OP_CAP})`;
+                        ctx.fillRect(c * BLOCK_SIZE + 1, r * BLOCK_SIZE + 1, BLOCK_SIZE - 2, BLOCK_SIZE - 2);
+                    }
+                }
+
+                // FPS Calculation
+                const now = performance.now();
+                const delta = now - lastTime;
+                if (delta > 0) {
+                    document.getElementById('fps').textContent = (1000 / delta).toFixed(1);
+                }
+                lastTime = now;
+            }
+            requestAnimationFrame(render);
+        }
+        requestAnimationFrame(render);
+
+
+        // Drag & Drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false)
+        });
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        dropZone.addEventListener('dragenter', () => dropZone.classList.add('hover'));
+        dropZone.addEventListener('dragover', () => dropZone.classList.add('hover'));
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('hover'));
+        dropZone.addEventListener('drop', handleDrop);
+
+        function handleDrop(e) {
+            dropZone.classList.remove('hover');
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('video/')) {
+                    const url = URL.createObjectURL(file);
+                    video.src = url;
+                    video.play();
+                    dropZone.textContent = `Playing: ${file.name}`;
+                } else {
+                    dropZone.textContent = 'Not a video file!';
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

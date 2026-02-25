@@ -1,0 +1,85 @@
+import * as THREE from 'three';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+
+// Scene Setup
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Orbit Controls
+const controls = new OrbitControls(camera, renderer.domElement);
+
+// Logo Components
+
+// 1. Main Triangle
+const triangleShape = new THREE.Shape();
+triangleShape.moveTo(0, 10);
+triangleShape.lineTo(-10, -7.32);
+triangleShape.lineTo(10, -7.32);
+triangleShape.lineTo(0, 10); // close path
+
+const triangleGeometry = new THREE.ShapeGeometry(triangleShape);
+const triangleMaterial = new THREE.MeshBasicMaterial({ color: 0x2962FF, side: THREE.DoubleSide });
+const triangle = new THREE.Mesh(triangleGeometry, triangleMaterial);
+scene.add(triangle);
+
+// 2. Central Circle
+const circleGeometry = new THREE.CircleGeometry(0.5, 32);
+const circleMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+circle.position.z = 0.1; // Position slightly in front of the triangle
+scene.add(circle);
+
+// 3. Lines from Center
+const lineMaterial = new THREE.LineBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0.7 });
+
+// Line to Top Vertex
+const points1 = [];
+points1.push(new THREE.Vector3(0, 0, 0.1));
+points1.push(new THREE.Vector3(0, 10, 0.1));
+const lineGeometry1 = new THREE.BufferGeometry().setFromPoints(points1);
+const line1 = new THREE.Line(lineGeometry1, lineMaterial);
+scene.add(line1);
+
+// Line to Bottom-Left Vertex
+const points2 = [];
+points2.push(new THREE.Vector3(0, 0, 0.1));
+points2.push(new THREE.Vector3(-10, -7.32, 0.1));
+const lineGeometry2 = new THREE.BufferGeometry().setFromPoints(points2);
+const line2 = new THREE.Line(lineGeometry2, lineMaterial);
+scene.add(line2);
+
+// Line to Bottom-Right Vertex
+const points3 = [];
+points3.push(new THREE.Vector3(0, 0, 0.1));
+points3.push(new THREE.Vector3(10, -7.32, 0.1));
+const lineGeometry3 = new THREE.BufferGeometry().setFromPoints(points3);
+const line3 = new THREE.Line(lineGeometry3, lineMaterial);
+scene.add(line3);
+
+
+// Camera Position
+camera.position.z = 20;
+
+// Animation Loop
+function animate() {
+    requestAnimationFrame(animate);
+    
+    // Optional: Add animation/rotation here
+    // triangle.rotation.x += 0.01;
+    // triangle.rotation.y += 0.01;
+
+    controls.update();
+    renderer.render(scene, camera);
+}
+
+// Handle Window Resizing
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}, false);
+
+animate();

@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patroclus Industries | Cinematic Experience</title>
+    <style>
+        /* 
+        ===================================================================
+        CINEMATIC PATROCLUS EXPERIENCE
+        Style System: Frutiger Aero x Art Deco Sci-Fi
+        ===================================================================
+        */
+
+        @font-face {
+            font-family: 'Eurostile Extended';
+            src: local('Eurostile Extended'), local('EurostileExtended'), url('https://fonts.cdnfonts.com/s/14171/EurostileExtended.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --accent-gold: #D4AF37;
+            --accent-cyan: #00ffcc;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Eurostile Extended', 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+            /* Deep space black */
+            color: var(--text-primary);
+        }
+
+        /* =========================================
+           DIMENSIONAL PERMANENCE (Background Layer)
+           ========================================= */
+        #world-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+        }
+
+        .background-pattern {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg);
+            animation: gridFlow 20s linear infinite;
+        }
+
+        @keyframes gridFlow {
+            0% {
+                transform: perspective(500px) rotateX(60deg) translateY(0);
+            }
+
+            100% {
+                transform: perspective(500px) rotateX(60deg) translateY(50px);
+            }
+        }
+
+        /* Whale & Dove Elements (Ported from backup.html) */
+        .whale {
+            position: absolute;
+            width: 400px;
+            height: 120px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            border-radius: 50%;
+            filter: blur(20px);
+            opacity: 0.3;
+            animation: whaleSwim 30s linear infinite;
+        }
+
+        @keyframes whaleSwim {
+            0% {
+                left: -500px;
+                top: 40%;
+            }
+
+            100% {
+                left: 100%;
+                top: 40%;
+            }
+        }
+
+        /* =========================================
+           FELIX CONCIERGE (3D Layer)
+           ========================================= */
+        #felix-container {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            width: 250px;
+            height: 300px;
+            z-index: 100;
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        #felix-canvas {
+            width: 100%;
+            height: 100%;
+            /* Frutiger Aero Glass Orb Effect */
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05) 40%, transparent 70%);
+            border-radius: 50%;
+            box-shadow:
+                inset 0 0 20px rgba(255, 255, 255, 0.2),
+                0 0 30px rgba(0, 255, 204, 0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+
+        #felix-container:hover {
+            transform: scale(1.05) translateY(-10px);
+            filter: drop-shadow(0 0 20px rgba(0, 255, 204, 0.4));
+        }
+
+        /* =========================================
+           CHAT INTERFACE (UI Layer)
+           ========================================= */
+        #chat-interface {
+            position: fixed;
+            bottom: 360px;
+            right: 40px;
+            width: 400px;
+            height: 500px;
+            z-index: 99;
+
+            /* Glassmorphism Base */
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+
+            /* Art Deco Geometry */
+            clip-path: polygon(0 20px, 20px 0,
+                    100% 0, 100% calc(100% - 20px),
+                    calc(100% - 20px) 100%, 0 100%);
+
+            display: none;
+            /* Hidden by default */
+            flex-direction: column;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+        }
+
+        #chat-interface.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Art Deco Gold Border Overlay */
+        .deco-border {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            border: 1px solid var(--accent-gold);
+            opacity: 0.3;
+            clip-path: polygon(0 20px, 20px 0,
+                    100% 0, 100% calc(100% - 20px),
+                    calc(100% - 20px) 100%, 0 100%);
+            z-index: 101;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title {
+            font-size: 18px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #fff, var(--accent-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .message.felix {
+            align-self: flex-start;
+            background: rgba(0, 255, 204, 0.1);
+            border-left: 2px solid var(--accent-cyan);
+            border-top-left-radius: 0;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: rgba(212, 175, 55, 0.1);
+            border-right: 2px solid var(--accent-gold);
+            border-top-right-radius: 0;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #fff;
+            font-family: 'Eurostile Extended', sans-serif;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--accent-cyan), #0088cc);
+            border: none;
+            border-radius: 8px;
+            padding: 0 20px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Loading Indicator */
+        .typing-indicator {
+            font-size: 12px;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Background Layer -->
+    <div id="world-layer">
+        <div class="background-pattern"></div>
+        <div class="whale"></div>
+    </div>
+
+    <!-- Felix 3D Container -->
+    <div id="felix-container" onclick="toggleChat()">
+        <canvas id="felix-canvas"></canvas>
+    </div>
+
+    <!-- Chat Interface -->
+    <div id="chat-interface">
+        <div class="deco-border"></div>
+        <div class="chat-header">
+            <div class="chat-title">Felix Concierge</div>
+            <div style="cursor: pointer;" onclick="toggleChat()">✕</div>
+        </div>
+        <div class="chat-messages" id="messages">
+            <div class="message felix">
+                Greetings. I am Felix. I have been upgraded with the Gemini 1.5 neural architecture. How may I assist
+                your design journey today?
+            </div>
+        </div>
+        <div class="typing-indicator" id="typing-indicator">Scanning latent space...</div>
+        <div class="chat-input-area">
+            <input type="text" id="user-input" placeholder="Enter command or query..."
+                onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">TRANSMIT</button>
+        </div>
+    </div>
+
+    <!-- Neural Link (Login) Modal -->
+    <div id="neural-link-modal">
+        <div class="modal-content">
+            <div class="deco-border"></div>
+            <h2>ESTABLISH NEURAL LINK</h2>
+            <p>Enter Google Gemini API Key to initialize Felix.</p>
+            <div class="input-group">
+                <input type="password" id="api-key-input" placeholder="sk-..." autocomplete="off">
+            </div>
+            <p class="security-note">
+                <span style="color: var(--accent-gold);">⚠ SECURITY PROTOCOL:</span>
+                Key is processed locally in your browser. It is never sent to our servers.
+                For production, this will be replaced by a secure cloud proxy.
+            </p>
+            <button onclick="initializeNeuralLink()">CONNECT</button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <!-- Import Gemini Backend -->
+    <script type="module">
+        import GeminiConcierge from './gemini-concierge.js';
+
+        let felixAI = null;
+
+        // Expose initialization to global scope
+        window.initializeNeuralLink = function () {
+            const input = document.getElementById('api-key-input');
+            const apiKey = input.value.trim();
+            const modal = document.getElementById('neural-link-modal');
+
+            if (apiKey) {
+                felixAI = new GeminiConcierge(apiKey);
+                felixAI.initialize().then(success => {
+                    if (success) {
+                        modal.style.opacity = '0';
+                        setTimeout(() => modal.style.display = 'none', 500);
+                        addMessage("felix", "Neural Link Established. Systems Online.");
+                    } else {
+                        alert("Connection Failed. Please check your API Key.");
+                    }
+                });
+            } else {
+                alert("API Key required for neural handshake.");
+            }
+        };
+
+        // Expose to global scope for UI interaction
+        window.sendMessage = async function () {
+            const input = document.getElementById('user-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // Add User Message
+            addMessage("user", text);
+            input.value = '';
+
+            // Show Typing
+            const indicator = document.getElementById('typing-indicator');
+            indicator.classList.add('active');
+
+            if (felixAI) {
+                const response = await felixAI.sendMessage(text);
+                indicator.classList.remove('active');
+                addMessage("felix", response.text);
+            } else {
+                setTimeout(() => {
+                    indicator.classList.remove('active');
+                    addMessage("felix", "Neural Link Disconnected. Please refresh to reconnect.");
+                }, 1000);
+            }
+        };
+
+        window.handleKeyPress = function (e) {
+            if (e.key === 'Enter') window.sendMessage();
+        };
+
+        function addMessage(role, text) {
+            const container = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+            div.textContent = text;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+    </script>
+
+    <!-- 3D Scene Logic (Simplified for Index) -->
+    <script>
+        // Basic Three.js Setup for Felix
+        const canvas = document.getElementById('felix-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        camera.position.z = 5;
+
+        // Lights
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        const pointLight = new THREE.PointLight(0x00ffcc, 1);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        // Placeholder Geometry (until GLB loads)
+        const geometry = new THREE.IcosahedronGeometry(1, 1);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0x00ffcc,
+            wireframe: true,
+            emissive: 0x0044aa
+        });
+        const orb = new THREE.Mesh(geometry, material);
+        scene.add(orb);
+
+        // Animation Loop
+        function animate() {
+            requestAnimationFrame(animate);
+            orb.rotation.x += 0.005;
+            orb.rotation.y += 0.01;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        // UI Toggle
+        window.toggleChat = function () {
+            const chat = document.getElementById('chat-interface');
+            chat.classList.toggle('active');
+        }
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+        });
+    </script>
+</body>
+
+</html>

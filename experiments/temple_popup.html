@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patroclus Temple - 3D Scene</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.1);
+            font-family: 'Eurostile Extended', Arial, sans-serif;
+        }
+        
+        #temple-canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        .popup-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            background: rgba(41, 98, 255, 0.8);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            transition: background 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(41, 98, 255, 1);
+        }
+        
+        .status-display {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="temple-canvas-container">
+        <div class="popup-controls">
+            <button class="control-btn" onclick="resetCamera()">Reset View</button>
+            <button class="control-btn" onclick="window.close()">Close</button>
+        </div>
+        <div class="status-display" id="status-display">
+            Temple Scene Loading...
+        </div>
+    </div>
+
+    <!-- Three.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    
+    <script>
+        // Three.js Scene Variables
+        let scene = null;
+        let renderer = null;
+        let camera = null;
+        let animationId = null;
+        
+        // Camera control variables
+        let scrollOffset = 0;
+        let targetScrollOffset = 0;
+        const maxScrollDistance = 50;
+        
+        // Scene objects
+        let floatingCards = [];
+        let curiousPrism = null;
+        let dreamMist = null;
+        let sunLight = null;
+        
+        // GLB Model Loading
+        let gltfLoader = null;
+        let modelsLoaded = 0;
+        const totalModels = 1;
+        
+        // Initialize the popup window
+        function initializePopup() {
+            updateStatus('Initializing 3D Temple Scene...');
+            
+            // Setup Three.js scene
+            scene = new THREE.Scene();
+            scene.background = null;
+            
+            // Camera setup - start with close view
+            camera = new THREE.PerspectiveCamera(25, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 15, 35);
+            
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setClearColor(0x000000, 0);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Add renderer to container
+            const container = document.getElementById('temple-canvas-container');
+            container.appendChild(renderer.domElement);
+            
+            // Setup GLTF Loader
+            gltfLoader = new THREE.GLTFLoader();
+            
+            // Build temple scene
+            buildTempleScene();
+            
+            // Setup message listener for parent window communication
+            window.addEventListener('message', handleParentMessage);
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            updateStatus('Temple Scene Ready');
+        }
+        
+        // Handle messages from parent window
+        function handleParentMessage(event) {
+            if (event.data.type === 'scroll_update') {
+                targetScrollOffset = event.data.scrollOffset || 0;
+                updateStatus(`Camera Distance: ${targetScrollOffset.toFixed(1)}/${maxScrollDistance}`);
+            }
+            
+            if (event.data.type === 'close_popup') {
+                window.close();
+            }
+        }
+        
+        // Build the complete temple scene with proper GLB models
+        function buildTempleScene() {
+            updateStatus('Building Sacred Mathematics Gallery...');
+            
+            // Waking Daydream Lighting - Enhanced ethereal lighting
+            const ambientLight = new THREE.AmbientLight(0x9bb5d6, 0.4);
+            scene.add(ambientLight);
+
+            sunLight = new THREE.DirectionalLight(0xfff8dc, 2.0);
+            sunLight.position.set(15, 25, 8);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 4096;
+            sunLight.shadow.mapSize.height = 4096;
+            sunLight.shadow.camera.near = 0.1;
+            sunLight.shadow.camera.far = 50;
+            sunLight.shadow.camera.left = -20;
+            sunLight.shadow.camera.right = 20;
+            sunLight.shadow.camera.top = 20;
+            sunLight.shadow.camera.bottom = -20;
+            sunLight.shadow.bias = -0.0001;
+            scene.add(sunLight);
+
+            const bounceLight = new THREE.DirectionalLight(0xd6e6ff, 0.6);
+            bounceLight.position.set(-12, 4, -8);
+            scene.add(bounceLight);
+
+            const rimLight = new THREE.DirectionalLight(0xffffff, 0.3);
+            rimLight.position.set(0, 8, -15);
+            scene.add(rimLight);
+
+            // Dream Mist - Atmospheric particles
+            createDreamMist();
+            
+            // Create temple floor and architecture
+            createTempleArchitecture();
+            
+            // Create curious exploring prism
+            curiousPrism = createExploringPrism();
+            scene.add(curiousPrism);
+            
+            // Create floating mathematical cards
+            createFloatingCards();
+            
+            // Load GLB models
+            loadTempleModels();
+            
+            // Start animation loop
+            animateScene();
+            
+            updateStatus('Sacred Mathematics Gallery Complete');
+        }
+        
+        // Create dream mist atmospheric effect
+        function createDreamMist() {
+            const mistGeometry = new THREE.BufferGeometry();
+            const mistCount = 200;
+            const positions = new Float32Array(mistCount * 3);
+            
+            for (let i = 0; i < mistCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 30;     // x
+                positions[i + 1] = Math.random() * 3 - 2;      // y: closer to ground
+                positions[i + 2] = (Math.random() - 0.5) * 25; // z
+            }
+            
+            mistGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const mistMaterial = new THREE.PointsMaterial({
+                color: 0xd6e6ff,
+                size: 0.3,
+                transparent: true,
+                opacity: 0.2,
+                blending: THREE.AdditiveBlending
+            });
+            
+            dreamMist = new THREE.Points(mistGeometry, mistMaterial);
+            scene.add(dreamMist);
+        }
+        
+        // Create temple architecture
+        function createTempleArchitecture() {
+            // Materials
+            const marbleMaterial = new THREE.MeshPhongMaterial({
+                color: 0xf8f6f0,
+                specular: 0x111111,
+                shininess: 30,
+                transparent: true,
+                opacity: 0.95,
+                side: THREE.DoubleSide
+            });
+            
+            const floorMaterial = new THREE.MeshPhongMaterial({
+                color: 0xe8e3d3,
+                specular: 0x050505,
+                shininess: 5,
+                transparent: true,
+                opacity: 0.85
+            });
+
+            // Create floor
+            const floorGeometry = new THREE.PlaneGeometry(40, 30);
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -4;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Create floor tiles pattern
+            const tileSize = 2;
+            const tilesX = 20;
+            const tilesZ = 15;
+            
+            for (let x = 0; x < tilesX; x++) {
+                for (let z = 0; z < tilesZ; z++) {
+                    if ((x + z) % 4 === 0) {
+                        const tileGeometry = new THREE.PlaneGeometry(tileSize * 0.95, tileSize * 0.95);
+                        const tile = new THREE.Mesh(tileGeometry, marbleMaterial);
+                        tile.rotation.x = -Math.PI / 2;
+                        tile.position.set(
+                            (x - tilesX/2) * tileSize,
+                            -3.98,
+                            (z - tilesZ/2) * tileSize
+                        );
+                        tile.receiveShadow = true;
+                        scene.add(tile);
+                    }
+                }
+            }
+        }
+        
+        // Create curious exploring Patroklos prism
+        function createExploringPrism() {
+            const geometry = new THREE.OctahedronGeometry(0.6);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x2962ff,
+                transparent: true,
+                opacity: 0.8,
+                specular: 0x4080ff,
+                shininess: 100,
+                reflectivity: 0.3
+            });
+            
+            const prism = new THREE.Mesh(geometry, material);
+            prism.position.set(0, 1, 5);
+            prism.castShadow = true;
+            
+            // Inner glow
+            const glowGeometry = new THREE.OctahedronGeometry(0.8);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0x2962ff,
+                transparent: true,
+                opacity: 0.15,
+                side: THREE.BackSide
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            prism.add(glow);
+            
+            // White centerpoint
+            const centerpointGeometry = new THREE.SphereGeometry(0.06, 16, 16);
+            const centerpointMaterial = new THREE.MeshPhongMaterial({
+                color: 0xffffff,
+                emissive: 0xffffff,
+                emissiveIntensity: 0.4,
+                transparent: true,
+                opacity: 0.9
+            });
+            const centerpoint = new THREE.Mesh(centerpointGeometry, centerpointMaterial);
+            prism.add(centerpoint);
+            
+            return prism;
+        }
+        
+        // Create floating mathematical cards
+        function createFloatingCards() {
+            const textureLoader = new THREE.TextureLoader();
+            const thoughtRadius = 4;
+            const thoughtHeight = 2;
+            const cardCount = 3;
+            
+            for (let i = 0; i < cardCount; i++) {
+                const angle = (i / cardCount) * Math.PI * 2;
+                const position = {
+                    x: Math.cos(angle) * thoughtRadius,
+                    z: Math.sin(angle) * thoughtRadius
+                };
+                
+                // Card geometry
+                const cardGeometry = new THREE.PlaneGeometry(1.5, 2);
+                const cardMaterial = new THREE.MeshLambertMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.95,
+                    side: THREE.DoubleSide
+                });
+                
+                // Load hand-drawn diagrams
+                const imageUrls = [
+                    './temple_scene/images/mp_diagram_1.png',
+                    './temple_scene/images/mp_diagram_2.png',
+                    './temple_scene/images/mp_diagram_3.png'
+                ];
+                
+                if (imageUrls[i]) {
+                    textureLoader.load(
+                        imageUrls[i],
+                        (texture) => {
+                            texture.minFilter = THREE.LinearFilter;
+                            texture.magFilter = THREE.LinearFilter;
+                            texture.generateMipmaps = false;
+                            cardMaterial.map = texture;
+                            cardMaterial.needsUpdate = true;
+                            console.log(`✅ Loaded diagram: ${imageUrls[i]}`);
+                        },
+                        undefined,
+                        (error) => {
+                            console.warn(`❌ Could not load ${imageUrls[i]}`);
+                            createPlaceholder(cardMaterial, i);
+                        }
+                    );
+                } else {
+                    createPlaceholder(cardMaterial, i);
+                }
+                
+                const card = new THREE.Mesh(cardGeometry, cardMaterial);
+                card.position.set(position.x, thoughtHeight, position.z);
+                
+                scene.add(card);
+                
+                floatingCards.push({
+                    card: card,
+                    basePosition: { x: position.x, y: thoughtHeight, z: position.z },
+                    timeOffset: i * 0.5
+                });
+            }
+        }
+        
+        // Create placeholder for missing images
+        function createPlaceholder(material, index) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 500;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.fillStyle = '#f8f8f8';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = '#cccccc';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+            
+            ctx.fillStyle = '#666666';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Mathematical Diagram', canvas.width/2, canvas.height/2 - 20);
+            ctx.fillText(`Card ${index + 1}`, canvas.width/2, canvas.height/2 + 20);
+            
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.LinearFilter;
+            material.map = texture;
+            material.needsUpdate = true;
+        }
+        
+        // Load temple GLB models
+        function loadTempleModels() {
+            if (!gltfLoader) {
+                console.warn('GLTFLoader not available');
+                return;
+            }
+            
+            // Try to load central guardian statue
+            const modelPath = './temple_scene/models/statue_1.glb';
+            
+            gltfLoader.load(
+                modelPath,
+                (gltf) => {
+                    const statue = gltf.scene;
+                    statue.position.set(0, -1, 0);
+                    statue.scale.set(2, 2, 2);
+                    statue.traverse((child) => {
+                        if (child.isMesh) {
+                            child.castShadow = true;
+                            child.receiveShadow = true;
+                        }
+                    });
+                    scene.add(statue);
+                    modelsLoaded++;
+                    updateStatus(`Loaded temple guardian (${modelsLoaded}/${totalModels})`);
+                    console.log('✅ Temple guardian loaded successfully');
+                },
+                (progress) => {
+                    const percent = Math.round(progress.loaded / progress.total * 100);
+                    updateStatus(`Loading temple guardian... ${percent}%`);
+                },
+                (error) => {
+                    console.warn('❌ Could not load temple guardian model:', error);
+                    updateStatus('Temple guardian model unavailable - using geometric forms');
+                }
+            );
+        }
+        
+        // Animation loop
+        function animateScene() {
+            if (!renderer || !scene || !camera) return;
+            
+            animationId = requestAnimationFrame(animateScene);
+            
+            // Smooth camera interpolation
+            scrollOffset += (targetScrollOffset - scrollOffset) * 0.1;
+            
+            // Camera positioning based on scroll
+            const baseDistance = 35;
+            const cameraZ = baseDistance + scrollOffset;
+            const cameraX = -8 + (scrollOffset * 0.4);
+            const cameraY = 15 + (scrollOffset * 0.15);
+            
+            const lookAtX = scrollOffset * 0.2;
+            const lookAtY = 1 - (scrollOffset * 0.05);
+            
+            camera.position.set(cameraX, cameraY, cameraZ);
+            camera.lookAt(lookAtX, lookAtY, 0);
+            
+            // FOV adjustment for cinematic effect
+            const baseFOV = 25;
+            const fovExpansion = Math.min(scrollOffset * 0.8, 20);
+            camera.fov = baseFOV + fovExpansion;
+            camera.updateProjectionMatrix();
+            
+            // Animate floating cards
+            const time = Date.now() * 0.001;
+            floatingCards.forEach((cardData, index) => {
+                const { card, basePosition, timeOffset } = cardData;
+                
+                // Gentle floating motion
+                card.position.y = basePosition.y + Math.sin(time * 0.5 + timeOffset) * 0.3;
+                
+                // Face camera
+                card.lookAt(camera.position);
+                
+                // Gentle rotation
+                card.rotation.z = Math.sin(time * 0.3 + timeOffset) * 0.1;
+            });
+            
+            // Animate curious prism
+            if (curiousPrism) {
+                curiousPrism.rotation.x += 0.005;
+                curiousPrism.rotation.y += 0.01;
+                
+                // Gentle exploration movement
+                curiousPrism.position.x = Math.sin(time * 0.2) * 2;
+                curiousPrism.position.z = 5 + Math.cos(time * 0.15) * 1.5;
+            }
+            
+            // Animate dream mist
+            if (dreamMist) {
+                dreamMist.rotation.y += 0.001;
+                const positions = dreamMist.geometry.attributes.position.array;
+                for (let i = 1; i < positions.length; i += 3) {
+                    positions[i] += Math.sin(time * 0.5 + i) * 0.001;
+                }
+                dreamMist.geometry.attributes.position.needsUpdate = true;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Reset camera to default position
+        function resetCamera() {
+            targetScrollOffset = 0;
+            updateStatus('Camera Reset');
+        }
+        
+        // Handle window resize
+        function onWindowResize() {
+            if (camera && renderer) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        }
+        
+        // Update status display
+        function updateStatus(message) {
+            const statusDisplay = document.getElementById('status-display');
+            if (statusDisplay) {
+                statusDisplay.textContent = message;
+                console.log(`🏛️ Temple Popup: ${message}`);
+            }
+        }
+        
+        // Cleanup when window closes
+        window.addEventListener('beforeunload', () => {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            if (renderer) {
+                renderer.dispose();
+            }
+        });
+        
+        // Initialize when page loads
+        window.addEventListener('load', initializePopup);
+        
+        console.log('🏛️ Temple Popup Window Initialized');
+    </script>
+</body>
+</html>

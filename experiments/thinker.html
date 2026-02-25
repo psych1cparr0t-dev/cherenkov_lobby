@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Three.js Scene - Patroklos Industries</title>
+    <style>
+        @font-face {
+            font-family: 'Eurostile Extended';
+            src: local('Eurostile Extended'), local('EurostileExtended');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        @keyframes backgroundShift {
+
+            0%,
+            100% {
+                opacity: 0.1;
+                transform: scale(1);
+            }
+
+            25% {
+                opacity: 0.3;
+                transform: scale(1.02);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.03);
+            }
+
+            75% {
+                opacity: 0.3;
+                transform: scale(1.02);
+            }
+        }
+
+        @keyframes patternRotate {
+            0% {
+                transform: rotate(0deg) scale(1);
+                opacity: 0.15;
+            }
+
+            50% {
+                opacity: 0.4;
+                transform: rotate(180deg) scale(1.02);
+            }
+
+            100% {
+                transform: rotate(360deg) scale(1);
+                opacity: 0.15;
+            }
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Eurostile Extended', 'Eurostile', 'Orbitron', 'Arial', sans-serif;
+            overflow: hidden;
+            perspective: 1000px;
+            background-color: #f5f5f5;
+            cursor: default;
+        }
+
+        #scene-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(224, 224, 224, 0.1) 50%, rgba(208, 208, 208, 0.1) 100%);
+            overflow: hidden;
+        }
+
+        .background-pattern {
+            position: absolute;
+            top: -20%;
+            left: -20%;
+            width: 140%;
+            height: 140%;
+            background-repeat: repeat;
+            background-size: 80px 80px;
+            animation:
+                backgroundShift 12s ease-in-out infinite,
+                patternRotate 40s linear infinite;
+            pointer-events: none;
+            transform-origin: center center;
+            will-change: transform;
+        }
+
+        .pattern-1 {
+            background-image:
+                linear-gradient(45deg,
+                    rgba(255, 255, 255, 0.1) 25%,
+                    rgba(224, 224, 224, 0.1) 25%,
+                    rgba(41, 98, 255, 0.1) 50%,
+                    rgba(41, 98, 255, 0.2) 75%,
+                    rgba(208, 208, 208, 0.1) 75%);
+        }
+
+        .pattern-2 {
+            background-image:
+                linear-gradient(135deg,
+                    rgba(41, 98, 255, 0.05) 25%,
+                    rgba(224, 224, 224, 0.05) 25%,
+                    rgba(255, 255, 255, 0.05) 50%,
+                    rgba(41, 98, 255, 0.1) 75%,
+                    rgba(208, 208, 208, 0.05) 75%);
+            animation-delay: -6s;
+        }
+
+        .pattern-3 {
+            background-image:
+                linear-gradient(225deg,
+                    rgba(208, 208, 208, 0.05) 25%,
+                    rgba(41, 98, 255, 0.05) 25%,
+                    rgba(255, 255, 255, 0.05) 50%,
+                    rgba(224, 224, 224, 0.1) 75%,
+                    rgba(41, 98, 255, 0.05) 75%);
+            animation-delay: -3s;
+        }
+
+        .pattern-4 {
+            background-image:
+                linear-gradient(315deg,
+                    rgba(41, 98, 255, 0.03) 25%,
+                    rgba(224, 224, 224, 0.03) 25%,
+                    rgba(255, 255, 255, 0.03) 50%,
+                    rgba(41, 98, 255, 0.06) 75%,
+                    rgba(208, 208, 208, 0.03) 75%);
+            animation-delay: -9s;
+            background-size: 100px 100px;
+        }
+
+        canvas {
+            display: block;
+            position: relative;
+            z-index: 20;
+            cursor: grab;
+        }
+
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        #info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: rgba(41, 98, 255, 0.8);
+            font-size: 14px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 15px;
+            border-radius: 5px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-family: 'Eurostile Extended', 'Eurostile', 'Orbitron', 'Arial', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .cursor-ripple {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(41, 98, 255, 0.1);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 1000;
+            animation: ripple 1s ease-out forwards;
+        }
+
+        @keyframes ripple {
+            0% {
+                width: 0px;
+                height: 0px;
+                opacity: 0.5;
+            }
+
+            100% {
+                width: 300px;
+                height: 300px;
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="scene-container">
+        <!-- Background Patterns -->
+        <div class="background-pattern pattern-1"></div>
+        <div class="background-pattern pattern-2"></div>
+        <div class="background-pattern pattern-3"></div>
+        <div class="background-pattern pattern-4"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = null;
+
+        // Camera setup
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;
+
+        // Renderer setup
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor(0x000000, 0);
+        document.getElementById('scene-container').appendChild(renderer.domElement);
+
+        // Window resize handler
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        window.addEventListener('resize', onWindowResize);
+
+        // Waking Daydream Lighting - Softer, More Ethereal
+        const ambientLight = new THREE.AmbientLight(0x9bb5d6, 0.4); // Softer blue-white
+        scene.add(ambientLight);
+
+        const sunLight = new THREE.DirectionalLight(0xfff8dc, 2.0); // Slightly dimmer
+        sunLight.position.set(15, 25, 8); // Closer, more intimate
+        sunLight.castShadow = true;
+        sunLight.shadow.mapSize.width = 2048;
+        sunLight.shadow.mapSize.height = 2048;
+        sunLight.shadow.camera.near = 0.5;
+        sunLight.shadow.camera.far = 60;
+        sunLight.shadow.camera.left = -25;
+        sunLight.shadow.camera.right = 25;
+        sunLight.shadow.camera.top = 25;
+        sunLight.shadow.camera.bottom = -25;
+        sunLight.shadow.bias = -0.002;
+        sunLight.shadow.normalBias = 0.05;
+        scene.add(sunLight);
+
+        const bounceLight = new THREE.DirectionalLight(0xd6e6ff, 0.6); // Softer bounce
+        bounceLight.position.set(-12, 4, -8);
+        scene.add(bounceLight);
+
+        const rimLight = new THREE.DirectionalLight(0xffffff, 0.3); // Gentler rim
+        rimLight.position.set(0, 8, -15);
+        scene.add(rimLight);
+
+        // Dream Mist - Subtle, low-floating atmospheric particles
+        const mistGeometry = new THREE.BufferGeometry();
+        const mistCount = 200; // Reduced density for cleaner focus
+        const positions = new Float32Array(mistCount * 3);
+
+        for (let i = 0; i < mistCount * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 30;     // x
+            positions[i + 1] = Math.random() * 3 - 2;      // y: closer to ground (-2 to 1)
+            positions[i + 2] = (Math.random() - 0.5) * 25; // z
+        }
+
+        mistGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+        const mistMaterial = new THREE.PointsMaterial({
+            color: 0xd6e6ff,
+            size: 0.3, // Much smaller pixels
+            transparent: true,
+            opacity: 0.2,
+            blending: THREE.AdditiveBlending
+        });
+
+        const dreamMist = new THREE.Points(mistGeometry, mistMaterial);
+        scene.add(dreamMist);
+
+        // Enable shadows
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.shadowMap.autoUpdate = true;
+
+        // Materials
+        const marbleMaterial = new THREE.MeshPhongMaterial({
+            color: 0xf8f6f0,
+            specular: 0x111111,
+            shininess: 30,
+            transparent: true,
+            opacity: 0.95,
+            side: THREE.DoubleSide
+        });
+
+        const weatheredMarbleMaterial = new THREE.MeshPhongMaterial({
+            color: 0xede8d3,
+            specular: 0x080808,
+            shininess: 20,
+            transparent: true,
+            opacity: 0.92
+        });
+
+        const floorMaterial = new THREE.MeshPhongMaterial({
+            color: 0xe8e3d3,
+            specular: 0x050505,
+            shininess: 5,
+            transparent: true,
+            opacity: 0.85
+        });
+
+        // Create floor
+        const floorGeometry = new THREE.PlaneGeometry(40, 30);
+        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -4;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // Create floor tiles — extended beyond floor plane on all edges for overhang effect
+        function createFloorTiles() {
+            const tileSize = 2;
+            const tilesX = 22; // 1 tile overhang per side
+            const tilesZ = 17;
+
+            for (let x = 0; x < tilesX; x++) {
+                for (let z = 0; z < tilesZ; z++) {
+                    if ((x + z) % 4 === 0) {
+                        const tileGeometry = new THREE.PlaneGeometry(tileSize * 0.95, tileSize * 0.95);
+                        const tile = new THREE.Mesh(tileGeometry, weatheredMarbleMaterial);
+                        tile.rotation.x = -Math.PI / 2;
+                        tile.position.set(
+                            (x - tilesX / 2) * tileSize,
+                            -3.98,
+                            (z - tilesZ / 2) * tileSize
+                        );
+                        tile.receiveShadow = true;
+                        scene.add(tile);
+                    }
+                }
+            }
+        }
+        createFloorTiles();
+
+        // Create columns with varying heights for style
+        function createRealisticColumn(x, z, customHeight = 6.6) {
+            const group = new THREE.Group();
+            const columnDiameter = 1.2;
+            const columnHeight = customHeight;
+
+            // Base steps
+            const baseStep1 = new THREE.CylinderGeometry(columnDiameter * 0.9, columnDiameter * 1.1, 0.3, 16);
+            const step1 = new THREE.Mesh(baseStep1, marbleMaterial);
+            step1.position.y = -3.5;
+            step1.castShadow = true;
+            step1.receiveShadow = true;
+            group.add(step1);
+
+            const baseStep2 = new THREE.CylinderGeometry(columnDiameter * 0.8, columnDiameter * 0.9, 0.2, 16);
+            const step2 = new THREE.Mesh(baseStep2, marbleMaterial);
+            step2.position.y = -3.1;
+            step2.castShadow = true;
+            step2.receiveShadow = true;
+            group.add(step2);
+
+            // Column shaft
+            const shaftGeometry = new THREE.CylinderGeometry(
+                columnDiameter * 0.45,
+                columnDiameter * 0.5,
+                columnHeight,
+                16
+            );
+            const shaft = new THREE.Mesh(shaftGeometry, marbleMaterial);
+            shaft.position.y = 0.3;
+            shaft.castShadow = true;
+            shaft.receiveShadow = true;
+            group.add(shaft);
+
+            // Flutes
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const fluteGeometry = new THREE.CylinderGeometry(0.03, 0.03, columnHeight * 0.9, 4);
+                const flute = new THREE.Mesh(fluteGeometry, weatheredMarbleMaterial);
+                flute.position.set(
+                    Math.cos(angle) * columnDiameter * 0.48,
+                    0.3,
+                    Math.sin(angle) * columnDiameter * 0.48
+                );
+                flute.castShadow = true;
+                group.add(flute);
+            }
+
+            // Capital
+            const echinusGeometry = new THREE.CylinderGeometry(columnDiameter * 0.7, columnDiameter * 0.45, 0.4, 16);
+            const echinus = new THREE.Mesh(echinusGeometry, marbleMaterial);
+            echinus.position.y = 3.6;
+            echinus.castShadow = true;
+            echinus.receiveShadow = true;
+            group.add(echinus);
+
+            const abacusGeometry = new THREE.CylinderGeometry(columnDiameter * 0.75, columnDiameter * 0.75, 0.2, 4);
+            const abacus = new THREE.Mesh(abacusGeometry, marbleMaterial);
+            abacus.position.y = 4;
+            abacus.castShadow = true;
+            abacus.receiveShadow = true;
+            group.add(abacus);
+
+            group.position.set(x, 0, z);
+            return group;
+        }
+
+        // Columns removed - statues will directly support the floating cards
+
+        // Create enhanced Patroklos prism with centerpoint
+        function createEnhancedPrism() {
+            const geometry = new THREE.OctahedronGeometry(0.8);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x2962ff,
+                transparent: true,
+                opacity: 0.8,
+                specular: 0x4080ff,
+                shininess: 100,
+                reflectivity: 0.3
+            });
+
+            const prism = new THREE.Mesh(geometry, material);
+            prism.position.set(0, 2, -2); // Centered between front statues
+            prism.castShadow = true;
+
+            // Inner glow
+            const glowGeometry = new THREE.OctahedronGeometry(1.0);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0x2962ff,
+                transparent: true,
+                opacity: 0.1,
+                side: THREE.BackSide
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            prism.add(glow);
+
+            // White centerpoint
+            const centerpointGeometry = new THREE.SphereGeometry(0.08, 16, 16);
+            const centerpointMaterial = new THREE.MeshPhongMaterial({
+                color: 0xffffff,
+                emissive: 0xffffff,
+                emissiveIntensity: 0.3,
+                transparent: true,
+                opacity: 0.9
+            });
+            const centerpoint = new THREE.Mesh(centerpointGeometry, centerpointMaterial);
+            centerpoint.position.set(0, 0, 0);
+            prism.add(centerpoint);
+
+            // Centerpoint glow
+            const centerpointGlowGeometry = new THREE.SphereGeometry(0.15, 16, 16);
+            const centerpointGlowMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.2,
+                side: THREE.BackSide
+            });
+            const centerpointGlow = new THREE.Mesh(centerpointGlowGeometry, centerpointGlowMaterial);
+            centerpoint.add(centerpointGlow);
+
+            return prism;
+        }
+
+        // Create curious exploring Patroklos prism
+        function createExploringPrism() {
+            const geometry = new THREE.OctahedronGeometry(0.6);
+            const material = new THREE.MeshPhongMaterial({
+                color: 0x2962ff,
+                transparent: true,
+                opacity: 0.8,
+                specular: 0x4080ff,
+                shininess: 100,
+                reflectivity: 0.3
+            });
+
+            const prism = new THREE.Mesh(geometry, material);
+            prism.position.set(0, 1, 5); // Start exploring from a distance
+            prism.castShadow = true;
+
+            // Inner glow
+            const glowGeometry = new THREE.OctahedronGeometry(0.8);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: 0x2962ff,
+                transparent: true,
+                opacity: 0.15,
+                side: THREE.BackSide
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            prism.add(glow);
+
+            // White centerpoint
+            const centerpointGeometry = new THREE.SphereGeometry(0.06, 16, 16);
+            const centerpointMaterial = new THREE.MeshPhongMaterial({
+                color: 0xffffff,
+                emissive: 0xffffff,
+                emissiveIntensity: 0.4,
+                transparent: true,
+                opacity: 0.9
+            });
+            const centerpoint = new THREE.Mesh(centerpointGeometry, centerpointMaterial);
+            centerpoint.position.set(0, 0, 0);
+            prism.add(centerpoint);
+
+            return prism;
+        }
+
+        const curiousPrism = createExploringPrism();
+        scene.add(curiousPrism);
+
+        // ===================================
+        // FLOATING MATHEMATICAL CARD SYSTEM
+        // ===================================
+
+        // Texture loader for card images
+        const textureLoader = new THREE.TextureLoader();
+
+        // GLTF Loader for 3D models
+        const gltfLoader = new THREE.GLTFLoader();
+
+        // Array to store floating cards and their spotlights
+        const floatingCards = [];
+
+        // Arrays to store loaded models
+        const statueModels = [];
+        let doveModel = null;
+
+        // Model loading progress (1 central guardian)
+        let modelsLoaded = 0;
+        const totalModels = 1;
+
+        // Interactive state - Compassionate Precision preservation
+        let selectedStatue = null;
+        let hoveredCard = null;
+        let prismHovered = false;
+        let prismSpin = { x: 0, y: 0, z: 0 };  // Momentum impulse
+        let lastMouse = { x: 0, y: 0 };
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        // Dimensional Permanence - preserve original card states
+        const originalCardStates = [];
+        let cardInteractionEnabled = false;
+
+        // Create floating cards using your hand-drawn mathematical diagrams
+        function createFloatingCard(pillarPosition, cardIndex) {
+            const group = new THREE.Group();
+
+            // Card geometry - aspect ratio matched per image to prevent distortion
+            // mp_diagram_1: 462x207 (2.23:1), mp_diagram_2/3: use square as fallback
+            const aspectRatios = [462 / 207, 0.65, 1.0]; // landscape, portrait, square
+            const cardHeights = [2.5, 3.8, 2.5]; // portrait card taller
+            const cardHeight = cardHeights[cardIndex] || 2.5;
+            const cardWidth = cardHeight * (aspectRatios[cardIndex] || 1.0);
+            const cardHeightValue = cardHeight;
+            const cardGeometry = new THREE.PlaneGeometry(cardWidth, cardHeightValue);
+
+            // Create card material
+            const cardMaterial = new THREE.MeshLambertMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.95,
+                side: THREE.DoubleSide
+            });
+
+            // Load your hand-drawn diagrams
+            const imageUrls = [
+                './images/mp_diagram_1.png',  // Grid transformation
+                './images/mp_diagram_2.png',  // Hyperboloid surface  
+                './images/mp_diagram_3.png'   // Hexagonal prism
+            ];
+
+            if (imageUrls[cardIndex]) {
+                textureLoader.load(
+                    imageUrls[cardIndex],
+                    (texture) => {
+                        // Configure texture for crisp rendering
+                        texture.minFilter = THREE.LinearFilter;
+                        texture.magFilter = THREE.LinearFilter;
+                        texture.generateMipmaps = false;
+
+                        cardMaterial.map = texture;
+                        cardMaterial.needsUpdate = true;
+                        console.log(`✅ Loaded hand-drawn diagram: ${imageUrls[cardIndex]}`);
+                    },
+                    (progress) => {
+                        console.log(`Loading ${imageUrls[cardIndex]}: ${Math.round(progress.loaded / progress.total * 100)}%`);
+                    },
+                    (error) => {
+                        console.warn(`❌ Could not load ${imageUrls[cardIndex]}, using placeholder`);
+                        // Fallback to a simple placeholder
+                        createSimplePlaceholder(cardMaterial, cardIndex);
+                    }
+                );
+            } else {
+                createSimplePlaceholder(cardMaterial, cardIndex);
+            }
+
+            const card = new THREE.Mesh(cardGeometry, cardMaterial);
+
+            // Position card in thought bubble formation
+            const cardY = thoughtHeight; // Above the statue's head
+            card.position.set(pillarPosition.x, cardY, pillarPosition.z);
+
+            // Add subtle rim glow to highlight your artwork
+            const rimGeometry = new THREE.PlaneGeometry(cardWidth * 1.1, cardHeightValue * 1.1);
+            const rimMaterial = new THREE.MeshBasicMaterial({
+                color: 0x2962ff,
+                transparent: true,
+                opacity: 0.15,
+                side: THREE.BackSide
+            });
+            const rimGlow = new THREE.Mesh(rimGeometry, rimMaterial);
+            card.add(rimGlow);
+
+            // Create spotlight from central guardian illuminating thoughts
+            const spotlight = new THREE.SpotLight(0xfff8dc, 1.2, 15, Math.PI / 6, 0.3);
+            spotlight.position.set(0, 6, 0); // From the guardian's position
+            spotlight.target = card;
+            spotlight.castShadow = true;
+            spotlight.shadow.mapSize.width = 1024;
+            spotlight.shadow.mapSize.height = 1024;
+
+            group.add(card);
+            scene.add(spotlight);
+
+            // Store references for animation - Dimensional Permanence preservation
+            const cardData = {
+                card: card,
+                basePosition: { x: pillarPosition.x, y: cardY, z: pillarPosition.z },
+                timeOffset: cardIndex * Math.PI * 0.7,
+                spotlight: spotlight,
+                index: cardIndex,
+                isHovered: false,
+                targetScale: 1.0,
+                currentScale: 1.0
+            };
+
+            floatingCards.push(cardData);
+
+            // Preserve original state for Compassionate Precision
+            originalCardStates.push({
+                baseScale: 1.0,
+                baseOpacity: card.material.opacity,
+                rimOpacity: card.children[0] ? card.children[0].material.opacity : 0.15
+            });
+
+            scene.add(group);
+            return { card, spotlight };
+        }
+
+        // Simple placeholder for when images can't load
+        function createSimplePlaceholder(material, cardIndex) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 500;
+            const ctx = canvas.getContext('2d');
+
+            // Clean background
+            ctx.fillStyle = '#f8f8f8';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Border
+            ctx.strokeStyle = '#cccccc';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+
+            // Placeholder text
+            ctx.fillStyle = '#666666';
+            ctx.font = 'bold 24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('Hand-drawn diagram', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.fillText(`Card ${cardIndex + 1}`, canvas.width / 2, canvas.height / 2 + 20);
+
+            // Create texture
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.LinearFilter;
+            material.map = texture;
+            material.needsUpdate = true;
+        }
+
+        // Create rotating thought bubble cards around central guardian
+        const thoughtRadius = 4; // Distance from statue head
+        const thoughtHeight = 9; // Above the statue's head
+        const cardPositions = [];
+
+        // Initialize 3 cards in circular formation (will rotate in animation)
+        for (let i = 0; i < 3; i++) {
+            const angle = (i / 3) * Math.PI * 2; // 120 degrees apart
+            const position = {
+                x: Math.cos(angle) * thoughtRadius,
+                z: Math.sin(angle) * thoughtRadius
+            };
+            cardPositions.push(position);
+            createFloatingCard(position, i);
+        }
+
+        // ===================================
+        // GLB MODEL LOADING AND POSITIONING
+        // ===================================
+
+        // Sacred Mathematics Gallery - Model loading system with fallback
+        function loadAllModels() {
+            console.log('🏛️ Initializing Sacred Mathematics Gallery...');
+
+            // Check if GLTFLoader is available
+            if (typeof THREE.GLTFLoader === 'undefined') {
+                console.error('❌ GLTFLoader not available - check Three.js imports');
+                modelsLoaded = totalModels; // Skip model loading
+                updateLoadingProgress();
+                return;
+            }
+            console.log('✅ GLTFLoader is available');
+
+            console.log('🔄 Loading GLB models...');
+            console.log('🏛️ Museum Display: Loading all 4 guardian statues...');
+
+            // Single central guardian with rotating mathematical thoughts
+            const statuePositions = [
+                { x: 0, z: 0, path: './models/statue_2.glb', name: 'Guardian of Mathematical Consciousness' }
+            ];
+
+            // Dove loading disabled for statue test
+            console.log('🧪 Skipping dove model for statue test');
+
+            // Test file accessibility for all statues
+            console.log('🔍 Testing file accessibility for all 4 statues...');
+
+            // Load all 4 statues for museum display
+            statuePositions.forEach((statueData, index) => {
+                console.log(`🧪 Attempting to load: ${statueData.path}`);
+                console.log(`🌐 Full URL: ${window.location.origin}${window.location.pathname}${statueData.path}`);
+                try {
+                    gltfLoader.load(
+                        statueData.path,
+                        (gltf) => {
+                            const statue = gltf.scene;
+                            console.log(`✅ Successfully loaded: ${statueData.path}`);
+                            console.log(`📦 Model contains ${statue.children.length} objects`);
+                            setupStatueModel(statue, statueData, index);
+                            statueModels.push({ model: statue, data: statueData, cardIndex: index < 3 ? index : -1 });
+                            modelsLoaded++;
+                            console.log(`🏛️ ${statueData.name} ready!`);
+                            updateLoadingProgress();
+                        },
+                        (progress) => {
+                            const percent = Math.round(progress.loaded / progress.total * 100);
+                            console.log(`📊 Loading ${statueData.name}: ${percent}% (${progress.loaded}/${progress.total} bytes)`);
+                        },
+                        (error) => {
+                            console.error(`❌ Failed to load ${statueData.path}:`, error);
+                            console.error('📁 Check that the file exists and is accessible');
+                            modelsLoaded++;
+                            updateLoadingProgress();
+                        }
+                    );
+                } catch (e) {
+                    console.error(`❌ Exception loading ${statueData.path}:`, e);
+                    modelsLoaded++;
+                    updateLoadingProgress();
+                }
+            });
+        }
+
+        // Setup dove model as floating centerpiece
+        function setupDoveModel() {
+            if (!doveModel) return;
+
+            // Scale and position dove
+            doveModel.scale.setScalar(2.5);
+            doveModel.position.set(0, 12, 0);
+
+            // Enable shadows
+            doveModel.traverse((child) => {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+
+                    // Enhance materials
+                    if (child.material) {
+                        child.material.metalness = 0.3;
+                        child.material.roughness = 0.4;
+                    }
+                }
+            });
+
+            scene.add(doveModel);
+        }
+
+        // Setup statue model - Clean Museum Display (no pedestals)
+        function setupStatueModel(statue, statueData, index) {
+            if (!statue) {
+                console.warn('⚠️ No statue model provided to setupStatueModel');
+                return;
+            }
+
+            console.log(`🔧 Setting up statue: ${statueData.name}`);
+            console.log(`📍 Position: (${statueData.x}, 0, ${statueData.z})`);
+
+            const group = new THREE.Group();
+
+            // Position and scale statue - as tall as columns to fill scene space
+            statue.scale.setScalar(5.5);
+            statue.position.y = 1.5;
+            console.log('📏 Statue scaled and positioned');
+
+            // Enable shadows for statue
+            let meshCount = 0;
+            statue.traverse((child) => {
+                if (child.isMesh) {
+                    meshCount++;
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+
+                    // Add interactive property
+                    child.userData = {
+                        isStatue: true,
+                        statueIndex: index,
+                        cardIndex: index < 3 ? index : -1,
+                        name: statueData.name
+                    };
+                }
+            });
+            console.log(`🎨 Found ${meshCount} mesh objects in statue model`);
+
+            group.add(statue);
+            group.position.set(statueData.x, 0, statueData.z);
+            console.log('👥 Statue added to group');
+
+            // Add spotlight for statue - illuminating both statue and card above
+            const statueLight = new THREE.SpotLight(0xfff8dc, 1.5, 18, Math.PI / 5, 0.2);
+            statueLight.position.set(statueData.x, 12, statueData.z); // Higher to light both statue and card
+            statueLight.target = group;
+            statueLight.castShadow = true;
+            scene.add(statueLight);
+            console.log('💡 Integrated spotlight added');
+
+            scene.add(group);
+            console.log('✨ Statue group added to scene');
+        }
+
+        // Loading progress tracker
+        function updateLoadingProgress() {
+            const progress = (modelsLoaded / totalModels) * 100;
+            console.log(`📊 Model loading progress: ${Math.round(progress)}%`);
+
+            if (modelsLoaded >= totalModels) {
+                console.log('✨ Sacred Mathematics Gallery fully loaded!');
+                console.log('🎯 Click on guardian statues to highlight their mathematical domains');
+                setupInteractivity();
+            }
+        }
+
+        // Camera controls
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let cameraAngle = { x: -0.2, y: 0.3 };
+        let momentum = { x: 0, y: 0 };
+        let cameraRadius = 18;
+        let targetRadius = 18;
+        const dampening = 0.95;
+
+        // Scroll to zoom
+        document.addEventListener('wheel', (e) => {
+            targetRadius = Math.max(6, Math.min(40, targetRadius + e.deltaY * 0.03));
+            e.preventDefault();
+        }, { passive: false });
+
+        camera.position.set(-8, 6, 15);
+        camera.lookAt(0, 0, 0);
+
+        document.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+            momentum = { x: 0, y: 0 };
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaMove = {
+                    x: e.clientX - previousMousePosition.x,
+                    y: e.clientY - previousMousePosition.y
+                };
+
+                momentum.x = deltaMove.x * 0.008;
+                momentum.y = deltaMove.y * 0.008;
+
+                cameraAngle.y += momentum.x;
+                cameraAngle.x += momentum.y;
+
+                cameraAngle.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, cameraAngle.x));
+
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            }
+        });
+
+        // Camera animation
+        function updateCamera() {
+            if (!isDragging) {
+                momentum.x *= dampening;
+                momentum.y *= dampening;
+
+                cameraAngle.y += momentum.x;
+                cameraAngle.x += momentum.y;
+                cameraAngle.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, cameraAngle.x));
+            }
+
+            const radius = cameraRadius;
+            cameraRadius += (targetRadius - cameraRadius) * 0.08; // Smooth zoom
+            const targetX = radius * Math.sin(cameraAngle.y) * Math.cos(cameraAngle.x);
+            const targetY = radius * Math.sin(cameraAngle.x) + 4;
+            const targetZ = radius * Math.cos(cameraAngle.y) * Math.cos(cameraAngle.x);
+
+            camera.position.x += (targetX - camera.position.x) * 0.1;
+            camera.position.y += (targetY - camera.position.y) * 0.1;
+            camera.position.z += (targetZ - camera.position.z) * 0.1;
+
+            camera.lookAt(0, 1, 0);
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            updateCamera();
+
+            // Animate rotating thought bubble cards around central guardian
+            const time = Date.now() * 0.001;
+
+            floatingCards.forEach((cardData, index) => {
+                const { card, basePosition, timeOffset, spotlight } = cardData;
+
+                // Billboard behavior - always face camera (Dimensional Permanence)
+                card.lookAt(camera.position);
+
+                // Circular rotation around guardian's head (pinwheel effect) - preserved
+                const rotationSpeed = 0.3; // Slow, contemplative rotation
+                const angle = (index / 3) * Math.PI * 2 + time * rotationSpeed;
+
+                card.position.x = Math.cos(angle) * thoughtRadius;
+                card.position.z = Math.sin(angle) * thoughtRadius;
+                card.position.y = thoughtHeight + Math.sin(time * 0.8 + timeOffset) * 0.2; // Gentle floating
+
+                // Subtle rotation for mystical effect - preserved
+                card.rotation.z = Math.sin(time * 0.3 + timeOffset) * 0.05;
+
+                // Compassionate Precision - smooth hover scale transitions
+                if (cardData.currentScale !== cardData.targetScale) {
+                    const scaleSpeed = 0.08; // Gentle transition speed
+                    cardData.currentScale += (cardData.targetScale - cardData.currentScale) * scaleSpeed;
+
+                    // Apply scale while preserving original structure
+                    card.scale.setScalar(cardData.currentScale);
+
+                    // Enhanced rim glow on hover
+                    if (cardData.isHovered && card.children[0]) {
+                        card.children[0].material.opacity = Math.min(0.4, originalCardStates[index].rimOpacity * 2);
+                    } else if (card.children[0]) {
+                        card.children[0].material.opacity = originalCardStates[index].rimOpacity;
+                    }
+                }
+
+                // Pulsing spotlight intensity
+                const pulseIntensity = 1.2 + Math.sin(time * 1.5 + timeOffset) * 0.3;
+                spotlight.intensity = pulseIntensity;
+
+                // Distance-based opacity for atmospheric effect
+                const distance = camera.position.distanceTo(card.position);
+                const opacity = THREE.MathUtils.clamp(1.2 - (distance - 8) / 15, 0.4, 1);
+                card.material.opacity = opacity;
+
+                // Rim glow pulsing
+                if (card.children[0]) {
+                    const rimOpacity = 0.1 + Math.sin(time * 2 + timeOffset) * 0.05;
+                    card.children[0].material.opacity = rimOpacity;
+                }
+            });
+
+            // Animate dove model if loaded
+            if (doveModel) {
+                // Gentle wing-like rotation
+                doveModel.rotation.y += 0.005;
+
+                // Majestic floating pattern - figure-8 with elevation changes
+                const doveRadius = 8;
+                const elevationRange = 4;
+
+                const doveTime = time * 0.2;
+                doveModel.position.x = doveRadius * Math.sin(doveTime) * Math.cos(doveTime * 0.5);
+                doveModel.position.z = doveRadius * Math.sin(doveTime * 1.3) * Math.cos(doveTime * 0.7);
+
+                // Divine elevation - higher floating with graceful swoops
+                doveModel.position.y = 12 +
+                    Math.sin(time * 0.8) * 1.2 +
+                    Math.cos(time * 0.6) * 0.8 +
+                    elevationRange * Math.sin(doveTime * 0.3);
+
+                // Subtle banking during turns
+                const bankAngle = Math.sin(doveTime * 1.3) * 0.1;
+                doveModel.rotation.z = bankAngle;
+                doveModel.rotation.x = Math.sin(doveTime * 0.8) * 0.05;
+            }
+
+            // Waking Daydream Atmospheric Effects
+            // Gentle dream mist animation
+            const mistPositions = dreamMist.geometry.attributes.position.array;
+
+            // Curious prism exploring the scene with particle interaction
+            const explorationRadius = 8;
+            const explorationHeight = 3;
+            const explorationSpeed = 0.15; // Slower, more contemplative exploration
+
+            const explorationTime = time * explorationSpeed;
+
+            // Complex exploration pattern - figure-8 with vertical variation
+            curiousPrism.position.x = explorationRadius * Math.sin(explorationTime) * Math.cos(explorationTime * 0.7);
+            curiousPrism.position.z = explorationRadius * Math.sin(explorationTime * 1.3) * Math.cos(explorationTime * 0.5);
+            curiousPrism.position.y = 1 + explorationHeight * Math.sin(explorationTime * 0.8) + Math.cos(explorationTime * 1.1) * 0.5;
+
+            // Rotation: base idle + graceful spin chirp momentum
+            const spinDampen = 0.96;
+            prismSpin.x *= spinDampen;
+            prismSpin.y *= spinDampen;
+            prismSpin.z *= spinDampen;
+            curiousPrism.rotation.x += 0.008 + prismSpin.x;
+            curiousPrism.rotation.y += 0.012 + prismSpin.y;
+            curiousPrism.rotation.z += 0.005 + prismSpin.z;
+
+            // Hard clamp: prism is never allowed closer than minRadius to statue center
+            const minRadius = 5.5;
+            const distXZ = Math.sqrt(
+                curiousPrism.position.x * curiousPrism.position.x +
+                curiousPrism.position.z * curiousPrism.position.z
+            );
+            if (distXZ < minRadius) {
+                const angle = Math.atan2(curiousPrism.position.z, curiousPrism.position.x);
+                curiousPrism.position.x = Math.cos(angle) * minRadius;
+                curiousPrism.position.z = Math.sin(angle) * minRadius;
+            }
+
+            // Particle interaction - prism disturbs nearby mist particles
+            const prismPosition = curiousPrism.position;
+            const interactionRadius = 2.5;
+            const churningStrength = 0.02;
+
+            for (let i = 0; i < mistPositions.length; i += 3) {
+                const particleX = mistPositions[i];
+                const particleY = mistPositions[i + 1];
+                const particleZ = mistPositions[i + 2];
+
+                // Calculate distance to prism
+                const dx = particleX - prismPosition.x;
+                const dy = particleY - prismPosition.y;
+                const dz = particleZ - prismPosition.z;
+                const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                if (distance < interactionRadius) {
+                    // Gentle churning effect - particles swirl around the prism
+                    const influence = (interactionRadius - distance) / interactionRadius;
+                    const swirl = time * 2.0 + i * 0.01;
+
+                    mistPositions[i] += Math.sin(swirl) * churningStrength * influence;
+                    mistPositions[i + 1] += Math.cos(swirl * 1.3) * churningStrength * influence * 0.5;
+                    mistPositions[i + 2] += Math.cos(swirl * 0.8) * churningStrength * influence;
+                }
+            }
+            for (let i = 0; i < mistPositions.length; i += 3) {
+                // Slow drifting motion
+                mistPositions[i] += Math.sin(time * 0.2 + i * 0.01) * 0.002; // x drift
+                mistPositions[i + 1] += Math.sin(time * 0.15 + i * 0.008) * 0.001; // y float
+                mistPositions[i + 2] += Math.cos(time * 0.18 + i * 0.012) * 0.0015; // z sway
+            }
+            dreamMist.geometry.attributes.position.needsUpdate = true;
+
+            // Gentle opacity pulsing for dream mist
+            dreamMist.material.opacity = 0.1 + Math.sin(time * 0.3) * 0.05;
+
+            // Softer dynamic lighting changes
+            sunLight.position.x = 15 + Math.sin(time * 0.08) * 3;
+            sunLight.position.z = 8 + Math.cos(time * 0.08) * 2;
+            sunLight.intensity = 1.8 + Math.sin(time * 0.12) * 0.2; // Gentle intensity variation
+
+            renderer.render(scene, camera);
+        }
+
+        // Background pattern interaction
+        document.addEventListener('mousemove', function (e) {
+            const x = e.clientX;
+            const y = e.clientY;
+            const patterns = document.querySelectorAll('.background-pattern');
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+
+            patterns.forEach((pattern, index) => {
+                const xOffset = (x - windowWidth / 2) / windowWidth * 5;
+                const yOffset = (y - windowHeight / 2) / windowHeight * 5;
+                const rotationFactor = 1 - (index * 0.2);
+
+                pattern.style.transform = `rotate(${xOffset * rotationFactor}deg) translateX(${yOffset * rotationFactor}px) translateY(${xOffset * rotationFactor}px)`;
+            });
+        });
+
+        // Ripple effect on click
+        document.addEventListener('click', function (e) {
+            const ripple = document.createElement('div');
+            ripple.className = 'cursor-ripple';
+            ripple.style.left = e.clientX + 'px';
+            ripple.style.top = e.clientY + 'px';
+            document.body.appendChild(ripple);
+
+            setTimeout(() => {
+                ripple.remove();
+            }, 1000);
+        });
+
+        // GLB models enabled for local server
+        console.log('🌐 Local server detected - enabling GLB model loading');
+
+        // Initialize model loading with delay to ensure GLTFLoader is ready
+        setTimeout(() => {
+            loadAllModels();
+        }, 100);
+
+        // Interactive system setup - Compassionate Precision enhancement
+        function setupInteractivity() {
+            document.addEventListener('click', onStatueClick);
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mousemove', onCardHover);
+            document.addEventListener('mousemove', onPrismHover); // Prism wobble
+            cardInteractionEnabled = true;
+        }
+
+        // Mouse interaction handlers
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        }
+
+        // Compassionate Precision - gentle card hover detection
+        function onCardHover(event) {
+            if (!cardInteractionEnabled) return;
+
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            // Check for card intersections - preserve legacy rotation
+            const cardMeshes = floatingCards.map(cardData => cardData.card);
+            const intersects = raycaster.intersectObjects(cardMeshes);
+
+            // Reset all cards to normal state (Dimensional Permanence)
+            floatingCards.forEach((cardData, index) => {
+                if (cardData.isHovered) {
+                    cardData.isHovered = false;
+                    cardData.targetScale = originalCardStates[index].baseScale;
+                }
+            });
+
+            // Apply hover effect to intersected card
+            if (intersects.length > 0) {
+                const intersectedCard = intersects[0].object;
+                const cardData = floatingCards.find(data => data.card === intersectedCard);
+
+                if (cardData && !cardData.isHovered) {
+                    cardData.isHovered = true;
+                    cardData.targetScale = 1.4; // Gentle enlargement
+                    hoveredCard = cardData;
+                }
+            } else {
+                hoveredCard = null;
+            }
+        }
+
+        // Prism hover - graceful spin chirp on swipe
+        function onPrismHover(event) {
+            const px = (event.clientX / window.innerWidth) * 2 - 1;
+            const py = -(event.clientY / window.innerHeight) * 2 + 1;
+            const prismMouse = new THREE.Vector2(px, py);
+
+            // Track mouse velocity
+            const vx = event.clientX - lastMouse.x;
+            const vy = event.clientY - lastMouse.y;
+            lastMouse = { x: event.clientX, y: event.clientY };
+
+            raycaster.setFromCamera(prismMouse, camera);
+            const intersects = raycaster.intersectObject(curiousPrism, true);
+
+            if (intersects.length > 0) {
+                // Inject gentle momentum from swipe — soft ceiling so it never panics
+                prismSpin.y += vx * 0.0025;
+                prismSpin.x += vy * 0.0015;
+                prismSpin.z += (Math.abs(vx) + Math.abs(vy)) * 0.0008;
+                prismHovered = true;
+                document.body.style.cursor = 'pointer';
+            } else {
+                prismHovered = false;
+                document.body.style.cursor = 'grab';
+            }
+        }
+
+        function onStatueClick(event) {
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+
+            // Check for statue intersections
+            const intersectableObjects = [];
+            statueModels.forEach(statueData => {
+                if (statueData.model) {
+                    statueData.model.traverse(child => {
+                        if (child.isMesh && child.userData.isStatue) {
+                            intersectableObjects.push(child);
+                        }
+                    });
+                }
+            });
+
+            const intersects = raycaster.intersectObjects(intersectableObjects);
+
+            if (intersects.length > 0) {
+                const clickedObject = intersects[0].object;
+                const statueIndex = clickedObject.userData.statueIndex;
+                const cardIndex = clickedObject.userData.cardIndex;
+                const statueName = clickedObject.userData.name;
+
+                console.log(`🏛️ Clicked: ${statueName}`);
+
+                // Highlight corresponding math card if exists
+                if (cardIndex >= 0 && cardIndex < floatingCards.length) {
+                    highlightMathCard(cardIndex, statueName);
+                }
+
+                // Visual feedback for clicked statue
+                highlightStatue(statueIndex);
+            }
+        }
+
+        // Highlight mathematical card
+        function highlightMathCard(cardIndex, statueName) {
+            const cardData = floatingCards[cardIndex];
+            if (!cardData) return;
+
+            console.log(`✨ Highlighting mathematical domain: ${statueName}`);
+
+            // Reset all cards to normal
+            floatingCards.forEach(card => {
+                card.card.scale.setScalar(1);
+                if (card.card.children[0]) {
+                    card.card.children[0].material.opacity = 0.15;
+                }
+            });
+
+            // Enhance selected card
+            cardData.card.scale.setScalar(1.3);
+            if (cardData.card.children[0]) {
+                cardData.card.children[0].material.opacity = 0.4;
+            }
+
+            // Enhanced spotlight
+            cardData.spotlight.intensity = 2.5;
+
+            selectedStatue = cardIndex;
+        }
+
+        // Highlight clicked statue
+        function highlightStatue(statueIndex) {
+            // Visual enhancement could be added here
+            // For now, just console feedback
+            console.log(`🔆 Guardian ${statueIndex + 1} selected`);
+        }
+
+        // Start animation
+        animate();
+
+        console.log('🧠 CURIOUS EXPLORATION - Guardian with Thoughts + Exploring Prism');
+        console.log('✅ Sacred Mathematics Gallery initializing...');
+        console.log('🏛️ Dynamic temple architecture (central guardian + curious explorer)');
+        console.log('🗿 Central Guardian of Mathematical Consciousness');
+        console.log('💎 Curious Patroklos Prism exploring the scene');
+        console.log('🎨 Millennium Prize Problems rotating as thought bubbles:');
+        console.log('   - mp_diagram_1.png → Grid Transformations (rotating)');
+        console.log('   - mp_diagram_2.png → Hyperboloid Surfaces (rotating)');
+        console.log('   - mp_diagram_3.png → Hexagonal Prisms (rotating)');
+        console.log('💫 Interactive experience: Prism churns dream mist as it explores');
+        console.log('');
+        console.log('📁 Loading files: statue_2.glb (single central guardian)');
+        console.log('🎯 Thought rotation: 4-unit radius, 9-unit height, 0.3 speed');
+        console.log('🌊 Prism interaction: 8-unit exploration, 2.5-unit churn radius, figure-8 pattern');
+        console.log('✨ Living ecosystem: Guardian thinks, prism explores, particles respond');
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Symposium — Socrates Demo</title>
+
+    <!-- ============================================================
+         Shared data — regular script so it runs BEFORE the deferred
+         module and the bottom script that both need it.
+         ============================================================ -->
+    <script>
+        window.COURSE_DATA = [
+            { type: 'assignment',   id: 'a-4810', title: 'Midterm Essay',             body: 'Write a 5-page essay on the ethics of artificial intelligence.',  detail: 'This assignment asks you to explore the ethical implications of modern AI systems. Consider topics such as bias in machine learning, privacy concerns with large language models, and the societal impact of automation.\n\nRequirements:\n\u2022 5 pages, double-spaced, 12pt Times New Roman\n\u2022 Minimum 4 academic sources (peer-reviewed)\n\u2022 APA citation format\n\u2022 Submit as PDF via this page\n\nLate submissions will lose 10% per day.', due: 'Mar 14', pts: 100, url: 'https://canvas.university.edu/courses/CS301/assignments/4810' },
+            { type: 'assignment',   id: 'a-4811', title: 'Final Project',             body: 'Build and deploy a working chatbot using an LLM framework.',      detail: 'Design, implement, and deploy a conversational AI chatbot that demonstrates core NLP concepts covered in this course.\n\nDeliverables:\n\u2022 Working chatbot deployed to a public URL\n\u2022 Technical write-up (3-5 pages)\n\u2022 10-minute live demo during finals week\n\u2022 Source code submitted via GitHub repository link\n\nYou may work in teams of up to 3 students. All team members must contribute equally.', due: 'May 2',  pts: 200, url: 'https://canvas.university.edu/courses/CS301/assignments/4811' },
+            { type: 'assignment',   id: 'a-4812', title: 'Homework 3',               body: 'Complete exercises 1-10 on recursion.',                           detail: 'Complete the following exercises from Chapter 7 of the textbook:\n\n1. Implement binary search recursively\n2. Write a recursive function for Fibonacci sequence\n3. Implement merge sort\n4. Solve the Tower of Hanoi problem\n5. Write a recursive descent parser for arithmetic expressions\n6-10. Additional problems on the attached worksheet\n\nShow all work. Code must compile and run.', due: 'Feb 28', pts: 30,  url: 'https://canvas.university.edu/courses/CS301/assignments/4812' },
+            { type: 'assignment',   id: 'a-4813', title: 'Lab Report 2',             body: 'Document your sorting algorithm benchmarks.',                     detail: 'Using the timing framework from Lab 1, benchmark the following sorting algorithms on arrays of size 100, 1000, 10000, and 100000:\n\n\u2022 Bubble Sort\n\u2022 Insertion Sort\n\u2022 Merge Sort\n\u2022 Quick Sort\n\u2022 Python built-in sort\n\nInclude graphs comparing runtime performance. Discuss your findings in relation to theoretical time complexity. Submit as PDF.', due: 'Mar 7',  pts: 50,  url: 'https://canvas.university.edu/courses/CS301/assignments/4813' },
+            { type: 'announcement', id: 'n-1',    title: 'Welcome to CS 301',        body: 'Please read the syllabus before our first lecture on Monday.',    detail: 'Welcome to Introduction to Artificial Intelligence!\n\nBefore our first class on Monday, please:\n\n1. Read the Syllabus page on this site\n2. Purchase or rent the textbook: \u201cArtificial Intelligence: A Modern Approach\u201d (4th Edition)\n3. Set up your Python development environment (Python 3.10+)\n4. Join the course Discord server (link in your email)\n\nOffice hours are listed on the Schedule page. Looking forward to a great semester!\n\n\u2014 Dr. Patel', url: 'https://canvas.university.edu/courses/CS301/announcements' },
+            { type: 'announcement', id: 'n-2',    title: 'Office Hours Change',      body: 'Office hours moved to Thursday 2-4 PM in Room 214.',             detail: 'Starting this week, office hours are moving from Wednesday to Thursday.\n\nNew schedule:\n\u2022 Thursday 2:00 \u2013 4:00 PM\n\u2022 Room 214, Science Hall\n\nIf Thursday doesn\u2019t work for you, email me to schedule an appointment. TA office hours remain unchanged (Monday 5-7 PM in the CS Lab).\n\n\u2014 Dr. Patel', url: 'https://canvas.university.edu/courses/CS301/announcements' },
+            { type: 'announcement', id: 'n-3',    title: 'Midterm Grades Posted',    body: 'Midterm essay grades are now available in the gradebook.',        detail: 'Midterm Essay grades have been posted to the gradebook.\n\nClass statistics:\n\u2022 Mean: 78.4\n\u2022 Median: 81\n\u2022 High: 98\n\u2022 Low: 42\n\nCommon issues:\n\u2022 Missing citations (\u221210 pts)\n\u2022 Not addressing counterarguments (\u22125 pts)\n\u2022 Exceeding page limit \u2014 please follow formatting guidelines\n\nIf you\u2019d like to discuss your grade, come to office hours or schedule an appointment.\n\n\u2014 Dr. Patel', url: 'https://canvas.university.edu/courses/CS301/announcements' },
+            { type: 'page',         id: 'p-1',    title: 'Syllabus',                 body: 'Course overview, grading policy, schedule, and required texts.',  detail: 'CS 301 \u2014 Introduction to Artificial Intelligence\nSpring 2025 \u00b7 Dr. Ananya Patel\n\nCourse Description:\nAn introduction to the theory and practice of artificial intelligence. Topics include search algorithms, knowledge representation, machine learning, neural networks, natural language processing, and AI ethics.\n\nGrading:\n\u2022 Homework (4 \u00d7 30 pts) \u2014 120 pts\n\u2022 Lab Reports (2 \u00d7 50 pts) \u2014 100 pts\n\u2022 Midterm Essay \u2014 100 pts\n\u2022 Final Project \u2014 200 pts\n\u2022 Participation \u2014 80 pts\n\u2022 Total: 600 pts\n\nRequired Text:\nRussell & Norvig, \u201cArtificial Intelligence: A Modern Approach\u201d (4th Ed.)\n\nAcademic Integrity:\nAll work must be your own unless explicitly stated otherwise. Use of AI tools must be disclosed.', url: 'https://canvas.university.edu/courses/CS301/pages/syllabus' },
+            { type: 'page',         id: 'p-2',    title: 'Course Schedule',          body: 'Weekly topics, readings, and assignment due dates.',              detail: 'Week 1 \u2014 Introduction & History of AI\nWeek 2 \u2014 Intelligent Agents\nWeek 3 \u2014 Search Algorithms (BFS, DFS, A*)\nWeek 4 \u2014 Adversarial Search & Game Playing\nWeek 5 \u2014 Knowledge Representation\nWeek 6 \u2014 Logic & Inference\nWeek 7 \u2014 Probability & Bayesian Networks\nWeek 8 \u2014 Machine Learning Fundamentals\nWeek 9 \u2014 Neural Networks & Deep Learning\nWeek 10 \u2014 Natural Language Processing\nWeek 11 \u2014 Computer Vision (Overview)\nWeek 12 \u2014 Reinforcement Learning\nWeek 13 \u2014 AI Ethics & Society\nWeek 14 \u2014 Final Project Presentations\nWeek 15 \u2014 Finals Week', url: 'https://canvas.university.edu/courses/CS301/pages/schedule' },
+            { type: 'page',         id: 'p-3',    title: 'Grading Rubric',           body: 'Rubric details for essays, projects, and participation.',         detail: 'Essay Rubric (100 pts):\n\u2022 Thesis & Argument (30 pts) \u2014 Clear, well-supported central argument\n\u2022 Evidence & Sources (25 pts) \u2014 Minimum 4 peer-reviewed sources\n\u2022 Analysis & Depth (25 pts) \u2014 Goes beyond surface-level discussion\n\u2022 Writing Quality (10 pts) \u2014 Grammar, clarity, organization\n\u2022 Formatting (10 pts) \u2014 APA, page count, font\n\nProject Rubric (200 pts):\n\u2022 Functionality (80 pts) \u2014 Does the chatbot work?\n\u2022 Technical Depth (50 pts) \u2014 Demonstrates course concepts\n\u2022 Documentation (30 pts) \u2014 Clear write-up\n\u2022 Presentation (25 pts) \u2014 Effective live demo\n\u2022 Code Quality (15 pts) \u2014 Clean, commented code', url: 'https://canvas.university.edu/courses/CS301/pages/rubric' },
+            { type: 'discussion',   id: 'd-920',  title: 'Introduce Yourself',       body: 'Post a short introduction \u2014 name, major, and one fun fact.',  detail: 'Welcome to the class! Let\u2019s get to know each other.\n\nPlease post a short introduction including:\n\u2022 Your name and preferred pronouns\n\u2022 Your major and year\n\u2022 One fun fact about yourself\n\u2022 What you hope to learn in this course\n\nReply to at least two classmates\u2019 introductions.\n\n12 replies so far', url: 'https://canvas.university.edu/courses/CS301/discussion_topics/920', replies: 12 },
+            { type: 'discussion',   id: 'd-921',  title: 'Week 4 Reading Response',  body: 'Share your thoughts on the Turing Test chapter.',                detail: 'After reading Chapter 4 (The Turing Test and Beyond), post a 200-word response addressing one of the following:\n\n1. Is the Turing Test still a valid measure of machine intelligence? Why or why not?\n2. How would you design a better test for AI capabilities?\n3. Discuss the Chinese Room argument \u2014 do you find it convincing?\n\nEngage with at least one classmate\u2019s post with a substantive reply (not just \u201cI agree\u201d).\n\nDue: Friday at midnight\n\n8 replies so far', url: 'https://canvas.university.edu/courses/CS301/discussion_topics/921', replies: 8 },
+        ];
+
+        window.searchIndex = function(query) {
+            var tokens = query.toLowerCase().match(/\w+/g);
+            if (!tokens || tokens.length === 0) return null;
+            var best = null, bestScore = 0;
+            for (var i = 0; i < window.COURSE_DATA.length; i++) {
+                var item = window.COURSE_DATA[i];
+                var hay = (item.title + ' ' + item.body).toLowerCase();
+                var titleLow = item.title.toLowerCase();
+                var score = 0;
+                for (var j = 0; j < tokens.length; j++) {
+                    if (hay.indexOf(tokens[j]) !== -1) score += 1;
+                    if (titleLow.indexOf(tokens[j]) !== -1) score += 0.5;
+                }
+                if (score > bestScore) { bestScore = score; best = item; }
+            }
+            return bestScore > 0 ? best : null;
+        };
+    </script>
+
+    <script type="module">
+        import {html, css, LitElement} from 'https://cdn.jsdelivr.net/gh/lit/dist@3/core/lit-core.min.js';
+
+        const TYPE_LABELS = { assignment:'Assignment', announcement:'Announcement', page:'Page', discussion:'Discussion' };
+        const TYPE_ICONS = {
+            assignment:   html`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+            announcement: html`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+            page:         html`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+            discussion:   html`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+        };
+
+        class SocratesDemo extends LitElement {
+            static styles = css`
+                :host {
+                    display: block;
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                    -webkit-font-smoothing: antialiased;
+                    text-rendering: optimizeLegibility;
+                    --primary: #4f46e5; --bg: #ffffff; --text: #0f172a;
+                    --text-light: #64748b; --border: #e2e8f0;
+                }
+                .widget-container {
+                    width: 370px; background: var(--bg);
+                    border-radius: 16px;
+                    box-shadow: 0 25px 60px -12px rgba(0,0,0,0.25), 0 0 0 1px rgba(0,0,0,0.05);
+                    display: flex; flex-direction: column; overflow: hidden;
+                    max-height: 620px;
+                }
+                /* Header */
+                .header {
+                    padding: 14px 16px; background: #fff;
+                    border-bottom: 2px solid var(--primary);
+                    display: flex; align-items: center; gap: 12px;
+                }
+                .header-icon {
+                    width: 34px; height: 34px; background: var(--primary);
+                    border-radius: 10px; display: flex; align-items: center; justify-content: center;
+                    color: white; box-shadow: 0 2px 8px -1px rgba(79,70,229,0.3); flex-shrink: 0;
+                }
+                .header-text h3 { margin: 0; font-size: 15px; font-weight: 700; color: var(--text); }
+                .header-text p  { margin: 0; font-size: 11px; color: var(--text-light); font-weight: 500; }
+                /* Chat */
+                .chat-area {
+                    flex: 1; padding: 14px; overflow-y: auto;
+                    display: flex; flex-direction: column; gap: 10px;
+                    min-height: 140px;
+                }
+                .chat-area::-webkit-scrollbar { display: none; }
+                .message {
+                    padding: 10px 14px; border-radius: 12px; font-size: 13px;
+                    line-height: 1.55; max-width: 88%; animation: fadeIn 0.3s ease;
+                    white-space: pre-line;
+                }
+                .bot {
+                    background: var(--bg); color: var(--text);
+                    border: 1px solid var(--border); border-top-left-radius: 2px;
+                    align-self: flex-start; box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+                }
+                .user {
+                    background: var(--primary); color: white;
+                    border-top-right-radius: 2px; align-self: flex-end;
+                    box-shadow: 0 4px 6px -1px rgba(79,70,229,0.2);
+                }
+                /* Receipt */
+                .receipt {
+                    background: #f0fdf4; border: 1px solid #bbf7d0;
+                    border-radius: 12px; padding: 10px 14px;
+                    align-self: flex-start; animation: fadeIn 0.3s ease;
+                    font-size: 12px; color: #166534; line-height: 1.5;
+                    display: flex; align-items: flex-start; gap: 8px;
+                }
+                .receipt-check {
+                    width: 20px; height: 20px; background: #22c55e; border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;
+                    color: white; flex-shrink: 0; font-size: 11px; font-weight: 700;
+                }
+                .receipt-body { white-space: pre-line; }
+                /* Nav card */
+                .nav-card {
+                    border: 1px solid #c7d2fe;
+                    background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 100%);
+                    border-radius: 12px; padding: 14px 16px;
+                    animation: fadeIn 0.35s cubic-bezier(0.16,1,0.3,1);
+                    align-self: flex-start; max-width: 94%;
+                }
+                .nav-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+                .nav-card-icon {
+                    width: 22px; height: 22px; border-radius: 5px; background: var(--primary);
+                    display: flex; align-items: center; justify-content: center;
+                    color: white; flex-shrink: 0;
+                }
+                .nav-card-label {
+                    font-size: 10px; font-weight: 600; text-transform: uppercase;
+                    letter-spacing: 0.05em; color: var(--primary);
+                }
+                .nav-card-title { font-size: 14px; font-weight: 600; color: var(--text); margin: 2px 0 10px; }
+                .nav-card-btn {
+                    display: inline-flex; align-items: center; gap: 6px;
+                    padding: 7px 14px; background: var(--primary); color: white;
+                    border: none; border-radius: 8px; font-size: 12px; font-weight: 600;
+                    cursor: pointer; transition: background 0.15s; font-family: inherit;
+                }
+                .nav-card-btn:hover { background: #4338ca; }
+                .nav-card-btn svg { flex-shrink: 0; }
+                /* Drop zone */
+                .drop-zone {
+                    margin: 0 14px 6px; padding: 18px;
+                    border: 2px dashed #cbd5e1; border-radius: 12px;
+                    display: flex; flex-direction: column; align-items: center;
+                    justify-content: center; gap: 4px; cursor: default;
+                    transition: all 0.2s;
+                }
+                .drop-zone.active { border-color: var(--primary); background: #eef2ff; }
+                .drop-zone svg { color: #94a3b8; }
+                .drop-zone.active svg { color: var(--primary); }
+                .drop-title { font-size: 13px; font-weight: 600; color: #475569; }
+                .drop-subtitle { font-size: 11px; color: #94a3b8; }
+                .drop-zone.active .drop-title { color: var(--primary); }
+                /* Dots */
+                .dots { display:flex; gap:4px; padding:8px 12px; align-self:flex-start; }
+                .dot { width:4px;height:4px;background:#94a3b8;border-radius:50%;animation:bounce 1s infinite; }
+                .dot:nth-child(2){animation-delay:.2s} .dot:nth-child(3){animation-delay:.4s}
+                /* Input */
+                .input-area {
+                    padding: 12px 14px; border-top: 1px solid var(--border);
+                    display: flex; gap: 8px; background: #fff;
+                }
+                input {
+                    flex:1; padding:10px 12px; border:1px solid var(--border);
+                    border-radius:8px; font-size:13px; outline:none;
+                    color: var(--text); font-family: inherit;
+                }
+                input::placeholder { color:#94a3b8; }
+                input:focus { border-color: var(--primary); }
+                .send-btn {
+                    background:var(--text); color:white; border:none;
+                    width:36px;height:36px; border-radius:8px;
+                    cursor:pointer; display:flex;align-items:center;justify-content:center;
+                    transition:background .2s; flex-shrink:0;
+                }
+                .send-btn:hover { background:var(--primary); }
+                .send-btn:disabled { opacity:.5;cursor:not-allowed; }
+                @keyframes fadeIn  { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+                @keyframes bounce  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+            `;
+
+            static properties = {
+                messages:   { type: Array },
+                inputText:  { type: String },
+                processing: { type: Boolean },
+                isDragging: { type: Boolean },
+            };
+
+            constructor() {
+                super();
+                const hw = window.COURSE_DATA.find(d => d.id === 'a-4812');
+                this.messages = [{ role: 'bot', text: 'Hi. I see ' + hw.title + ' is due ' + hw.due + '. Drag your file here to submit.' }];
+                this.inputText = '';
+                this.processing = false;
+                this.isDragging = false;
+            }
+
+            addMessage(msg) {
+                this.messages = [...this.messages, msg];
+                this.updateComplete.then(() => {
+                    const chat = this.shadowRoot.querySelector('.chat-area');
+                    if (chat) chat.scrollTop = chat.scrollHeight;
+                });
+            }
+
+            /* ── Intent classification ─────────────────────────── */
+            /* Mirrors _looks_like_action_request() from main.py:
+               Only explicit action keywords trigger navigation.
+               Everything else gets a conversational response
+               (simulating 3B model for chat, 8B for tools). */
+
+            classifyIntent(text) {
+                const l = text.toLowerCase();
+                // Greetings / chitchat → 3B conversational (no tools)
+                if (/^(hi|hello|hey|yo|sup|what'?s up|good morning|good afternoon)\b/i.test(l)) return 'greeting';
+                if (/^(thanks|thank you|thx|ok|okay|cool|bye|goodbye|see ya|great|nice)\b/i.test(l)) return 'farewell';
+                // Action keywords → 8B model + tools (from main.py)
+                if (/\b(show me|open|go to|take me|where is|find|navigate to)\b/.test(l)) return 'navigate';
+                // Conversational intents → 3B model + RAG
+                if (/\b(when|due|deadline|upcoming)\b/.test(l)) return 'due_dates';
+                if (/\b(grade|score|marks|how did i|my grade|gpa)\b/.test(l)) return 'grades';
+                if (/\b(help|what can you|how do i|capabilities)\b/.test(l)) return 'help';
+                if (/\b(office hours?|professor|dr\.|instructor)\b/.test(l)) return 'office_hours';
+                if (/\b(submit|upload|turn in|hand in)\b/.test(l)) return 'submit';
+                // Topic reference → 3B + RAG (info response, not navigation)
+                if (l.length > 4) {
+                    const m = window.searchIndex(text);
+                    if (m) return 'topic';
+                }
+                return 'general';
+            }
+
+            generateResponse(intent, text) {
+                const DATA = window.COURSE_DATA;
+                switch (intent) {
+                    case 'greeting':
+                        return { narration: 'Hey! How can I help you with CS 301 today?' };
+                    case 'farewell':
+                        return { narration: 'See you! Good luck with your assignments.' };
+                    case 'navigate': {
+                        const m = window.searchIndex(text);
+                        if (m) return { narration: 'Opening ' + m.title + '.', nav: { type: m.type, title: m.title, url: m.url, itemId: m.id } };
+                        return { narration: "I couldn\u2019t find that page. Could you be more specific?" };
+                    }
+                    case 'due_dates': {
+                        const a = DATA.filter(d => d.type === 'assignment' && d.due);
+                        const lines = a.map(x => '\u2022 ' + x.title + ' \u2014 ' + x.due + ' (' + x.pts + ' pts)').join('\n');
+                        return { narration: 'Here are your upcoming deadlines:\n\n' + lines };
+                    }
+                    case 'grades':
+                        return { narration: 'Your current grades:\n\n\u2022 Midterm Essay \u2014 87/100 (Graded)\n\u2022 Final Project \u2014 Pending\n\u2022 Homework 3 \u2014 Pending\n\u2022 Lab Report 2 \u2014 Pending\n\nThe class average on the Midterm was 78.4.' };
+                    case 'help':
+                        return { narration: 'I can help you with:\n\n\u2022 Navigate to pages \u2014 "show me the syllabus"\n\u2022 Check due dates \u2014 "when is the midterm due?"\n\u2022 View grades \u2014 "what\u2019s my grade?"\n\u2022 Submit files \u2014 drag & drop below\n\u2022 Course info \u2014 "office hours"\n\nJust ask naturally!' };
+                    case 'office_hours':
+                        return { narration: 'Dr. Patel\u2019s office hours:\n\u2022 Thursday 2:00\u20134:00 PM, Room 214 Science Hall\n\nTA office hours:\n\u2022 Monday 5\u20137 PM, CS Lab\n\nYou can also email to schedule an appointment.' };
+                    case 'submit':
+                        return { narration: 'Drag and drop your file onto the upload area below. I accept PDF, DOCX, and Pages formats.\n\nIf it\u2019s not a PDF, I\u2019ll convert it automatically before submitting.' };
+                    case 'topic': {
+                        const m = window.searchIndex(text);
+                        if (!m) return { narration: "Could you be more specific?" };
+                        let info = '';
+                        if (m.type === 'assignment') {
+                            info = m.title + ' \u2014 ' + m.body + (m.due ? ' Due ' + m.due + '.' : '') + (m.pts ? ' Worth ' + m.pts + ' pts.' : '');
+                        } else if (m.type === 'announcement') {
+                            info = m.title + ': ' + m.body;
+                        } else {
+                            info = m.title + ' \u2014 ' + m.body;
+                        }
+                        return { narration: info + '\n\nSay \u201cshow me ' + m.title.toLowerCase() + '\u201d to open it.' };
+                    }
+                    default:
+                        return { narration: 'I\u2019m your assistant for CS 301. Ask me about assignments, due dates, grades, or say \u201cshow me\u201d to navigate to a page.' };
+                }
+            }
+
+            /* ── Send ──────────────────────────────────────────── */
+
+            async handleSend() {
+                const text = this.inputText.trim();
+                if (!text || this.processing) return;
+                this.inputText = '';
+                this.addMessage({ role: 'user', text });
+                this.processing = true;
+                await new Promise(r => setTimeout(r, 500 + Math.random() * 500));
+                const intent = this.classifyIntent(text);
+                const resp = this.generateResponse(intent, text);
+                this.processing = false;
+                if (resp.narration) this.addMessage({ role: 'bot', text: resp.narration });
+                if (resp.nav) this.addMessage({ role: 'nav', ...resp.nav });
+            }
+
+            /* ── File drop ─────────────────────────────────────── */
+
+            handleDragOver(e)  { e.preventDefault(); this.isDragging = true; }
+            handleDragLeave(e) { e.preventDefault(); this.isDragging = false; }
+
+            async handleDrop(e) {
+                e.preventDefault();
+                this.isDragging = false;
+                const file = e.dataTransfer?.files?.[0];
+                if (!file) return;
+                const ext = file.name.split('.').pop().toLowerCase();
+                this.addMessage({ role: 'user', text: 'Attached: ' + file.name });
+                this.processing = true;
+                const convert = (ext === 'pages' || ext === 'docx');
+                if (convert) {
+                    await new Promise(r => setTimeout(r, 800));
+                    this.addMessage({ role: 'bot', text: 'Detected .' + ext + ' file. Converting to PDF\u2026' });
+                    this.requestUpdate();
+                    await new Promise(r => setTimeout(r, 1500));
+                    this.addMessage({ role: 'bot', text: 'Conversion complete. Submitting to Canvas\u2026' });
+                    this.requestUpdate();
+                } else {
+                    await new Promise(r => setTimeout(r, 600));
+                    this.addMessage({ role: 'bot', text: 'Submitting to Canvas\u2026' });
+                    this.requestUpdate();
+                }
+                await new Promise(r => setTimeout(r, 1000));
+                this.processing = false;
+                const rid = 'AF-' + Math.floor(1000 + Math.random() * 9000);
+                this.addMessage({ role: 'receipt', text: 'Submitted successfully.\nConfirmation: ' + rid + '\n' + new Date().toLocaleString() });
+            }
+
+            handleNavClick(itemId) { window.lmsOpenItem(itemId); }
+
+            /* ── Render ────────────────────────────────────────── */
+
+            render() {
+                return html`
+                    <div class="widget-container">
+                        <div class="header">
+                            <div class="header-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                            </div>
+                            <div class="header-text">
+                                <h3>Socrates</h3>
+                                <p>Symposium Connector</p>
+                            </div>
+                        </div>
+                        <div class="chat-area">
+                            ${this.messages.map(msg => {
+                                if (msg.role === 'nav') return html`
+                                    <div class="nav-card">
+                                        <div class="nav-card-header">
+                                            <div class="nav-card-icon">${TYPE_ICONS[msg.type]}</div>
+                                            <span class="nav-card-label">${TYPE_LABELS[msg.type]}</span>
+                                        </div>
+                                        <div class="nav-card-title">${msg.title}</div>
+                                        <button class="nav-card-btn" @click=${() => this.handleNavClick(msg.itemId)}>
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                            Open in LMS
+                                        </button>
+                                    </div>`;
+                                if (msg.role === 'receipt') return html`
+                                    <div class="receipt">
+                                        <div class="receipt-check">\u2713</div>
+                                        <div class="receipt-body">${msg.text}</div>
+                                    </div>`;
+                                return html`<div class="message ${msg.role}">${msg.text}</div>`;
+                            })}
+                            ${this.processing ? html`<div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>` : ''}
+                        </div>
+                        <div class="drop-zone ${this.isDragging ? 'active' : ''}"
+                             @dragover=${this.handleDragOver}
+                             @dragleave=${this.handleDragLeave}
+                             @drop=${this.handleDrop}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <div class="drop-title">Drag Assignment Here</div>
+                            <div class="drop-subtitle">PDF, DOCX, or Pages</div>
+                        </div>
+                        <div class="input-area">
+                            <input type="text" .value=${this.inputText}
+                                @input=${e => this.inputText = e.target.value}
+                                @keydown=${e => e.key === 'Enter' && this.handleSend()}
+                                placeholder="Type a command...">
+                            <button class="send-btn" @click=${this.handleSend} ?disabled=${!this.inputText.trim()}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        customElements.define('socrates-demo', SocratesDemo);
+    </script>
+
+    <style>
+        * { box-sizing: border-box; margin: 0; }
+        body {
+            height: 100vh; overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            color: #1e293b; background: #f8fafc;
+        }
+        .lms { display: flex; height: 100vh; }
+
+        /* Top bar */
+        .lms-topbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+            height: 48px; background: #1e293b;
+            display: flex; align-items: center; padding: 0 20px; gap: 16px;
+        }
+        .lms-topbar-logo {
+            font-size: 14px; font-weight: 700; color: #fff;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .lms-topbar-logo svg { opacity: 0.9; }
+        .lms-topbar-crumb { font-size: 12px; color: #94a3b8; }
+        .lms-topbar-crumb a { color: #94a3b8; text-decoration: none; cursor: pointer; }
+        .lms-topbar-crumb a:hover { color: #e2e8f0; }
+        .lms-topbar-crumb .crumb-current { color: #e2e8f0; font-weight: 500; }
+        .lms-topbar-right {
+            margin-left: auto; display: flex; align-items: center; gap: 14px;
+        }
+        .lms-topbar-right svg { color: #94a3b8; cursor: pointer; }
+        .lms-topbar-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: #4f46e5; display: flex; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: 700; color: white;
+        }
+
+        /* Sidebar */
+        .lms-sidebar {
+            position: fixed; top: 48px; left: 0; bottom: 0;
+            width: 200px; background: #fff;
+            border-right: 1px solid #e2e8f0;
+            padding: 16px 0; z-index: 40;
+            display: flex; flex-direction: column;
+        }
+        .lms-sidebar-section { padding: 0 12px; margin-bottom: 20px; }
+        .lms-sidebar-section h4 {
+            font-size: 10px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.06em; color: #94a3b8; padding: 0 8px; margin-bottom: 6px;
+        }
+        .lms-nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px; border-radius: 6px;
+            font-size: 13px; font-weight: 500; color: #475569;
+            cursor: pointer; transition: all 0.15s; text-decoration: none;
+        }
+        .lms-nav-item:hover { background: #f1f5f9; color: #1e293b; }
+        .lms-nav-item.active { background: #eef2ff; color: #4f46e5; font-weight: 600; }
+        .lms-nav-item svg { flex-shrink: 0; opacity: 0.6; }
+        .lms-nav-item.active svg { opacity: 1; color: #4f46e5; }
+        .lms-nav-count {
+            margin-left: auto; font-size: 10px; font-weight: 600;
+            background: #f1f5f9; color: #64748b; padding: 2px 6px; border-radius: 10px;
+        }
+
+        /* Content */
+        .lms-content {
+            margin-left: 200px; margin-top: 48px;
+            padding: 32px 40px 120px;
+            overflow-y: auto; height: calc(100vh - 48px);
+        }
+        .lms-page-header {
+            margin-bottom: 24px;
+        }
+        .lms-page-header h1 {
+            font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 4px;
+        }
+        .lms-page-header .lms-subtitle {
+            font-size: 13px; color: #64748b;
+        }
+
+        /* Back button */
+        .lms-back {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600; color: #4f46e5;
+            cursor: pointer; margin-bottom: 16px; padding: 4px 0;
+            text-decoration: none; transition: color 0.15s;
+        }
+        .lms-back:hover { color: #4338ca; }
+        .lms-back svg { flex-shrink: 0; }
+
+        /* Sections */
+        .lms-section { margin-bottom: 32px; }
+        .lms-section-header {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 12px; padding-bottom: 8px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .lms-section-header svg { color: #94a3b8; }
+        .lms-section-header h2 { font-size: 14px; font-weight: 600; color: #334155; }
+        .lms-section-header .count {
+            font-size: 11px; font-weight: 600; color: #94a3b8;
+            background: #f1f5f9; padding: 2px 8px; border-radius: 10px; margin-left: auto;
+        }
+
+        /* Items */
+        .lms-item {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 12px 14px; border-radius: 8px;
+            border: 1px solid transparent;
+            transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+            cursor: pointer;
+        }
+        .lms-item:hover { background: #f8fafc; border-color: #e2e8f0; }
+        .lms-item + .lms-item { border-top: 1px solid #f8fafc; }
+        .lms-item-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .lms-item-icon.assignment   { background: #eef2ff; color: #4f46e5; }
+        .lms-item-icon.announcement { background: #fef3c7; color: #d97706; }
+        .lms-item-icon.page         { background: #ecfdf5; color: #059669; }
+        .lms-item-icon.discussion   { background: #f0f9ff; color: #0284c7; }
+        .lms-item-body { flex: 1; min-width: 0; }
+        .lms-item-title { font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 2px; }
+        .lms-item-desc  { font-size: 12px; color: #64748b; line-height: 1.4; }
+        .lms-item-meta  { display: flex; gap: 12px; margin-top: 4px; }
+        .lms-item-meta span { font-size: 11px; font-weight: 500; color: #94a3b8; }
+        .lms-item-arrow {
+            align-self: center; color: #cbd5e1; flex-shrink: 0;
+            transition: color 0.15s;
+        }
+        .lms-item:hover .lms-item-arrow { color: #94a3b8; }
+
+        /* Highlight pulse */
+        .lms-item.highlighted {
+            background: #eef2ff; border-color: #a5b4fc;
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+        }
+
+        /* Detail view */
+        .lms-detail { animation: fadeIn 0.25s ease; }
+        .lms-detail-header {
+            display: flex; align-items: flex-start; gap: 14px; margin-bottom: 20px;
+        }
+        .lms-detail-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .lms-detail-icon.assignment   { background: #eef2ff; color: #4f46e5; }
+        .lms-detail-icon.announcement { background: #fef3c7; color: #d97706; }
+        .lms-detail-icon.page         { background: #ecfdf5; color: #059669; }
+        .lms-detail-icon.discussion   { background: #f0f9ff; color: #0284c7; }
+        .lms-detail-title { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .lms-detail-type  {
+            font-size: 11px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.05em; color: #94a3b8;
+        }
+        .lms-detail-meta {
+            display: flex; gap: 16px; padding: 12px 16px;
+            background: #f8fafc; border-radius: 8px; margin-bottom: 20px;
+        }
+        .lms-detail-meta-item { display: flex; flex-direction: column; gap: 2px; }
+        .lms-detail-meta-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.05em; }
+        .lms-detail-meta-value { font-size: 13px; font-weight: 600; color: #1e293b; }
+        .lms-detail-body {
+            font-size: 14px; line-height: 1.7; color: #334155;
+            white-space: pre-line;
+        }
+
+        /* Grades mock */
+        .grades-table {
+            width: 100%; border-collapse: collapse; font-size: 13px;
+        }
+        .grades-table th {
+            text-align: left; padding: 10px 14px; font-weight: 600;
+            color: #64748b; border-bottom: 2px solid #e2e8f0; font-size: 11px;
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+        .grades-table td {
+            padding: 12px 14px; border-bottom: 1px solid #f1f5f9; color: #334155;
+        }
+        .grades-table tr:hover td { background: #f8fafc; }
+        .grade-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 12px; font-weight: 600;
+        }
+        .grade-badge.graded   { background: #ecfdf5; color: #059669; }
+        .grade-badge.pending  { background: #f1f5f9; color: #94a3b8; }
+
+        /* Widget overlay */
+        .widget-wrapper { position: fixed; bottom: 24px; right: 24px; z-index: 100; }
+
+        /* Suggested queries */
+        .try-bar {
+            position: fixed; bottom: 0; left: 200px; right: 400px;
+            padding: 10px 40px;
+            background: linear-gradient(to top, #f8fafc 60%, transparent);
+            display: flex; gap: 6px; flex-wrap: wrap; z-index: 60;
+        }
+        .try-chip {
+            padding: 5px 10px; border-radius: 20px;
+            border: 1px solid #e2e8f0; background: #fff;
+            font-size: 11px; color: #475569;
+            cursor: pointer; user-select: none; transition: border-color 0.15s;
+        }
+        .try-chip:hover { border-color: #a5b4fc; color: #4f46e5; }
+
+        @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+    </style>
+</head>
+<body>
+
+<div class="lms">
+    <!-- Top bar -->
+    <div class="lms-topbar">
+        <div class="lms-topbar-logo">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            University LMS
+        </div>
+        <div class="lms-topbar-crumb" id="breadcrumb">
+            <a onclick="lmsNavigate('home')">Dashboard</a> / <span class="crumb-current">CS 301 — Intro to Artificial Intelligence</span>
+        </div>
+        <div class="lms-topbar-right">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <div class="lms-topbar-avatar">JS</div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="lms-sidebar">
+        <div class="lms-sidebar-section">
+            <h4>Course</h4>
+            <a class="lms-nav-item active" data-view="home" onclick="lmsNavigate('home')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+                Home
+            </a>
+            <a class="lms-nav-item" data-view="assignments" onclick="lmsNavigate('assignments')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                Assignments <span class="lms-nav-count">4</span>
+            </a>
+            <a class="lms-nav-item" data-view="announcements" onclick="lmsNavigate('announcements')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                Announcements <span class="lms-nav-count">3</span>
+            </a>
+            <a class="lms-nav-item" data-view="pages" onclick="lmsNavigate('pages')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                Pages <span class="lms-nav-count">3</span>
+            </a>
+            <a class="lms-nav-item" data-view="discussions" onclick="lmsNavigate('discussions')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Discussions <span class="lms-nav-count">2</span>
+            </a>
+            <a class="lms-nav-item" data-view="grades" onclick="lmsNavigate('grades')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                Grades
+            </a>
+        </div>
+        <div class="lms-sidebar-section" style="margin-top:auto">
+            <h4>People</h4>
+            <a class="lms-nav-item" style="cursor:default">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                Dr. Patel
+            </a>
+        </div>
+    </div>
+
+    <!-- Content area — rendered by JS -->
+    <div class="lms-content" id="lmsContent"></div>
+</div>
+
+<div class="widget-wrapper"><socrates-demo></socrates-demo></div>
+
+<div class="try-bar" id="tryBar">
+    <span class="try-chip">when is the midterm due?</span>
+    <span class="try-chip">show me the syllabus</span>
+    <span class="try-chip">what's my grade?</span>
+    <span class="try-chip">office hours</span>
+    <span class="try-chip">help</span>
+    <span class="try-chip">final project</span>
+    <span class="try-chip">how do I submit?</span>
+    <span class="try-chip">course schedule</span>
+</div>
+
+<script>
+    const DATA = window.COURSE_DATA;
+    const CONTENT = document.getElementById('lmsContent');
+    let currentView = 'home';
+    let currentItemId = null;
+
+    /* ── SVG icon bank ─────────────────────────────────────────── */
+    const ICON = {
+        assignment:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+        announcement: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+        page:         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+        discussion:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+        arrow:        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>',
+        back:         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>',
+    };
+
+    const SECTION_TITLES = {
+        assignments: 'Assignments', announcements: 'Announcements',
+        pages: 'Pages', discussions: 'Discussions',
+    };
+
+    /* ── Render helpers ────────────────────────────────────────── */
+
+    function itemCard(item) {
+        const meta = [];
+        if (item.due) meta.push(`Due ${item.due}`);
+        if (item.pts) meta.push(`${item.pts} pts`);
+        if (item.replies) meta.push(`${item.replies} replies`);
+        return `
+            <div class="lms-item" id="lms-${item.id}" onclick="lmsOpenItem('${item.id}')">
+                <div class="lms-item-icon ${item.type}">${ICON[item.type]}</div>
+                <div class="lms-item-body">
+                    <div class="lms-item-title">${item.title}</div>
+                    <div class="lms-item-desc">${item.body}</div>
+                    ${meta.length ? `<div class="lms-item-meta">${meta.map(m=>`<span>${m}</span>`).join('')}</div>` : ''}
+                </div>
+                <div class="lms-item-arrow">${ICON.arrow}</div>
+            </div>`;
+    }
+
+    function sectionBlock(type) {
+        const items = DATA.filter(d => d.type === type);
+        return `
+            <div class="lms-section">
+                <div class="lms-section-header">
+                    ${ICON[type]}
+                    <h2>${SECTION_TITLES[type + 's'] || type}</h2>
+                    <span class="count">${items.length}</span>
+                </div>
+                ${items.map(itemCard).join('')}
+            </div>`;
+    }
+
+    /* ── Views ─────────────────────────────────────────────────── */
+
+    function renderHome() {
+        CONTENT.innerHTML = `
+            <div class="lms-page-header">
+                <h1>CS 301 — Intro to Artificial Intelligence</h1>
+                <p class="lms-subtitle">Spring 2025 &middot; Dr. Ananya Patel &middot; MWF 10:00 – 10:50 AM &middot; Room 214 Science Hall</p>
+            </div>
+            ${sectionBlock('assignment')}
+            ${sectionBlock('announcement')}
+            ${sectionBlock('page')}
+            ${sectionBlock('discussion')}
+        `;
+        CONTENT.scrollTop = 0;
+    }
+
+    function renderList(type) {
+        const items = DATA.filter(d => d.type === type);
+        const label = SECTION_TITLES[type + 's'] || type;
+        CONTENT.innerHTML = `
+            <div class="lms-page-header">
+                <h1>${label}</h1>
+                <p class="lms-subtitle">${items.length} item${items.length !== 1 ? 's' : ''} in CS 301</p>
+            </div>
+            <div class="lms-section">
+                ${items.map(itemCard).join('')}
+            </div>
+        `;
+        CONTENT.scrollTop = 0;
+    }
+
+    function renderDetail(itemId) {
+        const item = DATA.find(d => d.id === itemId);
+        if (!item) return;
+
+        const parentView = item.type + 's';
+        const parentLabel = SECTION_TITLES[parentView];
+
+        const meta = [];
+        if (item.due) meta.push({ label: 'Due', value: item.due });
+        if (item.pts) meta.push({ label: 'Points', value: item.pts });
+        if (item.replies) meta.push({ label: 'Replies', value: item.replies });
+        meta.push({ label: 'Type', value: item.type.charAt(0).toUpperCase() + item.type.slice(1) });
+
+        CONTENT.innerHTML = `
+            <a class="lms-back" onclick="lmsNavigate('${parentView}')">
+                ${ICON.back} Back to ${parentLabel}
+            </a>
+            <div class="lms-detail">
+                <div class="lms-detail-header">
+                    <div class="lms-detail-icon ${item.type}">${ICON[item.type]}</div>
+                    <div>
+                        <div class="lms-detail-type">${item.type}</div>
+                        <div class="lms-detail-title">${item.title}</div>
+                    </div>
+                </div>
+                ${meta.length ? `
+                    <div class="lms-detail-meta">
+                        ${meta.map(m => `
+                            <div class="lms-detail-meta-item">
+                                <span class="lms-detail-meta-label">${m.label}</span>
+                                <span class="lms-detail-meta-value">${m.value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                <div class="lms-detail-body">${item.detail || item.body}</div>
+            </div>
+        `;
+        CONTENT.scrollTop = 0;
+    }
+
+    function renderGrades() {
+        const assignments = DATA.filter(d => d.type === 'assignment');
+        CONTENT.innerHTML = `
+            <div class="lms-page-header">
+                <h1>Grades</h1>
+                <p class="lms-subtitle">CS 301 — Spring 2025</p>
+            </div>
+            <table class="grades-table">
+                <thead>
+                    <tr>
+                        <th>Assignment</th>
+                        <th>Due</th>
+                        <th>Points</th>
+                        <th>Score</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${assignments.map((a, i) => {
+                        const graded = i < 2;
+                        const score = graded ? Math.floor(a.pts * (0.75 + Math.random() * 0.25)) : '—';
+                        return `
+                            <tr style="cursor:pointer" onclick="lmsOpenItem('${a.id}')">
+                                <td style="font-weight:600">${a.title}</td>
+                                <td>${a.due}</td>
+                                <td>${a.pts}</td>
+                                <td>${graded ? score + ' / ' + a.pts : '—'}</td>
+                                <td><span class="grade-badge ${graded ? 'graded' : 'pending'}">${graded ? 'Graded' : 'Pending'}</span></td>
+                            </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
+        `;
+        CONTENT.scrollTop = 0;
+    }
+
+    /* ── Router ────────────────────────────────────────────────── */
+
+    function updateSidebar(view) {
+        document.querySelectorAll('.lms-nav-item[data-view]').forEach(el => {
+            el.classList.toggle('active', el.dataset.view === view);
+        });
+    }
+
+    function updateBreadcrumb(view, item) {
+        const bc = document.getElementById('breadcrumb');
+        let trail = `<a onclick="lmsNavigate('home')">Dashboard</a> / `;
+        if (view === 'home') {
+            trail += `<span class="crumb-current">CS 301</span>`;
+        } else if (view === 'detail' && item) {
+            const parentView = item.type + 's';
+            trail += `<a onclick="lmsNavigate('home')">CS 301</a> / `;
+            trail += `<a onclick="lmsNavigate('${parentView}')">${SECTION_TITLES[parentView]}</a> / `;
+            trail += `<span class="crumb-current">${item.title}</span>`;
+        } else {
+            trail += `<a onclick="lmsNavigate('home')">CS 301</a> / `;
+            trail += `<span class="crumb-current">${SECTION_TITLES[view] || view}</span>`;
+        }
+        bc.innerHTML = trail;
+    }
+
+    window.lmsNavigate = function(view) {
+        currentView = view;
+        currentItemId = null;
+        updateSidebar(view);
+
+        if (view === 'home') {
+            renderHome();
+        } else if (view === 'grades') {
+            renderGrades();
+        } else {
+            // strip trailing 's' to get type
+            const type = view.replace(/s$/, '');
+            renderList(type);
+        }
+        updateBreadcrumb(view, null);
+    };
+
+    window.lmsOpenItem = function(itemId) {
+        const item = DATA.find(d => d.id === itemId);
+        if (!item) return;
+
+        currentView = 'detail';
+        currentItemId = itemId;
+        updateSidebar(item.type + 's');
+        renderDetail(itemId);
+        updateBreadcrumb('detail', item);
+
+        // Highlight flash on the detail header
+        setTimeout(() => {
+            const header = CONTENT.querySelector('.lms-detail-header');
+            if (header) {
+                header.style.transition = 'background 0.3s, box-shadow 0.3s';
+                header.style.background = '#eef2ff';
+                header.style.borderRadius = '10px';
+                header.style.padding = '14px';
+                header.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.15)';
+                setTimeout(() => {
+                    header.style.background = 'transparent';
+                    header.style.boxShadow = 'none';
+                }, 2000);
+            }
+        }, 100);
+    };
+
+    /* ── Chip clicks ───────────────────────────────────────────── */
+    document.querySelectorAll('.try-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const widget = document.querySelector('socrates-demo');
+            if (!widget) return;
+            widget.inputText = chip.textContent;
+            widget.requestUpdate();
+            setTimeout(() => {
+                const input = widget.shadowRoot?.querySelector('input');
+                if (input) input.focus();
+            }, 50);
+        });
+    });
+
+    /* ── Boot ──────────────────────────────────────────────────── */
+    lmsNavigate('home');
+</script>
+
+</body>
+</html>

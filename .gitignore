@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+# Environment Variables & Credentials
+.env
+.env.*
+ai/server/.env
+ai/server/token.json
+ai/server/credentials.json
+
+# Local Databases (Vercel Serverless)
+ai/server/chroma_db/
+ai/server/rag_db/
+
+# OSX / OS Files
+.DS_Store
+*.swp
+*~
+
+# Misc
+*.pid
+ai/server/*.pid
+.vercel/
+
+# Ignored huge video files from the repo
+*.webm
+*.mp4
+*.mov

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Test: Unreal Engine Portal</title>
+    <style>
+        /* FRUTIGER AERO / SCI-FI STYLES */
+        body {
+            margin: 0;
+            background: #111;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .portal-container {
+            position: relative;
+            width: 800px;
+            height: 450px;
+            perspective: 1000px;
+        }
+
+        .portal-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px solid #00ffcc;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.3);
+            background: #000;
+            overflow: hidden;
+            transition: transform 0.5s ease;
+            transform-style: preserve-3d;
+        }
+
+        .portal-frame:hover {
+            transform: scale(1.02) rotateX(2deg);
+            box-shadow: 0 0 50px rgba(0, 255, 204, 0.6);
+        }
+
+        /* Simulating the Unreal Stream */
+        .unreal-stream-simulation {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #222, #444);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* This would be the actual iframe for Pixel Streaming */
+        iframe.pixel-stream {
+            width: 100%;
+            height: 100%;
+            border: none;
+            opacity: 0.8;
+            /* Blending it slightly for effect */
+        }
+
+        /* Overlay UI */
+        .portal-hud {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            font-family: 'Courier New', monospace;
+            color: #00ffcc;
+            text-shadow: 0 0 5px #00ffcc;
+            pointer-events: none;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background: #00ffcc;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.5;
+                box-shadow: 0 0 0 0 rgba(0, 255, 204, 0.7);
+            }
+
+            70% {
+                opacity: 1;
+                box-shadow: 0 0 0 10px rgba(0, 255, 204, 0);
+            }
+
+            100% {
+                opacity: 0.5;
+                box-shadow: 0 0 0 0 rgba(0, 255, 204, 0);
+            }
+        }
+
+        /* Glitch Effect for "Transmission" */
+        .glitch-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+            /* Scanline */
+            opacity: 0.1;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="portal-container">
+        <div class="portal-frame">
+            <!-- 
+                CONCEPT:
+                This iframe would point to a hosted Unreal Engine Pixel Streaming instance.
+                For now, we simulate it with a WebGL demo or placeholder.
+            -->
+            <div class="unreal-stream-simulation">
+                <!-- Placeholder Content -->
+                <h1 style="font-size: 40px; letter-spacing: 10px; opacity: 0.5;">UNREAL<br>ENGINE<br>LINK</h1>
+
+                <!-- Simulating a live view -->
+                <div
+                    style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, transparent 50%, #000 150%);">
+                </div>
+            </div>
+
+            <div class="glitch-overlay"></div>
+
+            <div class="portal-hud">
+                <div class="connection-status">
+                    <div class="status-dot"></div>
+                    <span>LIVE FEED // SECTOR 7</span>
+                </div>
+                <div style="font-size: 10px; margin-top: 5px;">LATENCY: 12ms | RES: 4K</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulating connection noise
+        const dot = document.querySelector('.status-dot');
+        setInterval(() => {
+            // Random flicker
+            if (Math.random() > 0.9) {
+                dot.style.background = 'red';
+                setTimeout(() => dot.style.background = '#00ffcc', 100);
+            }
+        }, 500);
+    </script>
+
+</body>
+
+</html>

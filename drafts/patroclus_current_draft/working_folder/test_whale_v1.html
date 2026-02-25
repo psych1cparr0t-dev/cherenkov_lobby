@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Test: Autonomous Whale</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #001133;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #debug {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: cyan;
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 5px;
+            pointer-events: none;
+            z-index: 100;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="debug">Status: Initializing...</div>
+
+    <!-- Error Handler -->
+    <script>
+        window.onerror = function (message, source, lineno, colno, error) {
+            const debug = document.getElementById('debug');
+            debug.style.color = '#ff3333';
+            debug.innerHTML = `Error: ${message}<br>Line: ${lineno}`;
+        };
+    </script>
+
+    <!-- Load Three.js -->
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+
+    <script>
+        // Check if THREE is loaded
+        if (typeof THREE === 'undefined') {
+            throw new Error("Three.js library failed to load. Check internet connection.");
+        }
+
+        document.getElementById('debug').innerText = "Status: Building Scene...";
+
+        // SCENE SETUP
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x001133); // Explicit background
+        scene.fog = new THREE.FogExp2(0x001133, 0.02);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 20;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // LIGHTING
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+        dirLight.position.set(10, 10, 10);
+        scene.add(dirLight);
+
+        // WHALE CONSTRUCT (Procedural Realistic Style)
+        const whaleGroup = new THREE.Group();
+
+        // Material - Glossy, semi-translucent "bio-plastic" or wet skin look
+        const skinMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0x0066cc,
+            roughness: 0.2,
+            metalness: 0.1,
+            clearcoat: 0.8,
+            clearcoatRoughness: 0.1,
+            transmission: 0.2, // slight subsurface feel
+            opacity: 1,
+            transparent: true,
+            side: THREE.DoubleSide
+        });
+
+        const bellyMaterial = new THREE.MeshPhysicalMaterial({
+            color: 0xe0f0ff,
+            roughness: 0.3,
+            metalness: 0.0,
+            clearcoat: 0.5,
+            side: THREE.DoubleSide
+        });
+
+        // 1. Main Body (LatheGeometry for organic taper)
+        const bodyPoints = [];
+        for (let i = 0; i <= 10; i++) {
+            const x = i * 0.5; // Length along spine
+            // Profile curve: Tapered head, thick body, narrow tail
+            const y = Math.sin(i * 0.3) * (i < 2 ? 0.8 : 1.2) * (1 - i / 10);
+            bodyPoints.push(new THREE.Vector2(x - 2.5, y < 0 ? 0 : y));
+        }
+        // Smooth the points slightly if needed, but sine wave is decent
+        const bodyGeo = new THREE.LatheGeometry(bodyPoints, 32);
+        // Rotate to align with Z axis
+        bodyGeo.rotateZ(-Math.PI / 2);
+        const bodyMesh = new THREE.Mesh(bodyGeo, skinMaterial);
+        whaleGroup.add(bodyMesh);
+
+        // 2. Tail Flukes (Extruded Shape)
+        const tailShape = new THREE.Shape();
+        tailShape.moveTo(0, 0);
+        tailShape.bezierCurveTo(0.5, 0.5, 1.5, 0.8, 2, 0); // Top curve right
+        tailShape.bezierCurveTo(1.5, -0.2, 0.5, -0.2, 0, 0); // Bottom curve right
+        tailShape.moveTo(0, 0);
+        tailShape.bezierCurveTo(-0.5, 0.5, -1.5, 0.8, -2, 0); // Top curve left
+        tailShape.bezierCurveTo(-1.5, -0.2, -0.5, -0.2, 0, 0); // Bottom curve left
+
+        const extrudeSettings = { depth: 0.1, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 2 };
+        const tailGeo = new THREE.ExtrudeGeometry(tailShape, extrudeSettings);
+        tailGeo.rotateX(-Math.PI / 2); // Lay flat
+        const tailMesh = new THREE.Mesh(tailGeo, skinMaterial);
+        tailMesh.position.set(-2.8, 0, 0); // Attach to end of body
+        tailMesh.scale.set(0.8, 0.8, 0.8);
+        whaleGroup.add(tailMesh);
+
+        // 3. Pectoral Fins (Side fins)
+        const finShape = new THREE.Shape();
+        finShape.moveTo(0, 0);
+        finShape.quadraticCurveTo(0.5, 0.5, 1.5, -0.5); // Outer edge
+        finShape.quadraticCurveTo(0.5, -0.5, 0, 0); // Inner edge
+
+        const finGeo = new THREE.ExtrudeGeometry(finShape, { depth: 0.05, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02 });
+
+        // Left Fin
+        const leftFin = new THREE.Mesh(finGeo, skinMaterial);
+        leftFin.position.set(0.5, -0.5, 0.8);
+        leftFin.rotation.set(0.5, 0.5, 0); // Angled down and back
+        leftFin.scale.set(0.8, 0.8, 0.8);
+        whaleGroup.add(leftFin);
+
+        // Right Fin
+        const rightFin = new THREE.Mesh(finGeo, skinMaterial);
+        rightFin.position.set(0.5, -0.5, -0.8);
+        rightFin.rotation.set(-0.5, -0.5, 0); // Mirrored
+        rightFin.rotation.x = Math.PI - 0.5; // Flip
+        rightFin.scale.set(0.8, 0.8, 0.8);
+        whaleGroup.add(rightFin);
+
+        // 4. Belly Patch (Simple scaled sphere for contrast)
+        const bellyGeo = new THREE.SphereGeometry(1, 32, 16);
+        const bellyMesh = new THREE.Mesh(bellyGeo, bellyMaterial);
+        bellyMesh.scale.set(2.5, 0.6, 0.8);
+        bellyMesh.position.set(-0.2, -0.3, 0);
+        whaleGroup.add(bellyMesh);
+
+        scene.add(whaleGroup);
+
+        // PARTICLES (Plankton)
+        const particlesGeo = new THREE.BufferGeometry();
+        const particlesCount = 1000;
+        const posArray = new Float32Array(particlesCount * 3);
+        for (let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 100;
+        }
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const particlesMat = new THREE.PointsMaterial({ size: 0.1, color: 0xffffff });
+        const particles = new THREE.Points(particlesGeo, particlesMat);
+        scene.add(particles);
+
+        // MOVEMENT LOGIC (Catmull-Rom Spline Path)
+        const curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-10, 0, 0),
+            new THREE.Vector3(-5, 5, -5),
+            new THREE.Vector3(0, 0, -10),
+            new THREE.Vector3(5, -5, -5),
+            new THREE.Vector3(10, 0, 0),
+            new THREE.Vector3(5, 5, 5),
+            new THREE.Vector3(0, 0, 10),
+            new THREE.Vector3(-5, -5, 5)
+        ]);
+        curve.closed = true;
+
+        // Debug Path (Optional: toggle visible to true to see it)
+        const points = curve.getPoints(50);
+        const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
+        const lineMaterial = new THREE.LineBasicMaterial({ color: 0xff0000, visible: false });
+        const pathLine = new THREE.Line(lineGeometry, lineMaterial);
+        scene.add(pathLine);
+
+        // ANIMATION LOOP
+        let progress = 0;
+        const speed = 0.0004;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            progress += speed;
+            if (progress > 1) progress = 0;
+
+            const position = curve.getPoint(progress);
+            const nextPos = curve.getPoint((progress + 0.01) % 1);
+
+            whaleGroup.position.copy(position);
+            whaleGroup.lookAt(nextPos);
+
+            // Bobbing & Roll
+            whaleGroup.position.y += Math.sin(Date.now() * 0.0015) * 0.3;
+            whaleGroup.rotation.z = Math.sin(Date.now() * 0.002) * 0.05;
+
+            particles.rotation.y += 0.0003;
+
+            renderer.render(scene, camera);
+
+            // Update status once running
+            if (progress < speed * 2) {
+                document.getElementById('debug').innerText = "Status: Running (Whale Active)";
+            }
+        }
+
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+
+</html>

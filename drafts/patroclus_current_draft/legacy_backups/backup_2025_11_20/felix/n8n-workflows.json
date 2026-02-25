@@ -1,0 +1,454 @@
+{
+  "name": "Felix Concierge Agent - N8n Workflows",
+  "description": "Complete N8n workflow templates for Felix bot capabilities",
+  "workflows": [
+    {
+      "name": "Felix Main Agent Workflow",
+      "description": "Primary webhook endpoint for processing Felix messages",
+      "nodes": [
+        {
+          "name": "Webhook",
+          "type": "n8n-nodes-base.webhook",
+          "position": [250, 300],
+          "parameters": {
+            "path": "felix-agent",
+            "responseMode": "responseNode",
+            "options": {}
+          }
+        },
+        {
+          "name": "Parse Input",
+          "type": "n8n-nodes-base.function",
+          "position": [450, 300],
+          "parameters": {
+            "functionCode": "const input = items[0].json;\nconst message = input.message;\nconst capabilities = input.capabilities || [];\nconst context = input.context || {};\n\nreturn [{\n  json: {\n    message,\n    capabilities,\n    context,\n    timestamp: new Date().toISOString()\n  }\n}];"
+          }
+        },
+        {
+          "name": "Route to Capability",
+          "type": "n8n-nodes-base.switch",
+          "position": [650, 300],
+          "parameters": {
+            "dataPropertyName": "capabilities",
+            "rules": {
+              "rules": [
+                {
+                  "output": 0,
+                  "conditions": {
+                    "conditions": [
+                      {
+                        "leftValue": "={{$json.capabilities.includes('webScraping')}}",
+                        "rightValue": true,
+                        "operator": "equal"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "output": 1,
+                  "conditions": {
+                    "conditions": [
+                      {
+                        "leftValue": "={{$json.capabilities.includes('database')}}",
+                        "rightValue": true,
+                        "operator": "equal"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "output": 2,
+                  "conditions": {
+                    "conditions": [
+                      {
+                        "leftValue": "={{$json.capabilities.includes('api')}}",
+                        "rightValue": true,
+                        "operator": "equal"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "output": 3,
+                  "conditions": {
+                    "conditions": [
+                      {
+                        "leftValue": "={{$json.capabilities.includes('files')}}",
+                        "rightValue": true,
+                        "operator": "equal"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Web Scraping Workflow",
+          "type": "n8n-nodes-base.executeWorkflow",
+          "position": [850, 150],
+          "parameters": {
+            "workflowId": "{{$workflow.id_web_scraping}}"
+          }
+        },
+        {
+          "name": "Database Workflow",
+          "type": "n8n-nodes-base.executeWorkflow",
+          "position": [850, 250],
+          "parameters": {
+            "workflowId": "{{$workflow.id_database}}"
+          }
+        },
+        {
+          "name": "API Integration Workflow",
+          "type": "n8n-nodes-base.executeWorkflow",
+          "position": [850, 350],
+          "parameters": {
+            "workflowId": "{{$workflow.id_api}}"
+          }
+        },
+        {
+          "name": "File Operations Workflow",
+          "type": "n8n-nodes-base.executeWorkflow",
+          "position": [850, 450],
+          "parameters": {
+            "workflowId": "{{$workflow.id_files}}"
+          }
+        },
+        {
+          "name": "AI Response Generation",
+          "type": "n8n-nodes-base.openAi",
+          "position": [1050, 300],
+          "parameters": {
+            "resource": "chat",
+            "operation": "create",
+            "model": "gpt-4",
+            "messages": {
+              "messages": [
+                {
+                  "role": "system",
+                  "content": "You are Felix, a concierge bot combining BT-7274's tactical precision with WALL-E's curious nature. You are self-aware, contextual, and helpful. Respond concisely but warmly."
+                },
+                {
+                  "role": "user",
+                  "content": "={{$json.message}}"
+                }
+              ]
+            },
+            "options": {
+              "temperature": 0.7,
+              "maxTokens": 500
+            }
+          }
+        },
+        {
+          "name": "Format Response",
+          "type": "n8n-nodes-base.function",
+          "position": [1250, 300],
+          "parameters": {
+            "functionCode": "const aiResponse = items[0].json.choices[0].message.content;\nconst capabilities = items[0].json.capabilitiesUsed || [];\n\nreturn [{\n  json: {\n    response: aiResponse,\n    capabilitiesUsed: capabilities,\n    metadata: {\n      timestamp: new Date().toISOString(),\n      model: 'gpt-4',\n      confidence: 0.95\n    },\n    reasoning: 'Processed through AI with context awareness'\n  }\n}];"
+          }
+        },
+        {
+          "name": "Respond to Webhook",
+          "type": "n8n-nodes-base.respondToWebhook",
+          "position": [1450, 300],
+          "parameters": {
+            "respondWith": "json",
+            "responseBody": "={{$json}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Web Scraping Workflow",
+      "description": "Extract data from websites",
+      "nodes": [
+        {
+          "name": "Trigger",
+          "type": "n8n-nodes-base.executeWorkflowTrigger",
+          "position": [250, 300]
+        },
+        {
+          "name": "Extract URL",
+          "type": "n8n-nodes-base.function",
+          "position": [450, 300],
+          "parameters": {
+            "functionCode": "const message = items[0].json.message;\nconst urlRegex = /(https?:\\/\\/[^\\s]+)/g;\nconst urls = message.match(urlRegex) || [];\n\nreturn [{\n  json: {\n    url: urls[0] || 'https://example.com',\n    message: message\n  }\n}];"
+          }
+        },
+        {
+          "name": "HTTP Request",
+          "type": "n8n-nodes-base.httpRequest",
+          "position": [650, 300],
+          "parameters": {
+            "method": "GET",
+            "url": "={{$json.url}}",
+            "options": {
+              "timeout": 10000
+            }
+          }
+        },
+        {
+          "name": "HTML Extract",
+          "type": "n8n-nodes-base.htmlExtract",
+          "position": [850, 300],
+          "parameters": {
+            "dataPropertyName": "data",
+            "extractionValues": {
+              "values": [
+                {
+                  "key": "title",
+                  "cssSelector": "title"
+                },
+                {
+                  "key": "headings",
+                  "cssSelector": "h1, h2, h3"
+                },
+                {
+                  "key": "content",
+                  "cssSelector": "p"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Format Result",
+          "type": "n8n-nodes-base.function",
+          "position": [1050, 300],
+          "parameters": {
+            "functionCode": "const data = items[0].json;\nreturn [{\n  json: {\n    scraped: true,\n    url: data.url,\n    title: data.title,\n    summary: `Scraped content from ${data.url}`,\n    capabilitiesUsed: ['webScraping']\n  }\n}];"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Database Operations Workflow",
+      "description": "CRUD operations and queries",
+      "nodes": [
+        {
+          "name": "Trigger",
+          "type": "n8n-nodes-base.executeWorkflowTrigger",
+          "position": [250, 300]
+        },
+        {
+          "name": "Determine Operation",
+          "type": "n8n-nodes-base.function",
+          "position": [450, 300],
+          "parameters": {
+            "functionCode": "const message = items[0].json.message.toLowerCase();\nlet operation = 'read';\n\nif (message.includes('create') || message.includes('insert')) operation = 'create';\nif (message.includes('update') || message.includes('modify')) operation = 'update';\nif (message.includes('delete') || message.includes('remove')) operation = 'delete';\n\nreturn [{\n  json: {\n    operation,\n    message: items[0].json.message\n  }\n}];"
+          }
+        },
+        {
+          "name": "PostgreSQL",
+          "type": "n8n-nodes-base.postgres",
+          "position": [650, 300],
+          "parameters": {
+            "operation": "={{$json.operation}}",
+            "table": "felix_data",
+            "additionalFields": {}
+          }
+        },
+        {
+          "name": "Format Result",
+          "type": "n8n-nodes-base.function",
+          "position": [850, 300],
+          "parameters": {
+            "functionCode": "const result = items[0].json;\nreturn [{\n  json: {\n    database: true,\n    operation: result.operation,\n    summary: `Performed ${result.operation} operation`,\n    capabilitiesUsed: ['database']\n  }\n}];"
+          }
+        }
+      ]
+    },
+    {
+      "name": "API Integration Workflow",
+      "description": "Connect to external services",
+      "nodes": [
+        {
+          "name": "Trigger",
+          "type": "n8n-nodes-base.executeWorkflowTrigger",
+          "position": [250, 300]
+        },
+        {
+          "name": "Detect Service",
+          "type": "n8n-nodes-base.function",
+          "position": [450, 300],
+          "parameters": {
+            "functionCode": "const message = items[0].json.message.toLowerCase();\nlet service = 'generic';\n\nif (message.includes('weather')) service = 'weather';\nif (message.includes('news')) service = 'news';\nif (message.includes('ai')) service = 'ai';\n\nreturn [{\n  json: {\n    service,\n    message: items[0].json.message\n  }\n}];"
+          }
+        },
+        {
+          "name": "Route Service",
+          "type": "n8n-nodes-base.switch",
+          "position": [650, 300],
+          "parameters": {
+            "dataPropertyName": "service",
+            "rules": {
+              "rules": [
+                {
+                  "output": 0,
+                  "conditions": {
+                    "conditions": [
+                      {
+                        "leftValue": "={{$json.service}}",
+                        "rightValue": "weather",
+                        "operator": "equal"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "output": 1,
+                  "conditions": {
+                    "conditions": [
+                      {
+                        "leftValue": "={{$json.service}}",
+                        "rightValue": "news",
+                        "operator": "equal"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Weather API",
+          "type": "n8n-nodes-base.httpRequest",
+          "position": [850, 250],
+          "parameters": {
+            "method": "GET",
+            "url": "https://api.openweathermap.org/data/2.5/weather",
+            "options": {}
+          }
+        },
+        {
+          "name": "News API",
+          "type": "n8n-nodes-base.httpRequest",
+          "position": [850, 350],
+          "parameters": {
+            "method": "GET",
+            "url": "https://newsapi.org/v2/top-headlines",
+            "options": {}
+          }
+        },
+        {
+          "name": "Format Result",
+          "type": "n8n-nodes-base.function",
+          "position": [1050, 300],
+          "parameters": {
+            "functionCode": "const result = items[0].json;\nreturn [{\n  json: {\n    api: true,\n    service: result.service,\n    summary: `Connected to ${result.service} API`,\n    capabilitiesUsed: ['api']\n  }\n}];"
+          }
+        }
+      ]
+    },
+    {
+      "name": "File Operations Workflow",
+      "description": "Handle file uploads and processing",
+      "nodes": [
+        {
+          "name": "Trigger",
+          "type": "n8n-nodes-base.executeWorkflowTrigger",
+          "position": [250, 300]
+        },
+        {
+          "name": "Detect File Type",
+          "type": "n8n-nodes-base.function",
+          "position": [450, 300],
+          "parameters": {
+            "functionCode": "const message = items[0].json.message.toLowerCase();\nlet fileType = 'generic';\n\nif (message.includes('pdf')) fileType = 'pdf';\nif (message.includes('image') || message.includes('jpg') || message.includes('png')) fileType = 'image';\nif (message.includes('csv') || message.includes('excel')) fileType = 'spreadsheet';\n\nreturn [{\n  json: {\n    fileType,\n    message: items[0].json.message\n  }\n}];"
+          }
+        },
+        {
+          "name": "Process File",
+          "type": "n8n-nodes-base.switch",
+          "position": [650, 300],
+          "parameters": {
+            "dataPropertyName": "fileType",
+            "rules": {
+              "rules": [
+                {
+                  "output": 0,
+                  "conditions": {
+                    "conditions": [
+                      {
+                        "leftValue": "={{$json.fileType}}",
+                        "rightValue": "pdf",
+                        "operator": "equal"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "output": 1,
+                  "conditions": {
+                    "conditions": [
+                      {
+                        "leftValue": "={{$json.fileType}}",
+                        "rightValue": "image",
+                        "operator": "equal"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "PDF Processing",
+          "type": "n8n-nodes-base.function",
+          "position": [850, 250],
+          "parameters": {
+            "functionCode": "return [{\n  json: {\n    processed: true,\n    fileType: 'pdf',\n    summary: 'PDF processed successfully'\n  }\n}];"
+          }
+        },
+        {
+          "name": "Image Processing",
+          "type": "n8n-nodes-base.function",
+          "position": [850, 350],
+          "parameters": {
+            "functionCode": "return [{\n  json: {\n    processed: true,\n    fileType: 'image',\n    summary: 'Image processed successfully'\n  }\n}];"
+          }
+        },
+        {
+          "name": "Format Result",
+          "type": "n8n-nodes-base.function",
+          "position": [1050, 300],
+          "parameters": {
+            "functionCode": "const result = items[0].json;\nreturn [{\n  json: {\n    files: true,\n    fileType: result.fileType,\n    summary: result.summary,\n    capabilitiesUsed: ['files']\n  }\n}];"
+          }
+        }
+      ]
+    }
+  ],
+  "configuration": {
+    "baseUrl": "http://localhost:5678",
+    "webhookPath": "/webhook/felix-agent",
+    "apiKey": "YOUR_N8N_API_KEY",
+    "credentials": {
+      "openai": "YOUR_OPENAI_API_KEY",
+      "postgres": {
+        "host": "localhost",
+        "port": 5432,
+        "database": "felix_db",
+        "user": "felix",
+        "password": "YOUR_PASSWORD"
+      },
+      "weather": "YOUR_WEATHER_API_KEY",
+      "news": "YOUR_NEWS_API_KEY"
+    }
+  },
+  "setup_instructions": [
+    "1. Install N8n: npm install -g n8n",
+    "2. Start N8n: n8n start",
+    "3. Access N8n UI: http://localhost:5678",
+    "4. Import workflows from this JSON file",
+    "5. Configure credentials for each service",
+    "6. Activate workflows",
+    "7. Update felix-backend.js with your N8n URL",
+    "8. Test webhook endpoint: curl -X POST http://localhost:5678/webhook/felix-agent -H 'Content-Type: application/json' -d '{\"message\":\"Hello Felix!\"}'"
+  ]
+}

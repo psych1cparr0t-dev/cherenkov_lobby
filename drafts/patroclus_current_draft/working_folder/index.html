@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patroclus Industries | Cinematic Experience</title>
+    <style>
+        /* 
+        ===================================================================
+        CINEMATIC PATROCLUS EXPERIENCE
+        Style System: Frutiger Aero x Art Deco Sci-Fi
+        ===================================================================
+        */
+
+        @font-face {
+            font-family: 'Eurostile Extended';
+            src: local('Eurostile Extended'), local('EurostileExtended'), url('https://fonts.cdnfonts.com/s/14171/EurostileExtended.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.15);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --accent-gold: #D4AF37;
+            --accent-cyan: #00ffcc;
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+        }
+
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Eurostile Extended', 'Arial', sans-serif;
+            overflow: hidden;
+            background: #000;
+            /* Deep space black */
+            color: var(--text-primary);
+        }
+
+        /* =========================================
+           DIMENSIONAL PERMANENCE (Background Layer)
+           ========================================= */
+        #world-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%);
+        }
+
+        #world-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            /* Behind pattern, but visible */
+            opacity: 0.6;
+            /* Blend with gradient */
+        }
+
+        .background-pattern {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            transform: perspective(500px) rotateX(60deg);
+            animation: gridFlow 20s linear infinite;
+        }
+
+        @keyframes gridFlow {
+            0% {
+                transform: perspective(500px) rotateX(60deg) translateY(0);
+            }
+
+            100% {
+                transform: perspective(500px) rotateX(60deg) translateY(50px);
+            }
+        }
+
+        /* Whale & Dove Elements (Ported from backup.html) */
+        .whale {
+            position: absolute;
+            width: 400px;
+            height: 120px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            border-radius: 50%;
+            filter: blur(20px);
+            opacity: 0.3;
+            animation: whaleSwim 30s linear infinite;
+        }
+
+        @keyframes whaleSwim {
+            0% {
+                left: -500px;
+                top: 40%;
+            }
+
+            100% {
+                left: 100%;
+                top: 40%;
+            }
+        }
+
+        /* =========================================
+           FELIX CONCIERGE (3D Layer)
+           ========================================= */
+        #felix-container {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            width: 250px;
+            height: 300px;
+            z-index: 100;
+            transition: all 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        #felix-canvas {
+            width: 100%;
+            height: 100%;
+            /* Frutiger Aero Glass Orb Effect */
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05) 40%, transparent 70%);
+            border-radius: 50%;
+            box-shadow:
+                inset 0 0 20px rgba(255, 255, 255, 0.2),
+                0 0 30px rgba(0, 255, 204, 0.1);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+        }
+
+        #felix-container:hover {
+            transform: scale(1.05) translateY(-10px);
+            filter: drop-shadow(0 0 20px rgba(0, 255, 204, 0.4));
+        }
+
+        /* =========================================
+           CHAT INTERFACE (UI Layer)
+           ========================================= */
+        #chat-interface {
+            position: fixed;
+            bottom: 360px;
+            right: 40px;
+            width: 400px;
+            height: 500px;
+            z-index: 99;
+
+            /* Glassmorphism Base */
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+
+            /* Art Deco Geometry */
+            clip-path: polygon(0 20px, 20px 0,
+                    100% 0, 100% calc(100% - 20px),
+                    calc(100% - 20px) 100%, 0 100%);
+
+            display: none;
+            /* Hidden by default */
+            flex-direction: column;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+        }
+
+        #chat-interface.active {
+            display: flex;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Art Deco Gold Border Overlay */
+        .deco-border {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            border: 1px solid var(--accent-gold);
+            opacity: 0.3;
+            clip-path: polygon(0 20px, 20px 0,
+                    100% 0, 100% calc(100% - 20px),
+                    calc(100% - 20px) 100%, 0 100%);
+            z-index: 101;
+        }
+
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-title {
+            font-size: 18px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #fff, var(--accent-gold));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .message.felix {
+            align-self: flex-start;
+            background: rgba(0, 255, 204, 0.1);
+            border-left: 2px solid var(--accent-cyan);
+            border-top-left-radius: 0;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: rgba(212, 175, 55, 0.1);
+            border-right: 2px solid var(--accent-gold);
+            border-top-right-radius: 0;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px 15px;
+            color: #fff;
+            font-family: 'Eurostile Extended', sans-serif;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-cyan);
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--accent-cyan), #0088cc);
+            border: none;
+            border-radius: 8px;
+            padding: 0 20px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Loading Indicator */
+        .typing-indicator {
+            font-size: 12px;
+            padding-top: 10px;
+        }
+
+        /* =========================================
+           SPA LAYOUT & NAVIGATION
+           ========================================= */
+        nav {
+            position: fixed;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 500;
+            display: flex;
+            gap: 20px;
+            padding: 15px 30px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        nav button {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-family: 'Eurostile Extended', sans-serif;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 0;
+        }
+
+        nav button:hover,
+        nav button.active {
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px var(--accent-cyan);
+            transform: scale(1.1);
+        }
+
+        #content-viewport {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            /* Above world, below Felix */
+            pointer-events: none;
+            /* Let clicks pass to world if no content */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease;
+        }
+
+        .page {
+            pointer-events: auto;
+            text-align: center;
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(5px);
+            border-radius: 20px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: pageFadeIn 0.5s forwards;
+        }
+
+        @keyframes pageFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            background: linear-gradient(180deg, #fff, #aaa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+    </style>
+
+</head>
+
+<body>
+    < !-- Background Layer -->
+        <div id="world-layer"><canvas id="world-canvas"></canvas>
+            <div class="background-pattern"></div>
+            <div class="whale"></div>
+        </div>
+        < !-- Navigation -->
+            <nav><button onclick="navigateTo('home')" class="active">Home</button><button
+                    onclick="navigateTo('about')">About</button><button
+                    onclick="navigateTo('gallery')">Gallery</button><button
+                    onclick="navigateTo('contact')">Contact</button></nav>
+            < !-- Content Viewport -->
+                <div id="content-viewport">
+                    < !-- Initial Content injected by JS -->
+                </div>
+                < !-- Felix 3D Container -->
+                    <div id="felix-container" onclick="toggleChat()"><canvas id="felix-canvas"></canvas></div>
+                    < !-- Chat Interface -->
+                        <div id="chat-interface">
+                            <div class="deco-border"></div>
+                            <div class="chat-header">
+                                <div class="chat-title">Felix Concierge</div>
+                                <div style="cursor: pointer;" onclick="toggleChat()">✕</div>
+                            </div>
+                            <div class="chat-messages" id="messages">
+                                <div class="message felix">Greetings. I am Felix. I have been upgraded with the Gemini
+                                    1.5 neural architecture. How may I assist your design journey today? </div>
+                            </div>
+                            <div class="typing-indicator" id="typing-indicator">Scanning latent space...</div>
+                            <div class="chat-input-area"><input type="text" id="user-input"
+                                    placeholder="Enter command or query..." onkeypress="handleKeyPress(event)"><button
+                                    onclick="sendMessage()">TRANSMIT</button></div>
+                        </div>
+                        < !-- Neural Link (Login) Modal -->
+                            <div id="neural-link-modal">
+                                <div class="modal-content">
+                                    <div class="deco-border"></div>
+                                    <h2>ESTABLISH NEURAL LINK</h2>
+                                    <p>Enter Google Gemini API Key to initialize Felix.</p>
+                                    <div class="input-group"><input type="password" id="api-key-input"
+                                            placeholder="sk-..." autocomplete="off"></div>
+                                    <p class="security-note"><span style="color: var(--accent-gold);">⚠ SECURITY
+                                            PROTOCOL:</span>Key is processed locally in your browser. It is never sent
+                                        to our servers. For production,
+                                        this will be replaced by a secure cloud proxy. </p><button
+                                        onclick="initializeNeuralLink()">CONNECT</button>
+                                </div>
+                            </div>
+                            < !-- Scripts -->
+                                <script
+                                    src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r150/three.min.js"></script>
+                                <script
+                                    src="https://cdn.jsdelivr.net/npm/three@0.150.0/examples/js/loaders/GLTFLoader.js"></script>
+                                < !-- Import Gemini Backend -->
+                                    <script type="module">import GeminiConcierge from './gemini-concierge.js';
+
+                                        let felixAI = null;
+
+                                        // Expose initialization to global scope
+                                        window.initializeNeuralLink = function () {
+                                            const input = document.getElementById('api-key-input');
+                                            const apiKey = input.value.trim();
+                                            const modal = document.getElementById('neural-link-modal');
+
+                                            if (apiKey) {
+                                                felixAI = new GeminiConcierge(apiKey);
+
+                                                felixAI.initialize().then(success => {
+                                                    if (success) {
+                                                        modal.style.opacity = '0';
+                                                        setTimeout(() => modal.style.display = 'none', 500);
+                                                        addMessage("felix", "Neural Link Established. Systems Online.");
+                                                    }
+
+                                                    else {
+                                                        alert("Connection Failed. Please check your API Key.");
+                                                    }
+                                                });
+                                            }
+
+                                            else {
+                                                alert("API Key required for neural handshake.");
+                                            }
+                                        }
+
+                                            ;
+
+                                        // Expose to global scope for UI interaction
+                                        window.sendMessage = async function () {
+                                            const input = document.getElementById('user-input');
+                                            const text = input.value.trim();
+                                            if (!text) return;
+
+                                            // Add User Message
+                                            addMessage("user", text);
+                                            input.value = '';
+
+                                            // Show Typing
+                                            const indicator = document.getElementById('typing-indicator');
+                                            indicator.classList.add('active');
+
+                                            if (felixAI) {
+                                                const response = await felixAI.sendMessage(text);
+                                                indicator.classList.remove('active');
+                                                addMessage("felix", response.text);
+                                            }
+
+                                            else {
+                                                setTimeout(() => {
+                                                    indicator.classList.remove('active');
+                                                    addMessage("felix", "Neural Link Disconnected. Please refresh to reconnect.");
+                                                }
+
+                                                    , 1000);
+                                            }
+                                        }
+
+                                            ;
+
+                                        window.handleKeyPress = function (e) {
+                                            if (e.key === 'Enter') window.sendMessage();
+                                        }
+
+                                            ;
+
+                                        function addMessage(role, text) {
+                                            const container = document.getElementById('messages');
+                                            const div = document.createElement('div');
+
+                                            div.className = `message $ {
+                role
+            }
+
+            `;
+                                            div.textContent = text;
+                                            container.appendChild(div);
+                                            container.scrollTop = container.scrollHeight;
+                                        }
+
+                                    </script>
+                                    < !-- 3D Scene Logic (Felix) -->
+                                        <script> // Basic Three.js Setup for Felix
+                                            const felixCanvas = document.getElementById('felix-canvas');
+                                            const felixScene = new THREE.Scene();
+                                            const felixCamera = new THREE.PerspectiveCamera(45, felixCanvas.clientWidth / felixCanvas.clientHeight, 0.1, 1000);
+
+                                            const felixRenderer = new THREE.WebGLRenderer({
+                                                canvas: felixCanvas, alpha: true, antialias: true
+                                            });
+
+                                            felixRenderer.setSize(felixCanvas.clientWidth, felixCanvas.clientHeight);
+                                            felixCamera.position.z = 5;
+
+                                            // Lights
+                                            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+                                            felixScene.add(ambientLight);
+                                            const pointLight = new THREE.PointLight(0x00ffcc, 1);
+                                            pointLight.position.set(5, 5, 5);
+                                            felixScene.add(pointLight);
+
+                                            // Placeholder Geometry (until GLB loads)
+                                            const geometry = new THREE.IcosahedronGeometry(1, 1);
+
+                                            const material = new THREE.MeshPhongMaterial({
+                                                color: 0x00ffcc,
+                                                wireframe: true,
+                                                emissive: 0x0044aa
+                                            });
+                                            const orb = new THREE.Mesh(geometry, material);
+                                            felixScene.add(orb);
+
+                                            // Animation Loop
+                                            function animateFelix() {
+                                                requestAnimationFrame(animateFelix);
+                                                orb.rotation.x += 0.005;
+                                                orb.rotation.y += 0.01;
+                                                felixRenderer.render(felixScene, felixCamera);
+                                            }
+
+                                            animateFelix();
+
+                                            // UI Toggle
+                                            window.toggleChat = function () {
+                                                const chat = document.getElementById('chat-interface');
+                                                chat.classList.toggle('active');
+                                            }
+
+                                            // Handle Resize
+                                            window.addEventListener('resize', () => {
+                                                felixCamera.aspect = felixCanvas.clientWidth / felixCanvas.clientHeight;
+                                                felixCamera.updateProjectionMatrix();
+                                                felixRenderer.setSize(felixCanvas.clientWidth, felixCanvas.clientHeight);
+                                            });
+                                        </script>
+                                        < !-- 3D Scene Logic (World/Whale) -->
+                                            <script> // Setup World Canvas
+                                                const worldCanvas = document.getElementById('world-canvas');
+                                                const worldScene = new THREE.Scene();
+                                                worldScene.fog = new THREE.FogExp2(0x000000, 0.02); // Match background
+
+                                                const worldCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                                                worldCamera.position.z = 20;
+
+                                                const worldRenderer = new THREE.WebGLRenderer({
+                                                    canvas: worldCanvas, alpha: true, antialias: true
+                                                });
+                                                worldRenderer.setSize(window.innerWidth, window.innerHeight);
+
+                                                // World Lights
+                                                const worldAmbient = new THREE.AmbientLight(0x404040);
+                                                worldScene.add(worldAmbient);
+                                                const worldDirLight = new THREE.DirectionalLight(0xffffff, 1);
+                                                worldDirLight.position.set(10, 10, 10);
+                                                worldScene.add(worldDirLight);
+
+                                                // WHALE CONSTRUCT
+                                                const whaleGroup = new THREE.Group();
+
+                                                // Body
+                                                const bodyGeo = new THREE.CapsuleGeometry(1, 4, 4, 8);
+
+                                                const bodyMat = new THREE.MeshPhongMaterial({
+                                                    color: 0x00aaff,
+                                                    shininess: 100,
+                                                    transparent: true,
+                                                    opacity: 0.8
+                                                });
+                                                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                                                body.rotation.z = Math.PI / 2;
+                                                whaleGroup.add(body);
+
+                                                // Tail
+                                                const tailGeo = new THREE.ConeGeometry(0.8, 2, 32);
+                                                const tail = new THREE.Mesh(tailGeo, bodyMat);
+                                                tail.position.x = -2.5;
+                                                tail.rotation.z = Math.PI / 2;
+                                                whaleGroup.add(tail);
+
+                                                // Fins
+                                                const finGeo = new THREE.BoxGeometry(1, 0.2, 2);
+                                                const fin = new THREE.Mesh(finGeo, bodyMat);
+                                                fin.position.x = 1;
+                                                whaleGroup.add(fin);
+
+                                                worldScene.add(whaleGroup);
+
+                                                // PARTICLES (Plankton)
+                                                const particlesGeo = new THREE.BufferGeometry();
+                                                const particlesCount = 1000;
+                                                const posArray = new Float32Array(particlesCount * 3);
+
+                                                for (let i = 0; i < particlesCount * 3; i++) {
+                                                    posArray[i] = (Math.random() - 0.5) * 100;
+                                                }
+
+                                                particlesGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+                                                const particlesMat = new THREE.PointsMaterial({
+                                                    size: 0.1, color: 0xffffff
+                                                });
+                                                const particles = new THREE.Points(particlesGeo, particlesMat);
+                                                worldScene.add(particles);
+
+                                                // MOVEMENT LOGIC (Catmull-Rom Spline Path)
+                                                const curve = new THREE.CatmullRomCurve3([new THREE.Vector3(-10, 0, 0),
+                                                new THREE.Vector3(-5, 5, -5),
+                                                new THREE.Vector3(0, 0, -10),
+                                                new THREE.Vector3(5, -5, -5),
+                                                new THREE.Vector3(10, 0, 0),
+                                                new THREE.Vector3(5, 5, 5),
+                                                new THREE.Vector3(0, 0, 10),
+                                                new THREE.Vector3(-5, -5, 5)]);
+                                                curve.closed = true;
+
+                                                // Animation Loop
+                                                let progress = 0;
+                                                const speed = 0.0005;
+
+                                                function animateWorld() {
+                                                    requestAnimationFrame(animateWorld);
+
+                                                    // Update Whale Position
+                                                    progress += speed;
+                                                    if (progress > 1) progress = 0;
+
+                                                    const position = curve.getPoint(progress);
+                                                    whaleGroup.position.copy(position);
+
+                                                    const lookAtPos = curve.getPoint((progress + 0.01) % 1);
+                                                    whaleGroup.lookAt(lookAtPos);
+                                                    whaleGroup.rotation.z += Math.sin(Date.now() * 0.002) * 0.1;
+
+                                                    // Rotate particles
+                                                    particles.rotation.y += 0.0005;
+
+                                                    worldRenderer.render(worldScene, worldCamera);
+                                                }
+
+                                                animateWorld();
+
+                                                // Handle Resize for World
+                                                window.addEventListener('resize', () => {
+                                                    worldCamera.aspect = window.innerWidth / window.innerHeight;
+                                                    worldCamera.updateProjectionMatrix();
+                                                    worldRenderer.setSize(window.innerWidth, window.innerHeight);
+                                                });
+
+                                            </script>
+                                            < !-- SPA Router Logic -->
+                                                <script>const pages = {
+                                                        'home': ` <div class="page" > <h1>PATROCLUS INDUSTRIES</h1> <p>Architecting the dreams of tomorrow with the precision of yesterday.</p> <p style="font-size: 14px; margin-top: 20px; color: var(--accent-cyan);" >EST. 2025 // FRUTIGER AERO DIVISION</p>
+                </div> `,
+                                                        'about': ` <div class="page" > <h1>OUR MISSION</h1> <p>We explore the intersection of "Daydream Computation" and "Cinematic Cohesion." </p> <p>Our goal is to revive the imaginative playground of the early web using agentic intelligence.</p> </div> `,
+                                                        'gallery': ` <div class="page" > <h1>LATENT SPACE ARCHIVE</h1> <p>Scanning for artifacts...</p> <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px;" > <div style="height: 100px; background: rgba(255,255,255,0.1); border: 1px solid var(--accent-gold);" ></div> <div style="height: 100px; background: rgba(255,255,255,0.1); border: 1px solid var(--accent-gold);" ></div> <div style="height: 100px; background: rgba(255,255,255,0.1); border: 1px solid var(--accent-gold);" ></div> </div> </div> `,
+                                                        'contact': ` <div class="page" > <h1>ESTABLISH UPLINK</h1> <p>Signal frequency open.</p> <p>contact@patroclus.industries</p> </div> `
+                                                    }
+
+                                                        ;
+
+                                                    window.navigateTo = function (pageId) {
+                                                        const viewport = document.getElementById('content-viewport');
+                                                        const buttons = document.querySelectorAll('nav button');
+
+                                                        // Update Active State
+                                                        buttons.forEach(btn => btn.classList.remove('active'));
+                                                        event.target.classList.add('active');
+
+                                                        // Transition
+                                                        viewport.style.opacity = '0';
+
+                                                        setTimeout(() => {
+                                                            viewport.innerHTML = pages[pageId] || pages['home'];
+                                                            viewport.style.opacity = '1';
+
+                                                            // Notify Felix (Optional Integration)
+                                                            if (window.felixAI) {
+
+                                                                // We could trigger a Felix comment here
+                                                                console.log(`Felix observes navigation to: $ {
+                                pageId
+                            }
+
+                            `);
+                                                            }
+                                                        }
+
+                                                            , 300);
+                                                    }
+
+                                                        ;
+
+                                                    // Initialize Home
+                                                    document.getElementById('content-viewport').innerHTML = pages['home'];
+                                                </script>
+</body>
+
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patroclus Gemini API Test</title>
+    <meta name="gemini-api-key" content="AIzaSyDtM2ZYPsXWFJ59-NFoxNgChT5rXkNDf1E">
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(41, 98, 255, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(41, 98, 255, 0.3);
+        }
+        .test-button {
+            background: rgba(41, 98, 255, 0.7);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 10px 5px;
+            font-family: inherit;
+        }
+        .test-button:hover {
+            background: rgba(41, 98, 255, 1);
+        }
+        .result {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 3px solid #4CAF50;
+        }
+        .error {
+            border-left: 3px solid #F44336;
+        }
+        .loading {
+            border-left: 3px solid #FF9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🏛️ Patroclus Gemini API Test Suite</h1>
+        <p>Testing the Gemini API integration for the Patroclus Industries Concierge</p>
+        
+        <div class="test-section">
+            <h3>API Connectivity Tests</h3>
+            <button class="test-button" onclick="testApiKey()">Test API Key</button>
+            <button class="test-button" onclick="testBasicQuery()">Test Basic Query</button>
+            <button class="test-button" onclick="testConciergePersonality()">Test Concierge Personality</button>
+            <button class="test-button" onclick="testWebsiteContext()">Test Website Context</button>
+        </div>
+        
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_KEY = document.querySelector('meta[name="gemini-api-key"]').getAttribute('content');
+        const API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+        
+        function addResult(message, type = 'result') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong><br>${message}`;
+            resultsDiv.appendChild(resultDiv);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+        
+        async function callGeminiAPI(prompt, systemPrompt = '') {
+            const requestBody = {
+                contents: [
+                    {
+                        parts: [
+                            { text: systemPrompt + prompt }
+                        ]
+                    }
+                ],
+                generationConfig: {
+                    temperature: 0.7,
+                    topP: 0.8,
+                    topK: 40,
+                    maxOutputTokens: 200
+                }
+            };
+            
+            const response = await fetch(`${API_BASE_URL}?key=${API_KEY}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestBody)
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status} ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            return data.candidates[0]?.content?.parts[0]?.text || 'No response generated';
+        }
+        
+        async function testApiKey() {
+            addResult('Testing API key validity...', 'loading');
+            
+            try {
+                const response = await callGeminiAPI('Hello! Please respond with "API test successful"');
+                addResult(`✅ API Key Valid!<br>Response: ${response}`);
+            } catch (error) {
+                addResult(`❌ API Key Test Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testBasicQuery() {
+            addResult('Testing basic query handling...', 'loading');
+            
+            try {
+                const response = await callGeminiAPI('What is 2 + 2?');
+                addResult(`✅ Basic Query Successful!<br>Response: ${response}`);
+            } catch (error) {
+                addResult(`❌ Basic Query Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testConciergePersonality() {
+            addResult('Testing concierge personality...', 'loading');
+            
+            const systemPrompt = `You are the Patroclus Industries Concierge, a gracious and professional first contact for visitors. 
+            You embody "Dimensional Permanence" and "Compassionate Precision" principles.
+            Respond professionally and helpfully. `;
+            
+            try {
+                const response = await callGeminiAPI('Hello! I\'m new to Patroclus Industries. Can you help me?', systemPrompt);
+                addResult(`✅ Concierge Personality Test Successful!<br>Response: ${response}`);
+            } catch (error) {
+                addResult(`❌ Personality Test Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testWebsiteContext() {
+            addResult('Testing website context awareness...', 'loading');
+            
+            const systemPrompt = `You are the Patroclus Industries Concierge. 
+            Our website features temple-themed experiences with 3D mathematical models, interactive diagrams, and immersive audio.
+            Help visitors navigate these features professionally. `;
+            
+            try {
+                const response = await callGeminiAPI('I want to explore the temple scenes and mathematical models. Where should I start?', systemPrompt);
+                addResult(`✅ Website Context Test Successful!<br>Response: ${response}`);
+            } catch (error) {
+                addResult(`❌ Context Test Failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-run basic API test on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                addResult('🏛️ Patroclus Concierge API Test Suite Initialized<br>API Key: ' + API_KEY.substring(0, 10) + '...<br>Ready for testing!');
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

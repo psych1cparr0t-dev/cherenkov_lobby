@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Whale – Minimal Three.js</title>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background: #000;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r150/three.min.js"></script>
+    <script>
+        // Basic scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, innerWidth / innerHeight, 0.1, 200);
+        camera.position.set(0, 5, 30);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(innerWidth, innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lights
+        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambient);
+        const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+        dir.position.set(10, 20, 10);
+        scene.add(dir);
+
+        // Whale group (simple cylinder body)
+        const whale = new THREE.Group();
+        const bodyGeo = new THREE.CylinderGeometry(1, 1, 4, 8);
+        const bodyMat = new THREE.MeshPhongMaterial({ color: 0x00aaff, transparent: true, opacity: 0.85 });
+        const body = new THREE.Mesh(bodyGeo, bodyMat);
+        body.rotation.z = Math.PI / 2;
+        whale.add(body);
+        // Tail (cone)
+        const tailGeo = new THREE.ConeGeometry(0.8, 2, 32);
+        const tail = new THREE.Mesh(tailGeo, bodyMat);
+        tail.position.x = -2.5;
+        tail.rotation.z = Math.PI / 2;
+        whale.add(tail);
+        // Fin (box)
+        const finGeo = new THREE.BoxGeometry(1, 0.2, 2);
+        const fin = new THREE.Mesh(finGeo, bodyMat);
+        fin.position.x = 1;
+        whale.add(fin);
+        scene.add(whale);
+
+        // Simple particle field
+        const particlesCount = 800;
+        const particlesGeo = new THREE.BufferGeometry();
+        const positions = new Float32Array(particlesCount * 3);
+        for (let i = 0; i < particlesCount * 3; i++) positions[i] = (Math.random() - 0.5) * 80;
+        particlesGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const particlesMat = new THREE.PointsMaterial({ size: 0.2, color: 0xffffff });
+        const particles = new THREE.Points(particlesGeo, particlesMat);
+        scene.add(particles);
+
+        // Spline path for whale movement
+        const curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(-20, 0, 0), new THREE.Vector3(-10, 5, -5), new THREE.Vector3(0, 0, -10),
+            new THREE.Vector3(10, -5, -5), new THREE.Vector3(20, 0, 0), new THREE.Vector3(10, 5, 5),
+            new THREE.Vector3(0, 0, 10), new THREE.Vector3(-10, -5, 5)
+        ]);
+        curve.closed = true;
+        let progress = 0;
+        const speed = 0.0006;
+        function animate() {
+            requestAnimationFrame(animate);
+            progress = (progress + speed) % 1;
+            const pos = curve.getPoint(progress);
+            whale.position.copy(pos);
+            const look = curve.getPoint((progress + 0.01) % 1);
+            whale.lookAt(look);
+            whale.rotation.z += Math.sin(Date.now() * 0.002) * 0.05;
+            particles.rotation.y += 0.0003;
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+    </script>
+</body>
+
+</html>
