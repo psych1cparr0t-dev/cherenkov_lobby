@@ -42,6 +42,7 @@ const CARDS = [
     "Is there anything else?",
     "My pleasure.",
     "Done.",
+    "?",
 ];
 
 // ─── Tool Definitions ─────────────────────────────────────────────────────────
