@@ -11,19 +11,9 @@
     'use strict';
 
     const TILE = 7;     // must match veil_mosaic currentBlockSize
-    const RADIUS = 56;    // disturbance radius in px (~8 blocks)
+    const RADIUS = 19;    // disturbance radius in px
     const DECAY = 0.84;  // spin friction per frame
     const MAX_SPIN = 0.28;  // max rad/frame
-    const SND_MIN = 0.05;  // spin threshold to trigger sound
-    const SND_CD = 220;   // ms cooldown per tile
-    const MAX_SND = 8;     // max new sounds per frame
-
-    const SCALE_HZ = [
-        65.41, 73.42, 82.41, 98.00, 110.00,
-        130.81, 146.83, 164.81, 196.00, 220.00,
-        261.63, 293.66, 329.63, 392.00, 440.00,
-        523.25, 587.33, 659.25, 784.00, 880.00,
-    ];
 
     // ─── State ────────────────────────────────────────────────────────────────
     let overlay, oCtx;
@@ -33,7 +23,6 @@
     let activeTiles = new Set();   // only active tiles rendered
     let gridCols = 0, gridRows = 0;
     let mouse = { x: -9999, y: -9999, vx: 0, vy: 0 };
-    let audioCtx = null;
     let colorMap = null;
     let lastColorSample = 0;
 
@@ -87,50 +76,6 @@
         return [colorMap[i], colorMap[i + 1], colorMap[i + 2]];
     }
 
-    // ─── Color → pitch ────────────────────────────────────────────────────────
-    function rgbToHue(r, g, b) {
-        r /= 255; g /= 255; b /= 255;
-        const max = Math.max(r, g, b), min = Math.min(r, g, b);
-        if (max === min) return 180;
-        const d = max - min;
-        let h;
-        switch (max) {
-            case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
-            case g: h = ((b - r) / d + 2) / 6; break;
-            default: h = ((r - g) / d + 4) / 6;
-        }
-        return h * 360;
-    }
-
-    function hueToFreq(h) {
-        return SCALE_HZ[Math.floor(h / 360 * SCALE_HZ.length) % SCALE_HZ.length];
-    }
-
-    // ─── Audio ────────────────────────────────────────────────────────────────
-    function ensureAudio() {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-    }
-
-    function playPluck(freq, strength) {
-        if (!audioCtx) return;
-        const t = audioCtx.currentTime;
-        const vol = Math.min(0.15, 0.04 + strength * 0.18);
-        const osc = audioCtx.createOscillator();
-        osc.type = 'triangle';
-        osc.frequency.value = freq;
-        osc.detune.value = (Math.random() - 0.5) * 18;
-        const filt = audioCtx.createBiquadFilter();
-        filt.type = 'lowpass';
-        filt.frequency.value = 2800;
-        const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(vol, t + 0.006);
-        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-        osc.connect(filt); filt.connect(gain); gain.connect(audioCtx.destination);
-        osc.start(t); osc.stop(t + 0.20);
-    }
-
     // ─── Render + physics ─────────────────────────────────────────────────────
     function tick() {
         requestAnimationFrame(tick);
@@ -146,8 +91,6 @@
 
         const veilVisible = veilCanvas &&
             parseFloat(veilCanvas.style.opacity || '0') > 0.01;
-
-        let soundsThisFrame = 0;
 
         // Disturb tiles near cursor
         if (speed > 0.5) {
@@ -169,16 +112,6 @@
                 if (!tile.active) {
                     tile.active = true;
                     activeTiles.add(tile);
-                }
-
-                if (soundsThisFrame < MAX_SND &&
-                    Math.abs(tile.spinVel) > SND_MIN &&
-                    now - tile.lastSound > SND_CD) {
-                    ensureAudio();
-                    const [r, g, b] = tileRGB(tile);
-                    playPluck(hueToFreq(rgbToHue(r, g, b)), strength);
-                    tile.lastSound = now;
-                    soundsThisFrame++;
                 }
             });
         }
