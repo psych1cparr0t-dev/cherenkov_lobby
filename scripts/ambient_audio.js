@@ -1,62 +1,59 @@
 /**
- * ambient_audio.js — Liminal Veil Pixel Ambience
+ * ambient_audio.js — Liminal Veil Pixel Ambience v2
  *
- * Inspired by science museum sound installations (Exploratorium, etc.)
- * Each block in the Liminal Veil mosaic that changes color triggers a
- * soft, sustained sine tone mapped to a pentatonic scale.
- * A slow LFO breathes the master volume in and out.
- *
- * Starts on first user interaction (browser autoplay policy).
+ * Clear pixel → sound mapping:
+ * - Selects the single most-changed block per sample cycle
+ * - Fast 40ms attack so you hear it *right when* the block changes
+ * - Stereo panning = block X position (left block → left ear)
+ * - Brief visual flash on the triggering block
+ * - Short notes (no wash) + light reverb tail
+ * - Slow LFO breathes master volume
  */
 
 (function () {
     'use strict';
 
     // ─── Musical config ──────────────────────────────────────────────────────
-    // C major pentatonic across 3 octaves (ethereal, no dissonance possible)
     const SCALE_HZ = [
-        130.81, 146.83, 164.81, 196.00, 220.00,  // C3 penta
-        261.63, 293.66, 329.63, 392.00, 440.00,  // C4 penta
-        523.25, 587.33, 659.25, 784.00, 880.00,  // C5 penta
+        261.63, 293.66, 329.63, 392.00, 440.00,   // C4 pentatonic
+        523.25, 587.33, 659.25, 784.00, 880.00,   // C5 pentatonic
     ];
 
     const CFG = {
-        gridCols: 12,
-        gridRows: 7,
-        sampleInterval: 220,      // ms between canvas samples
-        changeThreshold: 18,      // pixel delta to trigger note
-        maxNotesPerCycle: 3,      // cap simultaneous new notes per sample
-        noteGain: 0.07,           // per-note volume
-        attack: 2.0,              // note attack seconds
-        release: 3.0,             // note release seconds
-        reverbDuration: 5.0,      // reverb tail seconds
-        reverbDecay: 3.5,
-        reverbMix: 0.6,           // wet/dry ratio
-        breathFreq: 0.055,        // LFO Hz  (~18s per breath)
-        breathDepth: 0.07,        // LFO gain depth
-        masterBase: 0.12,         // base master gain
-        minSaturation: 0.06,      // ignore near-grey pixels
-        opacityGate: 0.08,        // only play when mosaic is this visible
+        gridCols: 8,
+        gridRows: 5,
+        sampleMs: 160,          // how often to check blocks
+        threshold: 22,          // min color delta to trigger
+        noteGain: 0.22,         // per-note loudness
+        attack: 0.04,           // 40ms — immediate
+        hold: 0.12,             // sustain hold
+        release: 0.55,          // quick decay
+        reverbMix: 0.18,        // light reverb — spatial not washy
+        reverbDur: 2.5,
+        breathHz: 0.048,        // one breath per ~21s
+        breathDepth: 0.06,
+        masterBase: 0.20,
+        minSat: 0.07,
+        flashDur: 240,          // visual flash duration ms
+        opacityGate: 0.06,
     };
 
     // ─── State ───────────────────────────────────────────────────────────────
-    let audioCtx = null;
-    let masterGain = null;
-    let lfo = null;
+    let audioCtx, masterGain, reverbSend, lfo;
     let initialized = false;
-    const prevColors = {};
+    let prevColors = {};
     let sampleCanvas, sampleCtx2d;
+    let flashCanvas, flashCtx;
     let sampleTimer = null;
 
-    // ─── Reverb ──────────────────────────────────────────────────────────────
+    // ─── Reverb builder ──────────────────────────────────────────────────────
     function buildImpulse(ctx, dur, decay) {
         const len = Math.floor(ctx.sampleRate * dur);
         const buf = ctx.createBuffer(2, len, ctx.sampleRate);
         for (let ch = 0; ch < 2; ch++) {
             const d = buf.getChannelData(ch);
-            for (let i = 0; i < len; i++) {
+            for (let i = 0; i < len; i++)
                 d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
-            }
         }
         return buf;
     }
@@ -80,108 +77,158 @@
     }
 
     function hslToFreq(h, l) {
-        // hue → scale degree (wrap 0–360 across all scale notes)
         const deg = Math.floor((h / 360) * SCALE_HZ.length) % SCALE_HZ.length;
-        // brightness shifts up an octave at high lightness
-        const octMul = l > 0.65 ? 2 : 1;
-        return SCALE_HZ[deg] * octMul;
+        return SCALE_HZ[deg] * (l > 0.6 ? 2 : 1);
     }
 
-    // ─── Note player ─────────────────────────────────────────────────────────
-    function playNote(freq, reverbSend) {
+    // ─── Note player (with stereo pan) ───────────────────────────────────────
+    function playNote(freq, pan) {
         if (!audioCtx) return;
         const now = audioCtx.currentTime;
 
         const osc = audioCtx.createOscillator();
-        osc.type = 'sine';
+        osc.type = 'triangle';     // more character than sine
         osc.frequency.value = freq;
-        // Subtle detune for warmth
-        osc.detune.value = (Math.random() - 0.5) * 6;
+        osc.detune.value = (Math.random() - 0.5) * 5;
+
+        const panner = audioCtx.createStereoPanner();
+        panner.pan.value = Math.max(-1, Math.min(1, pan));
 
         const filter = audioCtx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.value = 1400;
-        filter.Q.value = 0.4;
+        filter.frequency.value = 2200;
+        filter.Q.value = 0.6;
 
         const gain = audioCtx.createGain();
+        const total = CFG.attack + CFG.hold + CFG.release;
         gain.gain.setValueAtTime(0, now);
         gain.gain.linearRampToValueAtTime(CFG.noteGain, now + CFG.attack);
-        gain.gain.setTargetAtTime(0, now + CFG.attack, CFG.release * 0.6);
+        gain.gain.setValueAtTime(CFG.noteGain, now + CFG.attack + CFG.hold);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + total);
 
         osc.connect(filter);
-        filter.connect(gain);
+        filter.connect(panner);
+        panner.connect(gain);
         gain.connect(masterGain);
-        gain.connect(reverbSend); // also send to reverb
+
+        // Reverb send (also panned)
+        const rvPan = audioCtx.createStereoPanner();
+        rvPan.pan.value = pan * 0.5;
+        gain.connect(rvPan);
+        rvPan.connect(reverbSend);
 
         osc.start(now);
-        osc.stop(now + CFG.attack + CFG.release + 0.5);
+        osc.stop(now + total + 0.1);
     }
 
-    // ─── Canvas sampler ──────────────────────────────────────────────────────
+    // ─── Visual flash overlay ────────────────────────────────────────────────
+    function ensureFlashCanvas() {
+        if (flashCanvas) return;
+        const veil = document.getElementById('veil-canvas');
+        if (!veil) return;
+
+        flashCanvas = document.createElement('canvas');
+        flashCanvas.style.cssText = `
+      position: absolute; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 2;
+    `;
+        flashCanvas.width = veil.offsetWidth || innerWidth;
+        flashCanvas.height = veil.offsetHeight || innerHeight;
+        flashCtx = flashCanvas.getContext('2d');
+        veil.parentElement.appendChild(flashCanvas);
+    }
+
+    function flashBlock(col, row) {
+        ensureFlashCanvas();
+        if (!flashCtx) return;
+
+        const cw = flashCanvas.width, ch = flashCanvas.height;
+        const bw = cw / CFG.gridCols, bh = ch / CFG.gridRows;
+        const x = col * bw, y = row * bh;
+
+        // Draw bright flash rect
+        flashCtx.clearRect(x - 2, y - 2, bw + 4, bh + 4);
+        flashCtx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+        flashCtx.fillRect(x, y, bw, bh);
+
+        // Fade it out
+        const start = performance.now();
+        function fade(ts) {
+            const t = (ts - start) / CFG.flashDur;
+            if (t >= 1) { flashCtx.clearRect(x - 2, y - 2, bw + 4, bh + 4); return; }
+            flashCtx.clearRect(x - 2, y - 2, bw + 4, bh + 4);
+            flashCtx.fillStyle = `rgba(255, 255, 255, ${0.75 * (1 - t)})`;
+            flashCtx.fillRect(x, y, bw, bh);
+            requestAnimationFrame(fade);
+        }
+        requestAnimationFrame(fade);
+    }
+
+    // ─── Sampler ─────────────────────────────────────────────────────────────
     function sample() {
         if (!initialized) return;
 
         const veilCanvas = document.getElementById('veil-canvas');
         if (!veilCanvas) return;
 
-        // Gate: only play when mosaic is visible
         const opacity = parseFloat(veilCanvas.style.opacity || '0');
         if (opacity < CFG.opacityGate) return;
 
-        // Also fade master gain with mosaic opacity for extra coherence
+        // Breathe master gain with mosaic opacity
         if (masterGain) {
-            const target = CFG.masterBase * Math.min(opacity / 0.5, 1);
-            masterGain.gain.setTargetAtTime(target, audioCtx.currentTime, 1.5);
+            const target = CFG.masterBase * Math.min(opacity / 0.45, 1);
+            masterGain.gain.setTargetAtTime(target, audioCtx.currentTime, 2.0);
         }
 
         try {
             sampleCtx2d.drawImage(veilCanvas, 0, 0, CFG.gridCols, CFG.gridRows);
-            const pixels = sampleCtx2d.getImageData(0, 0, CFG.gridCols, CFG.gridRows).data;
-            let noteCount = 0;
+            const px = sampleCtx2d.getImageData(0, 0, CFG.gridCols, CFG.gridRows).data;
 
+            // Find single most-changed block
+            let bestDelta = 0, bestIdx = -1;
             for (let i = 0; i < CFG.gridCols * CFG.gridRows; i++) {
-                if (noteCount >= CFG.maxNotesPerCycle) break;
-
                 const p = i * 4;
-                const r = pixels[p], g = pixels[p + 1], b = pixels[p + 2];
+                const r = px[p], g = px[p + 1], b = px[p + 2];
                 const prev = prevColors[i];
-
                 if (prev) {
-                    const delta = Math.abs(r - prev[0]) + Math.abs(g - prev[1]) + Math.abs(b - prev[2]);
-                    if (delta > CFG.changeThreshold) {
-                        const [h, s, l] = rgbToHsl(r, g, b);
-                        if (s > CFG.minSaturation) {
-                            playNote(hslToFreq(h, l), reverbSend);
-                            noteCount++;
-                        }
-                    }
+                    const d = Math.abs(r - prev[0]) + Math.abs(g - prev[1]) + Math.abs(b - prev[2]);
+                    if (d > bestDelta) { bestDelta = d; bestIdx = i; }
                 }
-
                 prevColors[i] = [r, g, b];
             }
+
+            if (bestIdx >= 0 && bestDelta > CFG.threshold) {
+                const col = bestIdx % CFG.gridCols;
+                const row = Math.floor(bestIdx / CFG.gridCols);
+                const p = bestIdx * 4;
+                const [h, s, l] = rgbToHsl(px[p], px[p + 1], px[p + 2]);
+
+                if (s > CFG.minSat) {
+                    // Pan: left col = -1, right col = +1
+                    const pan = (col / (CFG.gridCols - 1)) * 2 - 1;
+                    playNote(hslToFreq(h, l), pan);
+                    flashBlock(col, row);
+                }
+            }
         } catch (_e) {
-            // Canvas tainted or unavailable — fail silently
             clearInterval(sampleTimer);
         }
     }
 
-    // Keep reverbSend reference outside init scope
-    let reverbSend = null;
-
-    // ─── Init audio graph ─────────────────────────────────────────────────────
+    // ─── Audio graph init ─────────────────────────────────────────────────────
     function init() {
         if (initialized) return;
 
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-        // Master gain
         masterGain = audioCtx.createGain();
         masterGain.gain.value = 0;
 
-        // LFO for breathing
+        // Breathing LFO
         lfo = audioCtx.createOscillator();
         lfo.type = 'sine';
-        lfo.frequency.value = CFG.breathFreq;
+        lfo.frequency.value = CFG.breathHz;
         const lfoGain = audioCtx.createGain();
         lfoGain.gain.value = CFG.breathDepth;
         lfo.connect(lfoGain);
@@ -190,51 +237,40 @@
 
         // Reverb
         const convolver = audioCtx.createConvolver();
-        convolver.buffer = buildImpulse(audioCtx, CFG.reverbDuration, CFG.reverbDecay);
+        convolver.buffer = buildImpulse(audioCtx, CFG.reverbDur, 2.8);
         const reverbGain = audioCtx.createGain();
         reverbGain.gain.value = CFG.reverbMix;
         reverbSend = audioCtx.createGain();
-        reverbSend.gain.value = 0.5;
+        reverbSend.gain.value = 0.4;
         reverbSend.connect(convolver);
         convolver.connect(reverbGain);
         reverbGain.connect(audioCtx.destination);
         masterGain.connect(audioCtx.destination);
 
-        // Fade master in slowly
-        masterGain.gain.setTargetAtTime(CFG.masterBase, audioCtx.currentTime, 3.0);
+        masterGain.gain.setTargetAtTime(CFG.masterBase, audioCtx.currentTime, 2.5);
 
-        // Sampler canvas (tiny - just grid size for perf)
         sampleCanvas = document.createElement('canvas');
         sampleCanvas.width = CFG.gridCols;
         sampleCanvas.height = CFG.gridRows;
         sampleCtx2d = sampleCanvas.getContext('2d', { willReadFrequently: true });
 
         initialized = true;
-        sampleTimer = setInterval(sample, CFG.sampleInterval);
-        console.log('✦ Pixel ambience active');
+        sampleTimer = setInterval(sample, CFG.sampleMs);
+        console.log('✦ Pixel ambience v2 — one note, one flash, one pixel');
     }
 
-    // ─── First-interaction trigger ────────────────────────────────────────────
+    // ─── Interaction gate ─────────────────────────────────────────────────────
     function onInteraction() {
         init();
-        document.removeEventListener('click', onInteraction);
         document.removeEventListener('mousemove', onInteraction);
+        document.removeEventListener('click', onInteraction);
         document.removeEventListener('keydown', onInteraction);
     }
 
-    // Wait until the mosaic has started before arming the listener,
-    // so we don't init audio before the experience begins.
-    function armWhenReady() {
-        const canvas = document.getElementById('veil-canvas');
-        if (canvas) {
-            document.addEventListener('click', onInteraction, { once: false });
-            document.addEventListener('mousemove', onInteraction, { once: false });
-            document.addEventListener('keydown', onInteraction, { once: false });
-        } else {
-            setTimeout(armWhenReady, 500);
-        }
-    }
-
-    window.addEventListener('DOMContentLoaded', armWhenReady);
+    window.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('mousemove', onInteraction, { once: false });
+        document.addEventListener('click', onInteraction, { once: false });
+        document.addEventListener('keydown', onInteraction, { once: false });
+    });
 
 })();
