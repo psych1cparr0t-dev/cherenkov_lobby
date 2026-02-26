@@ -373,19 +373,4 @@ async def list_tools():
     }
 
 
-# --- Static File Serving ---
-# Placed at the end to ensure API routes take precedence
-from fastapi.staticfiles import StaticFiles
-import os
-
-# Mount the project root directory (cherenkov_homepage) to serve index.html and models
-# We go up two levels from ai/server/main.py
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../"))
-
-# Mount root to "/" to serve index.html as fallback
-app.mount("/", StaticFiles(directory=project_root, html=True), name="static")
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host=API_HOST, port=API_PORT)
+# Static files are handled by vercel.json in production.

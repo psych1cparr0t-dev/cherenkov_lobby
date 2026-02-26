@@ -342,6 +342,8 @@
       z-index: 200;
       display: flex;
       justify-content: center;
+      will-change: transform;
+      overflow: hidden;
     }
 
     .input-bar.visible {

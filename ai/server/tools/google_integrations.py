@@ -1,26 +1,30 @@
 import os
 import datetime
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
 from config import GOOGLE_TOKEN_PATH
 from tools.registry import register_tool
 
 def _get_service(api_name, api_version):
     """Helper to get an authenticated Google API service."""
+    try:
+        from google.oauth2.credentials import Credentials
+        from googleapiclient.discovery import build
+    except ImportError:
+        print("Google API client libraries not installed.")
+        return None
+
     token_path = GOOGLE_TOKEN_PATH
-    
+
     # Support Vercel: Load token from environment variable if file is missing
     if not os.path.exists(token_path) and os.getenv("GOOGLE_TOKEN_JSON"):
         import tempfile
-        import json
         fd, temp_path = tempfile.mkstemp(suffix=".json")
         with os.fdopen(fd, 'w') as f:
-            f.write(os.getenv("GOOGLE_TOKEN_JSON"))
+            f.write(os.getenv("GOOGLE_TOKEN_JSON") or "")
         token_path = temp_path
 
     if not os.path.exists(token_path):
         return None
-    
+
     try:
         creds = Credentials.from_authorized_user_file(token_path)
         return build(api_name, api_version, credentials=creds)
