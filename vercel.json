@@ -1,16 +1,13 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "ai/server/main.py", "use": "@vercel/python" },
-    { "src": "index.html", "use": "@vercel/static" },
-    { "src": "scripts/**/*.js", "use": "@vercel/static" },
-    { "src": "styles/**/*.css", "use": "@vercel/static" },
-    { "src": "assets/**/*", "use": "@vercel/static" },
-    { "src": "images/**/*", "use": "@vercel/static" },
-    { "src": "references/**/*", "use": "@vercel/static" }
-  ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "ai/server/main.py" },
-    { "src": "/(.*)", "dest": "/$1" }
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
   ]
 }
