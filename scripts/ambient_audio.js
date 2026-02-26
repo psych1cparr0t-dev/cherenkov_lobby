@@ -1,66 +1,63 @@
 /**
- * ambient_audio.js — Liminal Veil Pixel Ambience v3
+ * ambient_audio.js — Liminal Veil Pixel Ambience v4
  *
- * Persistent oscillator pool — one sustained tone per scale note,
- * always running. Each sample cycle, pixel color changes are
- * aggregated per note and used to set "key pressure" (gain).
- * More pixels changing to a given hue = louder that note.
- * Only the top 4 most-pressed notes are audible at once.
- *
- * Like a keyboard played by the mosaic itself.
+ * Persistent oscillator pool. Gains driven by pixel color presence.
+ * Key fixes over v3:
+ *  - audioCtx.resume() called explicitly on every interaction
+ *  - masterGain set directly (no setTargetAtTime queue buildup)
+ *  - cancelScheduledValues before gain updates
+ *  - Very low thresholds so static video color still produces presence
  */
 
 (function () {
     'use strict';
 
-    // 4 octaves, C2–C5 pentatonic (20 sustained tones)
+    // C2–C5 pentatonic (20 notes)
     const SCALE_HZ = [
-        65.41, 73.42, 82.41, 98.00, 110.00,   // C2
-        130.81, 146.83, 164.81, 196.00, 220.00,   // C3
-        261.63, 293.66, 329.63, 392.00, 440.00,   // C4
-        523.25, 587.33, 659.25, 784.00, 880.00,   // C5
+        65.41, 73.42, 82.41, 98.00, 110.00,
+        130.81, 146.83, 164.81, 196.00, 220.00,
+        261.63, 293.66, 329.63, 392.00, 440.00,
+        523.25, 587.33, 659.25, 784.00, 880.00,
     ];
 
     const CFG = {
-        gridCols: 12,
-        gridRows: 7,
+        gridCols: 12, gridRows: 7,
         sampleMs: 80,
-        changeThreshold: 12,  // min pixel delta to count
-        maxActive: 4,         // max simultaneous audible notes
-        maxNoteGain: 0.14,    // gain at full pressure
-        gainSmoothing: 0.28,  // setTargetAtTime τ — controls attack + release feel
-        minPressure: 0.10,    // below this → fade to silence
-        minSat: 0.05,
-        reverbDur: 4.5,
-        reverbMix: 0.40,
-        breathHz: 0.048,
-        breathDepth: 0.04,
-        masterBase: 0.20,
-        opacityGate: 0.06,
+        maxActive: 4,
+        maxNoteGain: 0.12,
+        gainTau: 0.3,          // attack / release smoothing
+        minPressure: 0.01,
+        minSat: 0.02,
+        presenceWeight: 0.2,   // static color contribution
+        deltaThreshold: 3,
+        reverbDur: 4.0, reverbDecay: 2.8, reverbMix: 0.35,
+        breathHz: 0.048, breathDepth: 0.035,
+        masterGain: 0.22,
+        opacityGate: 0.02,
     };
 
-    let audioCtx, masterGain, reverbSend, lfo;
+    let audioCtx = null;
+    let masterNode = null;
+    let reverbSend = null;
     let initialized = false;
-    let sampleCanvas, sampleCtx2d, sampleTimer;
+    let sampleTimer = null;
     const prevColors = {};
-
-    // Persistent oscillator + gain node per scale note
     const oscPool = [];
     const gainPool = [];
 
-    // ─── Reverb ───────────────────────────────────────────────────────────────
-    function buildImpulse(ctx, dur, decay) {
-        const len = Math.floor(ctx.sampleRate * dur);
+    // ── Reverb ────────────────────────────────────────────────────────────────
+    function buildImpulse(ctx) {
+        const len = Math.floor(ctx.sampleRate * CFG.reverbDur);
         const buf = ctx.createBuffer(2, len, ctx.sampleRate);
         for (let ch = 0; ch < 2; ch++) {
             const d = buf.getChannelData(ch);
             for (let i = 0; i < len; i++)
-                d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+                d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, CFG.reverbDecay);
         }
         return buf;
     }
 
-    // ─── Color math ───────────────────────────────────────────────────────────
+    // ── Color ─────────────────────────────────────────────────────────────────
     function rgbToHsl(r, g, b) {
         r /= 255; g /= 255; b /= 255;
         const max = Math.max(r, g, b), min = Math.min(r, g, b);
@@ -78,156 +75,167 @@
         return [h * 360, s, l];
     }
 
-    // ─── Oscillator pool init ─────────────────────────────────────────────────
+    // ── Oscillator pool ───────────────────────────────────────────────────────
     function initPool() {
         SCALE_HZ.forEach((freq) => {
             const osc = audioCtx.createOscillator();
-            osc.type = 'triangle'; // warm, natural harmonics
+            osc.type = 'triangle';
             osc.frequency.value = freq;
-            osc.detune.value = (Math.random() - 0.5) * 10; // fixed slight detune per note
+            osc.detune.value = (Math.random() - 0.5) * 12;
 
             const filt = audioCtx.createBiquadFilter();
             filt.type = 'lowpass';
-            filt.frequency.value = 1800;
-            filt.Q.value = 0.5;
+            filt.frequency.value = 2000;
 
             const gn = audioCtx.createGain();
-            gn.gain.value = 0; // silent until pressed
+            gn.gain.value = 0;
 
             osc.connect(filt);
             filt.connect(gn);
-            gn.connect(masterGain);
+            gn.connect(masterNode);
             gn.connect(reverbSend);
 
             osc.start();
             oscPool.push(osc);
             gainPool.push(gn);
         });
+        console.log('✦ Ambience pool started:', SCALE_HZ.length, 'oscillators');
     }
 
-    // ─── Sample + update gains ────────────────────────────────────────────────
+    // ── Sample loop ───────────────────────────────────────────────────────────
     function sample() {
-        if (!initialized) return;
+        if (!initialized || !audioCtx) return;
+        if (audioCtx.state === 'suspended') { audioCtx.resume(); return; }
 
-        const veilCanvas = document.getElementById('veil-canvas');
-        if (!veilCanvas) return;
+        const veil = document.getElementById('veil-canvas');
+        if (!veil) return;
 
-        const opacity = parseFloat(veilCanvas.style.opacity || '0');
+        const opacity = parseFloat(veil.style.opacity || '0');
         const t = audioCtx.currentTime;
 
         if (opacity < CFG.opacityGate) {
-            gainPool.forEach(gn => gn.gain.setTargetAtTime(0, t, CFG.gainSmoothing));
+            gainPool.forEach(gn => {
+                gn.gain.cancelScheduledValues(t);
+                gn.gain.setTargetAtTime(0, t, CFG.gainTau);
+            });
             return;
         }
 
-        // Breathe master with mosaic opacity
-        masterGain.gain.setTargetAtTime(
-            CFG.masterBase * Math.min(opacity / 0.45, 1),
-            t, 2.0
-        );
-
+        let sCanvas, sCtx;
         try {
-            sampleCtx2d.drawImage(veilCanvas, 0, 0, CFG.gridCols, CFG.gridRows);
-            const px = sampleCtx2d.getImageData(0, 0, CFG.gridCols, CFG.gridRows).data;
+            sCanvas = sCanvas || (() => {
+                const c = document.createElement('canvas');
+                c.width = CFG.gridCols; c.height = CFG.gridRows;
+                return c;
+            })();
+        } catch (_) { }
 
-            // Accumulate weighted color delta per note bucket
+        // Use module-level sample canvas
+        try {
+            _sCtx.drawImage(veil, 0, 0, CFG.gridCols, CFG.gridRows);
+            const px = _sCtx.getImageData(0, 0, CFG.gridCols, CFG.gridRows).data;
+
             const pressure = new Float32Array(SCALE_HZ.length);
 
             for (let i = 0; i < CFG.gridCols * CFG.gridRows; i++) {
                 const p = i * 4;
                 const r = px[p], g = px[p + 1], b = px[p + 2];
-                const prev = prevColors[i];
+                const [h, s] = rgbToHsl(r, g, b);
 
-                if (prev) {
-                    const delta = Math.abs(r - prev[0]) + Math.abs(g - prev[1]) + Math.abs(b - prev[2]);
-                    if (delta > CFG.changeThreshold) {
-                        const [h, s] = rgbToHsl(r, g, b);
-                        if (s > CFG.minSat) {
-                            const idx = Math.floor((h / 360) * SCALE_HZ.length) % SCALE_HZ.length;
-                            pressure[idx] += delta * s; // weight by both magnitude and saturation
-                        }
+                if (s > CFG.minSat) {
+                    const idx = Math.floor((h / 360) * SCALE_HZ.length) % SCALE_HZ.length;
+                    // baseline presence from current color
+                    pressure[idx] += s * CFG.presenceWeight;
+                    // bonus from color change
+                    const prev = prevColors[i];
+                    if (prev) {
+                        const delta = Math.abs(r - prev[0]) + Math.abs(g - prev[1]) + Math.abs(b - prev[2]);
+                        if (delta > CFG.deltaThreshold) pressure[idx] += delta * s * 0.01;
                     }
                 }
                 prevColors[i] = [r, g, b];
             }
 
-            // Normalize to 0..1
+            // Normalize and pick top N
             const maxP = Math.max(...pressure) || 1;
-            const norm = pressure.map(p => p / maxP);
-
-            // Only top maxActive notes above minPressure are audible
-            const ranked = norm
-                .map((p, i) => ({ p, i }))
-                .sort((a, b) => b.p - a.p);
-            const activeSet = new Set(
+            const norm = Array.from(pressure, p => p / maxP);
+            const ranked = norm.map((p, i) => ({ p, i })).sort((a, b) => b.p - a.p);
+            const active = new Set(
                 ranked.slice(0, CFG.maxActive).filter(x => x.p >= CFG.minPressure).map(x => x.i)
             );
 
-            // Update every gain node
             gainPool.forEach((gn, i) => {
-                const target = activeSet.has(i) ? CFG.maxNoteGain * norm[i] : 0;
-                gn.gain.setTargetAtTime(target, t, CFG.gainSmoothing);
+                const target = active.has(i) ? CFG.maxNoteGain * norm[i] : 0;
+                gn.gain.cancelScheduledValues(t);
+                gn.gain.setTargetAtTime(target, t, CFG.gainTau);
             });
 
-        } catch (_e) {
-            clearInterval(sampleTimer);
+        } catch (e) {
+            console.warn('Ambience sample error:', e.message);
         }
     }
 
-    // ─── Init audio graph ─────────────────────────────────────────────────────
+    // module-level sample canvas
+    let _sCanvas, _sCtx;
+
+    // ── Init ─────────────────────────────────────────────────────────────────
     function init() {
         if (initialized) return;
 
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioCtx.resume(); // explicit resume — critical for suspended contexts
 
-        masterGain = audioCtx.createGain();
-        masterGain.gain.value = 0;
+        // Master
+        masterNode = audioCtx.createGain();
+        masterNode.gain.value = CFG.masterGain;
 
-        lfo = audioCtx.createOscillator();
+        // Breathing LFO
+        const lfo = audioCtx.createOscillator();
         lfo.type = 'sine';
         lfo.frequency.value = CFG.breathHz;
-        const lfoGain = audioCtx.createGain();
-        lfoGain.gain.value = CFG.breathDepth;
-        lfo.connect(lfoGain);
-        lfoGain.connect(masterGain.gain);
+        const lfoG = audioCtx.createGain();
+        lfoG.gain.value = CFG.breathDepth;
+        lfo.connect(lfoG);
+        lfoG.connect(masterNode.gain);
         lfo.start();
 
-        const convolver = audioCtx.createConvolver();
-        convolver.buffer = buildImpulse(audioCtx, CFG.reverbDur, 2.8);
-        const reverbGain = audioCtx.createGain();
-        reverbGain.gain.value = CFG.reverbMix;
+        // Reverb
+        const conv = audioCtx.createConvolver();
+        conv.buffer = buildImpulse(audioCtx);
+        const rvG = audioCtx.createGain();
+        rvG.gain.value = CFG.reverbMix;
         reverbSend = audioCtx.createGain();
-        reverbSend.gain.value = 0.35;
-        reverbSend.connect(convolver);
-        convolver.connect(reverbGain);
-        reverbGain.connect(audioCtx.destination);
-        masterGain.connect(audioCtx.destination);
+        reverbSend.gain.value = 0.4;
+        reverbSend.connect(conv);
+        conv.connect(rvG);
+        rvG.connect(audioCtx.destination);
+        masterNode.connect(audioCtx.destination);
 
-        masterGain.gain.setTargetAtTime(CFG.masterBase, audioCtx.currentTime, 3.0);
-
-        sampleCanvas = document.createElement('canvas');
-        sampleCanvas.width = CFG.gridCols;
-        sampleCanvas.height = CFG.gridRows;
-        sampleCtx2d = sampleCanvas.getContext('2d', { willReadFrequently: true });
+        // Sample canvas
+        _sCanvas = document.createElement('canvas');
+        _sCanvas.width = CFG.gridCols;
+        _sCanvas.height = CFG.gridRows;
+        _sCtx = _sCanvas.getContext('2d', { willReadFrequently: true });
 
         initPool();
         initialized = true;
         sampleTimer = setInterval(sample, CFG.sampleMs);
-        console.log('✦ Pixel ambience v3 — sustained harmonic pool');
+        console.log('✦ Ambience v4 active, ctx state:', audioCtx.state);
     }
 
-    // ─── Interaction gate ─────────────────────────────────────────────────────
+    // ── Interaction gate ──────────────────────────────────────────────────────
     function onInteraction() {
-        init();
-        document.removeEventListener('mousemove', onInteraction);
-        document.removeEventListener('click', onInteraction);
-        document.removeEventListener('keydown', onInteraction);
+        if (!initialized) {
+            init();
+        } else if (audioCtx && audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-        document.addEventListener('mousemove', onInteraction, { once: false });
-        document.addEventListener('click', onInteraction, { once: false });
-        document.addEventListener('keydown', onInteraction, { once: false });
+        ['click', 'keydown', 'mousemove', 'touchstart'].forEach(ev =>
+            document.addEventListener(ev, onInteraction, { passive: true })
+        );
     });
 
 })();
