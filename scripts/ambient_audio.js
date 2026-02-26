@@ -93,7 +93,7 @@
     }
 
     // ─── Note player ─────────────────────────────────────────────────────────
-    function playNote(freq, noteIdx, reverbSend) {
+    function playNote(freq, noteIdx, reverbSend, weight = 0.5) {
         if (!audioCtx) return;
 
         // Cooldown: skip if same scale degree fired recently
@@ -115,8 +115,9 @@
         filter.Q.value = 0.4;
 
         const gain = audioCtx.createGain();
+        const gain_val = CFG.noteGain * (0.4 + 0.6 * weight);
         gain.gain.setValueAtTime(0, t);
-        gain.gain.linearRampToValueAtTime(CFG.noteGain, t + CFG.attack);
+        gain.gain.linearRampToValueAtTime(gain_val, t + CFG.attack);
         gain.gain.setTargetAtTime(0, t + CFG.attack, CFG.release * 0.6);
 
         osc.connect(filter);
@@ -148,11 +149,11 @@
         try {
             sampleCtx2d.drawImage(veilCanvas, 0, 0, CFG.gridCols, CFG.gridRows);
             const pixels = sampleCtx2d.getImageData(0, 0, CFG.gridCols, CFG.gridRows).data;
-            let noteCount = 0;
+
+            // Group changed pixels by note index → count how many changed to each note
+            const noteBuckets = {}; // idx -> { freq, count }
 
             for (let i = 0; i < CFG.gridCols * CFG.gridRows; i++) {
-                if (noteCount >= CFG.maxNotesPerCycle) break;
-
                 const p = i * 4;
                 const r = pixels[p], g = pixels[p + 1], b = pixels[p + 2];
                 const prev = prevColors[i];
@@ -163,13 +164,23 @@
                         const [h, s, l] = rgbToHsl(r, g, b);
                         if (s > CFG.minSaturation) {
                             const { freq, idx } = hslToFreq(h, l);
-                            playNote(freq, idx, reverbSend);
-                            noteCount++;
+                            if (!noteBuckets[idx]) noteBuckets[idx] = { freq, count: 0 };
+                            noteBuckets[idx].count++;
                         }
                     }
                 }
 
                 prevColors[i] = [r, g, b];
+            }
+
+            // Fire ONE note per unique bucket — volume scales with pixel count, capped
+            const totalPixels = CFG.gridCols * CFG.gridRows;
+            let fired = 0;
+            for (const [idx, bucket] of Object.entries(noteBuckets)) {
+                if (fired >= CFG.maxNotesPerCycle) break;
+                const weight = Math.min(bucket.count / totalPixels * 8, 1.0); // 0..1
+                playNote(bucket.freq, Number(idx), reverbSend, weight);
+                fired++;
             }
         } catch (_e) {
             // Canvas tainted or unavailable — fail silently
