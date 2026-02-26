@@ -364,6 +364,11 @@
       text-align: center;
       letter-spacing: 0.05em;
       cursor: text;
+      caret-color: transparent;
+    }
+
+    /* Show caret only when user has started typing */
+    .input-bar input:not(:placeholder-shown) {
       caret-color: #888888;
     }
 
