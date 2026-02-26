@@ -267,15 +267,17 @@
 
     /* --- Concierge Mode --- */
     .wordmark.concierge-mode {
-      font-size: clamp(20px, 4vw, 36px);
+      font-size: clamp(13px, 2.8vw, 28px);
       letter-spacing: 0.02em;
       text-transform: none;
       color: #666666;
       transition: font-size 0.5s ease, letter-spacing 0.5s ease;
       text-align: center;
-      max-width: 80vw;
+      max-width: 72vw;
+      max-height: 55vh;
+      overflow: hidden;
       padding: 0 24px;
-      line-height: 1.4;
+      line-height: 1.5;
     }
 
     .wordmark.concierge-mode .typewriter-text {
