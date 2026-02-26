@@ -10,6 +10,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      cursor: none !important;
     }
 
     body,
@@ -19,7 +20,7 @@
       overflow: hidden;
       perspective: 1000px;
       background-color: #f5f5f5;
-      cursor: default;
+      cursor: none;
     }
 
     /* --- Landing Container --- */
