@@ -48,6 +48,8 @@
     let lfo = null;
     let initialized = false;
     const prevColors = {};
+    const recentNotes = {};   // scaleIdx -> last-fired timestamp (ms)
+    const NOTE_COOLDOWN_MS = 600;
     let sampleCanvas, sampleCtx2d;
     let sampleTimer = null;
 
@@ -84,22 +86,28 @@
 
     function hslToFreq(h, l) {
         // hue → scale degree (wrap 0–360 across all scale notes)
-        const deg = Math.floor((h / 360) * SCALE_HZ.length) % SCALE_HZ.length;
+        const idx = Math.floor((h / 360) * SCALE_HZ.length) % SCALE_HZ.length;
         // brightness shifts up an octave at high lightness
         const octMul = l > 0.65 ? 2 : 1;
-        return SCALE_HZ[deg] * octMul;
+        return { freq: SCALE_HZ[idx] * octMul, idx };
     }
 
     // ─── Note player ─────────────────────────────────────────────────────────
-    function playNote(freq, reverbSend) {
+    function playNote(freq, noteIdx, reverbSend) {
         if (!audioCtx) return;
-        const now = audioCtx.currentTime;
+
+        // Cooldown: skip if same scale degree fired recently
+        const now = performance.now();
+        if (recentNotes[noteIdx] && (now - recentNotes[noteIdx]) < NOTE_COOLDOWN_MS) return;
+        recentNotes[noteIdx] = now;
+
+        const t = audioCtx.currentTime;
 
         const osc = audioCtx.createOscillator();
         osc.type = 'sine';
         osc.frequency.value = freq;
-        // Subtle detune for warmth
-        osc.detune.value = (Math.random() - 0.5) * 6;
+        // Wider detune spread prevents beating between stacked same-frequency notes
+        osc.detune.value = (Math.random() - 0.5) * 36;
 
         const filter = audioCtx.createBiquadFilter();
         filter.type = 'lowpass';
@@ -107,17 +115,17 @@
         filter.Q.value = 0.4;
 
         const gain = audioCtx.createGain();
-        gain.gain.setValueAtTime(0, now);
-        gain.gain.linearRampToValueAtTime(CFG.noteGain, now + CFG.attack);
-        gain.gain.setTargetAtTime(0, now + CFG.attack, CFG.release * 0.6);
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(CFG.noteGain, t + CFG.attack);
+        gain.gain.setTargetAtTime(0, t + CFG.attack, CFG.release * 0.6);
 
         osc.connect(filter);
         filter.connect(gain);
         gain.connect(masterGain);
-        gain.connect(reverbSend); // also send to reverb
+        gain.connect(reverbSend);
 
-        osc.start(now);
-        osc.stop(now + CFG.attack + CFG.release + 0.5);
+        osc.start(t);
+        osc.stop(t + CFG.attack + CFG.release + 0.5);
     }
 
     // ─── Canvas sampler ──────────────────────────────────────────────────────
@@ -154,7 +162,8 @@
                     if (delta > CFG.changeThreshold) {
                         const [h, s, l] = rgbToHsl(r, g, b);
                         if (s > CFG.minSaturation) {
-                            playNote(hslToFreq(h, l), reverbSend);
+                            const { freq, idx } = hslToFreq(h, l);
+                            playNote(freq, idx, reverbSend);
                             noteCount++;
                         }
                     }
