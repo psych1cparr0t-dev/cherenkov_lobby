@@ -15,15 +15,16 @@
     // ─── Musical config ──────────────────────────────────────────────────────
     // C major pentatonic across 3 octaves (ethereal, no dissonance possible)
     const SCALE_HZ = [
+        32.70, 36.71, 41.20, 49.00, 55.00,   // C1 penta
+        65.41, 73.42, 82.41, 98.00, 110.00,  // C2 penta
         130.81, 146.83, 164.81, 196.00, 220.00,  // C3 penta
         261.63, 293.66, 329.63, 392.00, 440.00,  // C4 penta
-        523.25, 587.33, 659.25, 784.00, 880.00,  // C5 penta
     ];
 
     const CFG = {
         gridCols: 12,
         gridRows: 7,
-        sampleInterval: 220,      // ms between canvas samples
+        sampleInterval: 80,       // ms between canvas samples
         changeThreshold: 18,      // pixel delta to trigger note
         maxNotesPerCycle: 3,      // cap simultaneous new notes per sample
         noteGain: 0.07,           // per-note volume
