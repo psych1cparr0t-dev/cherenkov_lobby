@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Cherenkov — Sandbox</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f0f0f0;
+            font-family: 'Orbitron', sans-serif;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #ui {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 22px 32px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        #timer {
+            font-size: 36px;
+            font-weight: 500;
+            color: #555;
+            letter-spacing: 0.08em;
+            line-height: 1;
+        }
+
+        #subtitle {
+            font-size: 10px;
+            color: #bbb;
+            letter-spacing: 0.18em;
+            margin-top: 6px;
+            text-transform: uppercase;
+        }
+
+        #right-panel {
+            text-align: right;
+        }
+
+        #move-count {
+            font-size: 28px;
+            font-weight: 400;
+            color: #aaa;
+            letter-spacing: 0.08em;
+        }
+
+        #move-label {
+            font-size: 10px;
+            color: #ccc;
+            letter-spacing: 0.18em;
+            margin-top: 6px;
+        }
+
+        #status-bar {
+            position: fixed;
+            bottom: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: #bbb;
+            letter-spacing: 0.18em;
+            white-space: nowrap;
+            pointer-events: none;
+            transition: opacity 0.4s;
+        }
+
+        #controls {
+            position: fixed;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            padding: 10px 22px;
+            background: transparent;
+            border: 1px solid #d0d0d0;
+            color: #888;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover {
+            border-color: #2962ff;
+            color: #2962ff;
+            background: rgba(41, 98, 255, 0.05);
+        }
+
+        #disk-select {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            padding: 9px 12px;
+            background: transparent;
+            border: 1px solid #d0d0d0;
+            color: #888;
+            cursor: pointer;
+            border-radius: 2px;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        #disk-select:focus {
+            outline: none;
+            border-color: #2962ff;
+        }
+
+        #disk-label {
+            font-size: 10px;
+            color: #bbb;
+            letter-spacing: 0.12em;
+        }
+
+        /* Win overlay */
+        #win-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(240, 240, 240, 0.94);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.6s ease;
+        }
+
+        #win-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        #win-word {
+            font-size: 11px;
+            color: #2962ff;
+            letter-spacing: 0.3em;
+            margin-bottom: 24px;
+        }
+
+        #win-time-display {
+            font-size: 64px;
+            font-weight: 500;
+            color: #444;
+            letter-spacing: 0.05em;
+            line-height: 1;
+        }
+
+        #win-moves-display {
+            font-size: 14px;
+            color: #aaa;
+            letter-spacing: 0.12em;
+            margin-top: 12px;
+            margin-bottom: 40px;
+        }
+
+        #win-reset {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            padding: 14px 36px;
+            background: transparent;
+            border: 1px solid rgba(41, 98, 255, 0.3);
+            color: #2962ff;
+            cursor: pointer;
+            border-radius: 2px;
+            transition: all 0.2s;
+        }
+
+        #win-reset:hover {
+            background: rgba(41, 98, 255, 0.08);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="ui">
+        <div id="left-panel">
+            <div id="timer">00:00.0</div>
+            <div id="subtitle">towers of hanoi</div>
+        </div>
+        <div id="right-panel">
+            <div id="move-count">0</div>
+            <div id="move-label">moves</div>
+        </div>
+    </div>
+
+    <div id="status-bar">click a peg to select — click again to move</div>
+
+    <div id="controls">
+        <label id="disk-label" for="disk-select">DISKS</label>
+        <select id="disk-select">
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+        </select>
+        <button class="btn" id="reset-btn">RESET</button>
+    </div>
+
+    <div id="win-overlay" id="win-overlay">
+        <div id="win-word">SOLVED</div>
+        <div id="win-time-display">00:00.0</div>
+        <div id="win-moves-display">— moves</div>
+        <button id="win-reset">PLAY AGAIN</button>
+    </div>
+
+    <script>
+        // ─── GAME LOGIC ──────────────────────────────────────────────────────────────
+        class HanoiGame {
+            constructor(n) {
+                this.n = n;
+                this.pegs = [[], [], []];
+                for (let i = n; i >= 1; i--) this.pegs[0].push(i);
+                this.moves = 0;
+                this.selectedPeg = null;
+            }
+            topDisk(p) { return this.pegs[p].length ? this.pegs[p][this.pegs[p].length - 1] : null; }
+            canMove(from, to) {
+                if (!this.pegs[from].length) return false;
+                if (!this.pegs[to].length) return true;
+                return this.topDisk(from) < this.topDisk(to);
+            }
+            move(from, to) {
+                if (!this.canMove(from, to)) return null;
+                const disk = this.pegs[from].pop();
+                this.pegs[to].push(disk);
+                this.moves++;
+                return disk;
+            }
+            isWon() { return this.pegs[2].length === this.n; }
+        }
+
+        // ─── THREE.JS SETUP ──────────────────────────────────────────────────────────
+        const W = window.innerWidth, H = window.innerHeight;
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(W, H);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setClearColor(0xf0f0f0);
+        document.body.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(0xf0f0f0, 20, 40);
+
+        const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+        camera.position.set(0, 6, 11);
+        camera.lookAt(0, 0.5, 0);
+
+        // Lights
+        const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambient);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+        dirLight.position.set(5, 12, 8);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.set(2048, 2048);
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 40;
+        dirLight.shadow.camera.left = -8;
+        dirLight.shadow.camera.right = 8;
+        dirLight.shadow.camera.top = 8;
+        dirLight.shadow.camera.bottom = -4;
+        scene.add(dirLight);
+
+        const fillLight = new THREE.DirectionalLight(0xd0d8ff, 0.3);
+        fillLight.position.set(-4, 5, -3);
+        scene.add(fillLight);
+
+        // ─── CONSTANTS ───────────────────────────────────────────────────────────────
+        const PEG_X = [-3.2, 0, 3.2];
+        const PEG_HEIGHT = 3.8;
+        const BASE_Y = 0;
+        const DISK_H = 0.28;
+        const DISK_GAP = 0.01;
+        const LIFT_Y = PEG_HEIGHT + 1.2;
+        const ANIM_DURATION = 520; // ms per phase
+
+        const DISK_COLORS = [
+            0x1a237e, 0x283593, 0x303f9f, 0x3949ab,
+            0x3f51b5, 0x5c6bc0, 0x7986cb,
+        ];
+
+        // ─── SCENE OBJECTS ───────────────────────────────────────────────────────────
+        // Base platform
+        const baseGeo = new THREE.BoxGeometry(10, 0.18, 2.6);
+        const baseMat = new THREE.MeshLambertMaterial({ color: 0xe0e0e0 });
+        const base = new THREE.Mesh(baseGeo, baseMat);
+        base.position.y = -0.09;
+        base.receiveShadow = true;
+        scene.add(base);
+
+        // Floor shadow catcher
+        const floorGeo = new THREE.PlaneGeometry(30, 30);
+        const floorMat = new THREE.ShadowMaterial({ opacity: 0.08 });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.position.y = -0.18;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        // Pegs
+        const pegMeshes = [];
+        PEG_X.forEach((x) => {
+            const geo = new THREE.CylinderGeometry(0.1, 0.12, PEG_HEIGHT, 16);
+            const mat = new THREE.MeshLambertMaterial({ color: 0x888888 });
+            const peg = new THREE.Mesh(geo, mat);
+            peg.position.set(x, PEG_HEIGHT / 2, 0);
+            peg.castShadow = true;
+            scene.add(peg);
+            pegMeshes.push(peg);
+        });
+
+        // Peg click zones (invisible tall boxes for easy raycasting)
+        const clickZones = [];
+        PEG_X.forEach((x, i) => {
+            const geo = new THREE.BoxGeometry(2.2, PEG_HEIGHT + 1, 2.2);
+            const mat = new THREE.MeshBasicMaterial({ visible: false });
+            const zone = new THREE.Mesh(geo, mat);
+            zone.position.set(x, PEG_HEIGHT / 2, 0);
+            zone.userData.pegIndex = i;
+            scene.add(zone);
+            clickZones.push(zone);
+        });
+
+        // ─── DISK MANAGEMENT ─────────────────────────────────────────────────────────
+        let game = null;
+        let diskMeshes = []; // indexed by disk number (1..n)
+        let numDisks = 5;
+
+        function maxDiskRadius(n) { return 0.45 + (n - 1) * 0.22; }
+
+        function diskRadius(diskNum, n) {
+            return 0.45 + (diskNum - 1) * ((maxDiskRadius(n) - 0.45) / Math.max(n - 1, 1));
+        }
+
+        function diskY(pegStackIndex) {
+            return BASE_Y + DISK_H / 2 + pegStackIndex * (DISK_H + DISK_GAP);
+        }
+
+        function buildDisks(n) {
+            diskMeshes.forEach(m => { if (m) scene.remove(m); });
+            diskMeshes = new Array(n + 1).fill(null);
+
+            for (let d = 1; d <= n; d++) {
+                const r = diskRadius(d, n);
+                const geo = new THREE.CylinderGeometry(r, r, DISK_H, 32);
+                const colorIdx = Math.round((d - 1) / Math.max(n - 1, 1) * (DISK_COLORS.length - 1));
+                const mat = new THREE.MeshLambertMaterial({ color: DISK_COLORS[colorIdx] });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                scene.add(mesh);
+                diskMeshes[d] = mesh;
+            }
+        }
+
+        function syncDiskPositions() {
+            if (!game) return;
+            game.pegs.forEach((stack, pegIdx) => {
+                stack.forEach((diskNum, stackIdx) => {
+                    const mesh = diskMeshes[diskNum];
+                    if (mesh) {
+                        mesh.position.set(PEG_X[pegIdx], diskY(stackIdx), 0);
+                    }
+                });
+            });
+        }
+
+        function resetGame() {
+            clearSelection();
+            game = new HanoiGame(numDisks);
+            buildDisks(numDisks);
+            syncDiskPositions();
+            stopTimer();
+            timerMs = 0;
+            updateTimerDisplay(0);
+            updateMoveDisplay(0);
+            document.getElementById('win-overlay').classList.remove('show');
+            document.getElementById('status-bar').textContent = 'click a peg to select — click again to move';
+            animQueue = [];
+            isAnimating = false;
+        }
+
+        // ─── SELECTION & HIGHLIGHT ────────────────────────────────────────────────────
+        let selectedPeg = null;
+
+        function clearSelection() {
+            if (selectedPeg !== null) {
+                const topDisk = game?.topDisk(selectedPeg);
+                if (topDisk && diskMeshes[topDisk]) {
+                    diskMeshes[topDisk].material.emissive?.setHex(0x000000);
+                }
+                // restore peg color
+                if (pegMeshes[selectedPeg]) pegMeshes[selectedPeg].material.color.setHex(0x888888);
+                selectedPeg = null;
+            }
+        }
+
+        function highlightPeg(pegIdx) {
+            pegMeshes[pegIdx].material.color.setHex(0x2962ff);
+            const topDisk = game.topDisk(pegIdx);
+            if (topDisk && diskMeshes[topDisk]) {
+                diskMeshes[topDisk].material.emissive = new THREE.Color(0x1a3a8f);
+            }
+        }
+
+        // ─── ANIMATION ────────────────────────────────────────────────────────────────
+        let animQueue = [];
+        let isAnimating = false;
+
+        function easeInOut(t) {
+            return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+        }
+
+        function animateDisk(diskNum, fromPeg, toPeg, onDone) {
+            const mesh = diskMeshes[diskNum];
+            if (!mesh) { onDone(); return; }
+
+            const startX = PEG_X[fromPeg];
+            const endX = PEG_X[toPeg];
+
+            // After the move, disk will be on top of toPeg stack
+            const endStackIdx = game.pegs[toPeg].length - 1;
+            const endY = diskY(endStackIdx);
+            const startY = mesh.position.y;
+
+            // 3 phases: lift, slide, lower
+            const phases = [
+                { from: { x: startX, y: startY }, to: { x: startX, y: LIFT_Y }, dur: ANIM_DURATION * 0.3 },
+                { from: { x: startX, y: LIFT_Y }, to: { x: endX, y: LIFT_Y }, dur: ANIM_DURATION * 0.4 },
+                { from: { x: endX, y: LIFT_Y }, to: { x: endX, y: endY }, dur: ANIM_DURATION * 0.3 },
+            ];
+
+            let phaseIdx = 0;
+            let phaseStart = null;
+
+            function animPhase(ts) {
+                if (!phaseStart) phaseStart = ts;
+                const phase = phases[phaseIdx];
+                const t = Math.min((ts - phaseStart) / phase.dur, 1);
+                const e = easeInOut(t);
+                mesh.position.x = phase.from.x + (phase.to.x - phase.from.x) * e;
+                mesh.position.y = phase.from.y + (phase.to.y - phase.from.y) * e;
+
+                if (t < 1) {
+                    requestAnimationFrame(animPhase);
+                } else {
+                    phaseIdx++;
+                    if (phaseIdx < phases.length) {
+                        phaseStart = null;
+                        requestAnimationFrame(animPhase);
+                    } else {
+                        onDone();
+                    }
+                }
+            }
+            requestAnimationFrame(animPhase);
+        }
+
+        function processMove(fromPeg, toPeg) {
+            if (isAnimating) return;
+            isAnimating = true;
+
+            const diskNum = game.topDisk(fromPeg);
+            game.move(fromPeg, toPeg);
+            updateMoveDisplay(game.moves);
+
+            animateDisk(diskNum, fromPeg, toPeg, () => {
+                isAnimating = false;
+                if (game.isWon()) {
+                    stopTimer();
+                    showWin();
+                }
+            });
+        }
+
+        // ─── RAYCASTING & CLICK ───────────────────────────────────────────────────────
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+
+        renderer.domElement.addEventListener('click', (e) => {
+            if (isAnimating || game?.isWon()) return;
+
+            mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+
+            const hits = raycaster.intersectObjects(clickZones);
+            if (!hits.length) { clearSelection(); return; }
+
+            const clickedPeg = hits[0].object.userData.pegIndex;
+
+            if (selectedPeg === null) {
+                // Select
+                if (!game.pegs[clickedPeg].length) return;
+                selectedPeg = clickedPeg;
+                highlightPeg(clickedPeg);
+                document.getElementById('status-bar').textContent = `peg ${['A', 'B', 'C'][clickedPeg]} selected — click destination`;
+            } else {
+                if (clickedPeg === selectedPeg) {
+                    clearSelection();
+                    document.getElementById('status-bar').textContent = 'click a peg to select — click again to move';
+                    return;
+                }
+
+                if (game.canMove(selectedPeg, clickedPeg)) {
+                    // Start timer on first move
+                    if (game.moves === 0 && !timerRunning) startTimer();
+
+                    const from = selectedPeg;
+                    clearSelection();
+                    processMove(from, clickedPeg);
+                    document.getElementById('status-bar').textContent = 'click a peg to select — click again to move';
+                } else {
+                    // Invalid move — flash
+                    document.getElementById('status-bar').textContent = 'invalid move — destination disk is smaller';
+                    setTimeout(() => {
+                        document.getElementById('status-bar').textContent = 'click a peg to select — click again to move';
+                    }, 1500);
+                }
+            }
+        });
+
+        // ─── TIMER ────────────────────────────────────────────────────────────────────
+        let timerMs = 0;
+        let timerRunning = false;
+        let timerInterval = null;
+
+        function startTimer() {
+            const start = performance.now() - timerMs;
+            timerRunning = true;
+            timerInterval = setInterval(() => {
+                timerMs = performance.now() - start;
+                updateTimerDisplay(timerMs);
+            }, 100);
+        }
+
+        function stopTimer() {
+            timerRunning = false;
+            clearInterval(timerInterval);
+        }
+
+        function formatTime(ms) {
+            const totalSec = Math.floor(ms / 1000);
+            const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+            const s = (totalSec % 60).toString().padStart(2, '0');
+            const t = Math.floor((ms % 1000) / 100);
+            return `${m}:${s}.${t}`;
+        }
+
+        function updateTimerDisplay(ms) {
+            document.getElementById('timer').textContent = formatTime(ms);
+        }
+        function updateMoveDisplay(n) {
+            document.getElementById('move-count').textContent = n;
+        }
+
+        // ─── WIN ─────────────────────────────────────────────────────────────────────
+        function showWin() {
+            const overlay = document.getElementById('win-overlay');
+            document.getElementById('win-time-display').textContent = formatTime(timerMs);
+            document.getElementById('win-moves-display').textContent = `${game.moves} moves — optimal: ${Math.pow(2, game.n) - 1}`;
+            overlay.classList.add('show');
+        }
+
+        // ─── CONTROLS ─────────────────────────────────────────────────────────────────
+        document.getElementById('reset-btn').addEventListener('click', resetGame);
+        document.getElementById('win-reset').addEventListener('click', resetGame);
+        document.getElementById('disk-select').addEventListener('change', (e) => {
+            numDisks = parseInt(e.target.value);
+            resetGame();
+        });
+
+        // Keyboard shortcut
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R') resetGame();
+        });
+
+        // ─── RENDER LOOP ──────────────────────────────────────────────────────────────
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            const w = window.innerWidth, h = window.innerHeight;
+            renderer.setSize(w, h);
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+        });
+
+        // ─── INIT ─────────────────────────────────────────────────────────────────────
+        resetGame();
+        animate();
+    </script>
+</body>
+
+</html>

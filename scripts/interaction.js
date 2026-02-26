@@ -372,6 +372,14 @@ document.getElementById('user-input').addEventListener('keydown', async (e) => {
     const message = userInput.value.trim();
     if (!message) return;
 
+    // --- SECRET ACTIVATION: Sandbox (Towers of Hanoi) ---
+    if (message.toLowerCase() === 'sandbox' || message.toLowerCase() === 'open sandbox') {
+      userInput.value = '';
+      hideInputBar();
+      window.open('sandbox.html', 'Sandbox', 'width=960,height=680,resizable=yes');
+      return;
+    }
+
     // --- SECRET ACTIVATION: Thinker Scene ---
     if (message.toLowerCase() === 'thinker' || message.toLowerCase() === 'open thinker') {
       userInput.value = '';
