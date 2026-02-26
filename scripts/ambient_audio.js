@@ -28,7 +28,6 @@
         gainTau: 0.3,          // attack / release smoothing
         minPressure: 0.01,
         minSat: 0.02,
-        presenceWeight: 0.2,   // static color contribution
         deltaThreshold: 3,
         reverbDur: 4.0, reverbDecay: 2.8, reverbMix: 0.35,
         breathHz: 0.048, breathDepth: 0.035,
@@ -144,13 +143,10 @@
 
                 if (s > CFG.minSat) {
                     const idx = Math.floor((h / 360) * SCALE_HZ.length) % SCALE_HZ.length;
-                    // baseline presence from current color
-                    pressure[idx] += s * CFG.presenceWeight;
-                    // bonus from color change
                     const prev = prevColors[i];
                     if (prev) {
                         const delta = Math.abs(r - prev[0]) + Math.abs(g - prev[1]) + Math.abs(b - prev[2]);
-                        if (delta > CFG.deltaThreshold) pressure[idx] += delta * s * 0.01;
+                        if (delta > CFG.deltaThreshold) pressure[idx] += delta * s;
                     }
                 }
                 prevColors[i] = [r, g, b];
