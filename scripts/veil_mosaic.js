@@ -1,6 +1,7 @@
 (function veilMosaic() {
   let currentBlockSize = 7;
-  window.veilStarted = false; // Add flag
+  let veilGo = false;
+  document.addEventListener('cherenkov:revealed', () => { veilGo = true; });
   const SCENES = [
     'references/liminal_veil/first_draft/cherry_blossoms.webm',
     'references/liminal_veil/first_draft/mexico_city_crosswalk.webm',
@@ -193,13 +194,13 @@
 
   function tick() {
     const config = window.veilConfig || { maxOp: 0.45 };
-    if (ready && curOp < config.maxOp && window.veilStarted) {
+    if (ready && curOp < config.maxOp && veilGo) {
       curOp = Math.min(config.maxOp, curOp + 0.004);
     } else if (curOp > config.maxOp) {
       curOp = config.maxOp; // Allows dynamic scaling down
     }
 
-    canvas.style.opacity = window.sandboxEnabled ? '0' : curOp.toFixed(3);
+    canvas.style.opacity = curOp.toFixed(3);
 
     // Even if opacity is 0, we must continue drawing so it doesn't freeze the video playhead state
     drawFrame();

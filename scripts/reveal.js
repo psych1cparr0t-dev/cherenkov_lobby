@@ -1,7 +1,8 @@
 // ============================================
 // CHERENKOV — Letter Proximity Reveal
 // Reveals hidden letters as the cursor hovers near them.
-// Triggers the veil mosaic once all letters are shown.
+// Dispatches 'cherenkov:revealed' once all letters are shown,
+// which triggers the veil mosaic to fade in.
 // ============================================
 
 (function () {
@@ -22,10 +23,11 @@
             }
         });
 
-        // Start the mosaic once every letter has been revealed
         if (!veilTriggered && document.querySelectorAll('.letter.visible').length === letters.length) {
             veilTriggered = true;
-            setTimeout(() => { window.veilStarted = true; }, 1200);
+            setTimeout(() => {
+                document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
+            }, 1200);
         }
     });
 })();
