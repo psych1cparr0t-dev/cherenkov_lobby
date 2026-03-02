@@ -12,10 +12,7 @@
     'references/liminal_veil/first_draft/hummingbird_10s.webm',
     'references/liminal_veil/first_draft/floating_market_10s.webm',
     'references/liminal_veil/first_draft/starling_swarm_10s.webm',
-    'references/liminal_veil/first_draft/nature1_10s.webm',
     'references/liminal_veil/first_draft/design1_10s.webm',
-    'references/liminal_veil/first_draft/innovation1_10s.webm',
-    'references/liminal_veil/first_draft/creative1_10s.webm'
   ];
 
   const canvas = document.getElementById('veil-canvas');
