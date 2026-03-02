@@ -7,7 +7,9 @@
 
 (function () {
     const letters = document.querySelectorAll('.letter');
+    const sub = document.querySelector('.wordmark-sub');
     let veilTriggered = false;
+    let subRevealed = false;
 
     document.addEventListener('mousemove', (e) => {
         letters.forEach((letter) => {
@@ -23,7 +25,15 @@
             }
         });
 
-        if (!veilTriggered && document.querySelectorAll('.letter.visible').length === letters.length) {
+        const visibleCount = document.querySelectorAll('.letter.visible').length;
+
+        // Fade in "Inc." once all letters are revealed
+        if (!subRevealed && visibleCount === letters.length) {
+            subRevealed = true;
+            if (sub) sub.classList.add('visible');
+        }
+
+        if (!veilTriggered && visibleCount === letters.length) {
             veilTriggered = true;
             setTimeout(() => {
                 document.dispatchEvent(new CustomEvent('cherenkov:revealed'));

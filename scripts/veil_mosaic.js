@@ -123,7 +123,7 @@
 
     isDrawing = true;
 
-    const config = window.veilConfig || { block: 7, lift: 155, desat: 0.6, maxOp: 0.45, zoomX: 1.0, zoomY: 1.0 };
+    const config = window.veilConfig || { block: 7, lift: 155, colorScale: 0.35, desat: 0.6, maxOp: 0.45, zoomX: 1.0, zoomY: 1.0 };
 
     if (config.block !== currentBlockSize) {
       currentBlockSize = config.block;
@@ -177,9 +177,10 @@
           B = B * (1 - ds) + grey * ds;
 
           // Lift aggressively into the page's near-white band
-          R = Math.min(255, R * 0.35 + config.lift);
-          G = Math.min(255, G * 0.35 + config.lift);
-          B = Math.min(255, B * 0.35 + config.lift + 7);
+          const cs = config.colorScale !== undefined ? config.colorScale : 0.35;
+          R = Math.min(255, R * cs + config.lift);
+          G = Math.min(255, G * cs + config.lift);
+          B = Math.min(255, B * cs + config.lift + 7);
 
           ctx.fillStyle = `rgb(${R | 0},${G | 0},${B | 0})`;
           ctx.fillRect(c * config.block + 1, r * config.block + 1, config.block - 2, config.block - 2);

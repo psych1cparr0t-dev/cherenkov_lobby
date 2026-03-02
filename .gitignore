@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+env/
+venv/
+
+# Environment Variables & Credentials
+.env
+.env.*
+ai/server/.env
+ai/server/token.json
+ai/server/credentials.json
+
+# Local Databases (Vercel Serverless)
+ai/server/chroma_db/
+ai/server/rag_db/
+
+# Node
+node_modules/
+
+# OSX / OS Files
+.DS_Store
+*.swp
+*~
+
+# Misc
+.vercel/
+*.pid
+
+# Uncompressed originals — keep locally, never commit
+*_original.webm
+*_original.mp4
+*_original.mov
+*_original.ogv
+
+# Large archives
+*.zip

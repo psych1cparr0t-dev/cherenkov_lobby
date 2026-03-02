@@ -155,8 +155,10 @@
       position: relative;
       z-index: 100;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
+      gap: 10px;
       transition: opacity 0.5s ease;
     }
 
@@ -176,6 +178,22 @@
       opacity: 0;
       transition: opacity 0.4s ease;
       position: relative;
+    }
+
+    .wordmark-sub {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(9px, 1.2vw, 13px);
+      font-weight: 400;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: #aaaaaa;
+      opacity: 0;
+      transition: opacity 1.2s ease 1.8s;
+      text-align: center;
+    }
+
+    .wordmark-sub.visible {
+      opacity: 1;
     }
 
     .letter.visible {

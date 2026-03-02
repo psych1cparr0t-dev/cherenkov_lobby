@@ -46,8 +46,8 @@
         <span class="letter">K</span>
         <span class="letter">O</span>
         <span class="letter">V</span>
-
       </h1>
+      <p class="wordmark-sub">Inc.</p>
     </div>
 
 
@@ -64,6 +64,16 @@
 
   <!-- Background Elements (Three.js) -->
   <script type="module" src="scripts/background_elements.js"></script>
+
+  <!-- Veil config: higher contrast on mobile where screens are smaller/dimmer -->
+  <script>
+    (function () {
+      var mobile = window.matchMedia('(max-width: 768px)').matches;
+      window.veilConfig = mobile
+        ? { block: 7, lift: 20, colorScale: 0.92, desat: 0.05, maxOp: 0.92, zoomX: 1.0, zoomY: 1.0 }
+        : { block: 7, lift: 155, colorScale: 0.35, desat: 0.60, maxOp: 0.45, zoomX: 1.0, zoomY: 1.0 };
+    })();
+  </script>
 
   <!-- Liminal Veil: block-mosaic video renderer -->
   <script src="scripts/veil_mosaic.js"></script>
