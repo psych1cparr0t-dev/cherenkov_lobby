@@ -8,7 +8,6 @@
     'references/liminal_veil/first_draft/whale_humpback.webm',
     'references/liminal_veil/first_draft/whales_orca.webm',
     'references/liminal_veil/first_draft/colosseum_aerial_10s.webm',
-    'references/liminal_veil/first_draft/robot_research_10s.webm',
     'references/liminal_veil/first_draft/floating_market_10s.webm',
     'references/liminal_veil/first_draft/starling_swarm_10s.webm',
     'references/liminal_veil/first_draft/scene_4_10s.webm',
