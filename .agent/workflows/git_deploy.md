@@ -81,7 +81,40 @@ cat .gitignore | grep original
 
 Should show `*_original.*` patterns. If missing, add them.
 
-## Step 3 — Check git status
+## Step 3 — Purge media blobs from git history (mandatory, every deploy)
+
+Run `git-filter-repo` on **both** the parent repo and any submodules to strip all media
+blobs from history before pushing. This prevents old force-added files from bloating pushes.
+
+**Parent repo:**
+```bash
+/Library/Frameworks/Python.framework/Versions/3.13/bin/git-filter-repo --force \
+  --path-glob '*.webm' --path-glob '*.mp4' --path-glob '*.ogv' \
+  --path-glob '*.mov'  --path-glob '*.mkv' --path-glob '*.wav' \
+  --path-glob '*.aiff' --path-glob '*/__pycache__/*' \
+  --invert-paths
+```
+
+**Re-add remote after filter-repo (it always removes it as a safety measure):**
+```bash
+git remote add origin https://github.com/psych1cparr0t-dev/cherenkov_lobby.git
+```
+
+**Each submodule (e.g. vercel_deployment):**
+```bash
+cd vercel_deployment
+/Library/Frameworks/Python.framework/Versions/3.13/bin/git-filter-repo --force \
+  --path-glob '*.webm' --path-glob '*.mp4' --path-glob '*.ogv' \
+  --path-glob '*.mov'  --path-glob '*.mkv' --path-glob '*.wav' \
+  --path-glob '*.aiff' \
+  --invert-paths
+git remote add origin https://github.com/psych1cparr0t-dev/cherenkov_lobby.git
+cd ..
+```
+
+> If `git-filter-repo` is not installed: `pip3 install git-filter-repo`
+
+## Step 4 — Check git status
 
 ```bash
 git status
@@ -89,7 +122,7 @@ git status
 
 Review what's staged/unstaged. Never `git add -A` blindly — add files explicitly.
 
-## Step 4 — Stage files
+## Step 5 — Stage files
 
 Stage only the files relevant to the current changeset:
 
@@ -99,7 +132,7 @@ git add <specific files or dirs>
 
 Never force-add (`-f`) video/media files — the .gitignore rules exist for good reason.
 
-## Step 5 — Commit with a clear message
+## Step 6 — Commit with a clear message
 
 ```bash
 git commit -m "<verb>: <short description of what changed>"
@@ -111,30 +144,28 @@ Good message format examples:
 - `remove: robot_research and scene_4 from tracking`
 - `fix: cursor effect removed from homepage`
 
-## Step 6 — Push
+## Step 7 — Push
 
-If upstream is set:
+Because filter-repo rewrites history, always use `--force`:
+
 ```bash
-git push
-```
-
-If first push on this branch:
-```bash
-git push --set-upstream origin main
-```
-
-If remote has diverged (unrelated histories from separate init):
-```bash
-# Option A: merge remote into local (safe, preserves both histories)
-git fetch origin
-git merge origin/main --allow-unrelated-histories --no-edit
-git push
-
-# Option B: force push local as source of truth (use when local is authoritative)
+# Parent repo
 git push --force --set-upstream origin main
+
+# Each submodule
+cd vercel_deployment
+git push --force origin main
+cd ..
 ```
 
-## Step 7 — Confirm
+If remote has diverged and you want to preserve both histories first:
+```bash
+git fetch origin
+git merge origin/main --allow-unrelated-histories --no-edit -X ours
+# then filter-repo again before pushing
+```
+
+## Step 8 — Confirm
 
 ```bash
 git log --oneline -5
@@ -149,6 +180,9 @@ Verify the push succeeded and working tree is clean.
 
 | Rule | Why |
 |------|-----|
+| Run `filter-repo` before EVERY push | Purges any media blobs that crept into history — keeps pushes fast |
+| Re-add remote after `filter-repo` | It always removes origin as a safety measure |
+| Run `filter-repo` on ALL submodules too | Each submodule has its own object store |
 | Compress ALL media before staging | GitHub 100MB hard limit, 50MB soft limit |
 | Never `git add -A` | Avoid accidentally staging secrets, node_modules, _originals |
 | Never `git add -f` on video/audio | .gitignore rules protect the repo intentionally |
