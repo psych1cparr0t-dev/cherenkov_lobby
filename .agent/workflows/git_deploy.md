@@ -1,0 +1,157 @@
+---
+description: full git deployment workflow — compress media, stage, commit, push
+---
+
+# Git Deploy Workflow
+
+> This workflow is owned by the **git agent**. The main vibedev chat does NOT handle git operations — it only builds. When the user says "deploy", "push", "ship it", or "send to git", hand off to this workflow.
+
+// turbo-all
+
+## 💡 Compression Quick Reference (always apply before upload)
+
+| Source format | Target | Codec | Scale cap | CRF | Audio |
+|---------------|--------|-------|-----------|-----|-------|
+| `.webm` (any res) | `.webm` | libvpx-vp9 | 1280×720 | 35 | libopus 64k |
+| `.mp4` / `.mov` | `.mp4` | libx264 | 1280×720 | 28 | aac 64k |
+| `.ogv` | `.webm` (convert) | libvpx-vp9 | 1280×720 | 35 | libopus 64k |
+| 4K source (>500MB) | `.webm` | libvpx-vp9 | 1280×720 | **38** | libopus 64k |
+| `.wav` / `.aiff` | `.opus` | libopus | — | — | 96k |
+
+**Target**: output must be **< 50 MB**. If over, raise CRF by 5 and re-encode.
+**Naming**: always swap original to `*_original.ext` — never delete the source.
+
+See full instructions: `.agent/workflows/compress_before_commit.md`
+
+---
+
+## Pre-flight: Check for large media
+
+Scan the working directory for uncompressed media files before touching git:
+
+```bash
+find . -not -path './.git/*' \( -name '*.mp4' -o -name '*.webm' -o -name '*.mov' -o -name '*.ogv' -o -name '*.mkv' -o -name '*.wav' -o -name '*.aiff' \) -size +5M -not -name '*_original*' | sort
+```
+
+If ANY file is **> 50 MB**, STOP and compress it first (see `compress_before_commit.md`).
+
+## Step 1 — Compress all large media (mandatory, always run first)
+
+For each file >5 MB found above, compress using the appropriate command:
+
+**WebM / VP9:**
+```bash
+ffmpeg -y -i INPUT.webm \
+  -vf "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease" \
+  -c:v libvpx-vp9 -crf 35 -b:v 0 -deadline good -cpu-used 4 \
+  -c:a libopus -b:a 64k \
+  INPUT_compressed.webm
+mv INPUT.webm INPUT_original.webm
+mv INPUT_compressed.webm INPUT.webm
+```
+
+**MP4 / MOV → x264:**
+```bash
+ffmpeg -y -i INPUT.mp4 \
+  -vf "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease" \
+  -c:v libx264 -crf 28 -preset slow \
+  -c:a aac -b:a 64k \
+  INPUT_compressed.mp4
+mv INPUT.mp4 INPUT_original.mp4
+mv INPUT_compressed.mp4 INPUT.mp4
+```
+
+**OGV → WebM (convert format too):**
+```bash
+ffmpeg -y -i INPUT.ogv \
+  -vf "scale='min(1280,iw)':'min(720,ih)':force_original_aspect_ratio=decrease" \
+  -c:v libvpx-vp9 -crf 35 -b:v 0 -deadline good -cpu-used 4 \
+  -c:a libopus -b:a 64k \
+  INPUT.webm
+mv INPUT.ogv INPUT_original.ogv
+```
+
+Verify each output: `ls -lh OUTPUT` — must be **< 50 MB**. If not, re-run with `-crf 40`.
+
+## Step 2 — Verify .gitignore protects originals
+
+```bash
+cat .gitignore | grep original
+```
+
+Should show `*_original.*` patterns. If missing, add them.
+
+## Step 3 — Check git status
+
+```bash
+git status
+```
+
+Review what's staged/unstaged. Never `git add -A` blindly — add files explicitly.
+
+## Step 4 — Stage files
+
+Stage only the files relevant to the current changeset:
+
+```bash
+git add <specific files or dirs>
+```
+
+Never force-add (`-f`) video/media files — the .gitignore rules exist for good reason.
+
+## Step 5 — Commit with a clear message
+
+```bash
+git commit -m "<verb>: <short description of what changed>"
+```
+
+Good message format examples:
+- `add: compressed reference videos for liminal veil`
+- `update: veil mosaic reveals on cherenkov event`
+- `remove: robot_research and scene_4 from tracking`
+- `fix: cursor effect removed from homepage`
+
+## Step 6 — Push
+
+If upstream is set:
+```bash
+git push
+```
+
+If first push on this branch:
+```bash
+git push --set-upstream origin main
+```
+
+If remote has diverged (unrelated histories from separate init):
+```bash
+# Option A: merge remote into local (safe, preserves both histories)
+git fetch origin
+git merge origin/main --allow-unrelated-histories --no-edit
+git push
+
+# Option B: force push local as source of truth (use when local is authoritative)
+git push --force --set-upstream origin main
+```
+
+## Step 7 — Confirm
+
+```bash
+git log --oneline -5
+git status
+```
+
+Verify the push succeeded and working tree is clean.
+
+---
+
+## Rules the git agent always follows
+
+| Rule | Why |
+|------|-----|
+| Compress ALL media before staging | GitHub 100MB hard limit, 50MB soft limit |
+| Never `git add -A` | Avoid accidentally staging secrets, node_modules, _originals |
+| Never `git add -f` on video/audio | .gitignore rules protect the repo intentionally |
+| Keep `_original.*` files local only | Large uncompressed masters live on local disk / external drives |
+| Use descriptive commit messages | Verb-first, lowercase, clear scope |
+| Check git status before AND after every operation | No surprises |

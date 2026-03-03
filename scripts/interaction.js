@@ -9,12 +9,8 @@
     let allRevealed = false;
     let conciergeStarted = false;
 
-    // Concierge messages
-    const conciergeMessages = [
-      "welcome! hahah",
-      "oh, you found us!",
-      "nice to meet you ✧"
-    ];
+    // Fallback streak — escalates after 3 consecutive unclassified queries
+    let fallback_streak = 0;
 
     // --- User Memory & Persistence ---
     class UserMemory {
@@ -162,27 +158,9 @@
 
       const typewriterText = document.getElementById('typewriter-text');
 
-      // Fetch greeting from API with timeout, or use fallback
-      let message = conciergeMessages[Math.floor(Math.random() * conciergeMessages.length)];
-
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-
-        const response = await fetch(`${window.CONCIERGE_API_URL}/greeting`, {
-          signal: controller.signal
-        });
-        clearTimeout(timeoutId);
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.greeting) {
-            message = data.greeting;
-          }
-        }
-      } catch (e) {
-        console.log('Using fallback greeting:', e.message || 'API unavailable');
-      }
+      // Client-side greeting card — no API call needed
+      const intentKey = userMemory.data.visitCount > 1 ? 'greeting_return' : 'greeting';
+      const message = window.getCard(intentKey);
 
       await typeText(typewriterText, message);
 
@@ -247,6 +225,28 @@
         }
         deleteNext();
       });
+    }
+
+    // --- Escalation: strike 3 — play card, notify owner, open thinker ---
+    async function triggerEscalation(cardText) {
+      const typewriterText = document.getElementById('typewriter-text');
+      await typeText(typewriterText, cardText);
+
+      // Notify owner (async, non-blocking — failure is silent)
+      fetch(`${window.CONCIERGE_API_URL}/escalate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcript: conversationHistory.slice(-6),
+          timestamp: new Date().toISOString()
+        })
+      }).catch(() => {});
+
+      // Pause, then redirect to Three.js sandbox
+      setTimeout(() => {
+        window.open('thinker.html', 'ThinkerScene', 'width=800,height=600,resizable=yes');
+        setTimeout(showInputBar, 600);
+      }, 2200);
     }
 
     // --- Show input bar ---
@@ -439,15 +439,35 @@
           handleAction(responseData.action);
         }
 
-
-
         // Restore normal blink
         typewriterText.classList.remove('thinking');
 
-        // Handle text response
-        await typeText(typewriterText, responseData.narration || responseData.response || '...');
+        // Resolve intent key and authored card text
+        const intentKey = responseData.intent_key || 'fallback';
+        console.log('[Concierge] intent_key:', intentKey);
 
-        conversationHistory.push({ role: 'assistant', content: responseData.narration || '' });
+        // Track consecutive fallbacks
+        if (intentKey === 'fallback') {
+          fallback_streak++;
+        } else {
+          fallback_streak = 0;
+        }
+
+        // Look up authored card text
+        const cardText = window.getCard(intentKey);
+
+        // Escalation at strike 3
+        if (fallback_streak >= 3) {
+          fallback_streak = 0;
+          conversationHistory.push({ role: 'assistant', content: cardText });
+          await triggerEscalation(window.getCard('escalation'));
+          return;
+        }
+
+        // Normal display — show authored card
+        await typeText(typewriterText, cardText);
+
+        conversationHistory.push({ role: 'assistant', content: cardText });
 
         // Show input again
         setTimeout(showInputBar, 800);

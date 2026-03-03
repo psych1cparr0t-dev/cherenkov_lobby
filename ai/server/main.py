@@ -61,8 +61,15 @@ class ChatResponse(BaseModel):
     """Response model for chat endpoint."""
     type: str = "text"
     narration: str = ""
+    intent_key: str = "text"
     sources_used: bool = False
     action: dict | None = None  # Tool execution result
+
+
+class EscalateRequest(BaseModel):
+    """Request model for escalation endpoint."""
+    transcript: list[dict] = []
+    timestamp: str = ""
 
 
 @app.get("/health")
@@ -80,61 +87,85 @@ async def health_check():
 async def get_greeting():
     """
     Generate a random greeting from the Concierge.
-    Used when the chat widget first opens.
+    Kept for backwards compatibility — client now uses card lookup instead.
     """
-    # Simple, functional greeting (faster than LLM)
-    return {"greeting": "Welcome to the lobby."}
+    return {"greeting": "Welcome To Cherenkov."}
+
+
+@app.post("/escalate")
+async def escalate(payload: EscalateRequest):
+    """
+    Escalation endpoint — called after 3 consecutive fallback strikes.
+    Sends a transcript email to the owner via Resend, then client redirects visitor.
+    """
+    from config import RESEND_API_KEY, EMAIL_FROM, EMAIL_TO_DEFAULT
+
+    if not RESEND_API_KEY:
+        print("[Escalate] RESEND_API_KEY not set — skipping email")
+        return {"status": "notified"}
+
+    try:
+        import resend
+        resend.api_key = RESEND_API_KEY
+
+        transcript_lines = []
+        for msg in payload.transcript:
+            role = msg.get("role", "?").upper()
+            content = msg.get("content", "")
+            transcript_lines.append(f"{role}: {content}")
+
+        body = (
+            f"Cherenkov Concierge Escalation\n"
+            f"Timestamp: {payload.timestamp}\n\n"
+            f"Conversation Transcript:\n"
+            f"{'—' * 40}\n"
+            + "\n".join(transcript_lines)
+            + f"\n{'—' * 40}\n\n"
+            f"Visitor was redirected to the Three.js sandbox after 3 unclassified queries."
+        )
+
+        resend.Emails.send({
+            "from": EMAIL_FROM,
+            "to": EMAIL_TO_DEFAULT,
+            "subject": "Cherenkov Concierge Escalation",
+            "text": body
+        })
+        print(f"[Escalate] Notification sent to {EMAIL_TO_DEFAULT}")
+    except Exception as e:
+        print(f"[Escalate] Email failed: {e}")
+
+    return {"status": "notified"}
 
 
 def build_system_prompt(user_context: dict | None = None) -> str:
-    """Build the system prompt including tool instructions."""
-    tools_section = get_tools_prompt()
-    
-    # Base persona: Functional, polite, minimal
-    base_prompt = (
-        "You are the Concierge of the Cherenkov Lobby. You represent a high-end design firm.\n"
-        "Your goal is to be helpful, polite, and efficient. You have access to powerful tools to assist the user.\n"
-        "Use your tools creatively to solve problems (e.g., look up a contact, then draft an email).\n"
-        "You are the Concierge — that is your identity. Do not describe yourself as an AI, bot, or assistant."
+    """Build the classifier-only system prompt."""
+    return (
+        "You are a concierge intent classifier for Cherenkov, a high-end design firm. "
+        "Respond ONLY with a JSON object — no prose, no explanation, no extra keys.\n\n"
+        "Format: {\"intent\": \"<key>\", \"tool\": \"<tool_name_or_null>\", \"args\": {}}\n\n"
+        "Intent keys:\n"
+        "  identity         — who is Cherenkov, what are you\n"
+        "  services         — what work / disciplines\n"
+        "  portfolio        — show me your work, examples, past projects\n"
+        "  contact          — reach the team, send a message, inquiry\n"
+        "  pricing          — cost, rates, budget, fees\n"
+        "  process          — how do you work, workflow, timeline\n"
+        "  qualification    — are you right for my project, fit\n"
+        "  scope_limit      — legal, hiring, press, irrelevant topics\n"
+        "  pleasantries     — greetings, thanks, compliments, goodbye\n"
+        "  repeat_browsing  — no clear ask, vague, browsing\n"
+        "  philosophical    — meta, existential, weird, off-lane\n"
+        "  fallback         — cannot classify confidently\n\n"
+        "Tool keys (include only when intent clearly requires an action):\n"
+        "  navigate_to            — portfolio intent → navigate to portfolio page\n"
+        "  send_contact_message   — contact intent with name + email provided\n"
+        "  get_availability       — scheduling / calendar request\n"
+        "  create_calendar_event  — explicit event booking\n"
+        "  get_projects           — request for specific project list\n\n"
+        "If a tool is needed, populate args with the required parameters. "
+        "If no tool is needed, set tool to null and args to {}.\n"
+        "Never generate natural language. Return only the JSON object."
     )
-
-    memory_injection = ""
-    if user_context:
-        visits = user_context.get('visit_count', 0)
-        name = user_context.get('user_name')
-        
-        if name:
-            memory_injection += f"\n\nUSER CONTEXT: The user's name is '{name}'."
-        
-        if visits > 1:
-            memory_injection += f"\nThis is visit #{visits}. Welcome them back politely."
-        elif visits == 1:
-            pass
-    
-    rules = (
-        "\n\nRULES:"
-        "\n1. MAX 1 SENTENCE per response. Be completely confident. If unsure, say 'I am unsure how to respond.' instead of hallucinating."
-        "\n2. You understand modern internet slang (e.g., 'fr', 'no cap', 'idgaf', 'twin', 'hb', 'lowkey', 'gang', 'bussin', 'rizz') so you can comprehend users, but you MUST NEVER USE IT. Speak only with absolute, simple, professional minimalism."
-        "\n3. TOOL CONFIRMATIONS ARE THE EXCEPTION: When combining conversation with a tool action, use exactly two sentences: First, state the action (e.g., 'Allow me to draft an email.'). Second, ask a confirmation question (e.g., 'Does this work?')."
-        "\n4. NEVER output XML tags, <thought> tags, or JSON. Just speak your one sentence."
-        "\n5. Be polite and professional."
-        "\n6. If you cannot help, apologize and offer an alternative."
-        "\n7. IDENTITY: Never say \"I am an AI\" or \"AI Concierge\". You are the Concierge — that is your identity."
-        "\n   If asked 'are you an AI?': answer with role first: 'I am the Concierge.'"
-        "\n   If the user presses further on your technical nature, be precise without claiming it as identity:"
-        "\n   'These responses are generated through LLM computation.' — the model is an organ, not an identity."
-        "\n   Never say 'I am an LLM' or 'I am a language model'. Describe the mechanism, don't become it."
-        "\n8. __SMART EMAIL SORTING__: When drafting emails, choose the appropriate 'from_email' alias based on context:"
-        "\n   - 'careers@cherenkov.industries': For job applications, hiring, or HR questions."
-        "\n   - 'support@cherenkov.industries': For technical issues, bugs, or help requests."
-        "\n   - 'collaborations@cherenkov.industries': For partnerships, business deals, or press."
-        "\n   - 'creative@cherenkov.industries': For design feedback, art direction, or project ideas."
-        "\n   - 'secret@cherenkov.industries': For confidential, mysterious, or sensitive topics."
-        "\n   - 'max@cherenkov.industries': Default for personal or general inquiries."
-    )
-    
-    full_prompt = f"{base_prompt}{memory_injection}{rules}\n\n{tools_section if tools_section else ''}"
-    return full_prompt
 
 
 @app.post("/chat", response_model=ChatResponse)
@@ -215,67 +246,64 @@ async def _process_chat_with_anthropic(
     messages: list,
     sources_used: bool
 ) -> ChatResponse:
-    """Process chat with Anthropic's Claude"""
+    """Process chat with Anthropic's Claude (classifier mode)."""
+    import json as _json
+
     system_msg = next((m["content"] for m in messages if m["role"] == "system"), "")
     chat_msgs = [m for m in messages if m["role"] != "system"]
-    
+
     response = await client.messages.create(
         model=model,
-        max_tokens=1024,
+        max_tokens=256,
         system=system_msg,
         messages=chat_msgs
     )
-    response_text = response.content[0].text
-    
-    # Check if the response contains a tool call
-    tool_name, tool_args = parse_tool_call(response_text)
-    
-    if tool_name and tool_args:
-        # Execute the tool
-        tool_result = await execute_tool(tool_name, tool_args)
-        
+    response_text = response.content[0].text.strip()
+
+    # --- Parse classifier JSON ---
+    intent_key = "fallback"
+    tool_name_from_classifier = None
+    tool_args_from_classifier = {}
+
+    try:
+        # Strip any thought/reasoning wrappers if model adds them
+        clean_text = re.sub(r'<think>.*?</think>', '', response_text, flags=re.DOTALL).strip()
+        classifier_data = _json.loads(clean_text)
+        intent_key = classifier_data.get("intent", "fallback")
+        tool_name_from_classifier = classifier_data.get("tool") or None
+        tool_args_from_classifier = classifier_data.get("args") or {}
+    except Exception:
+        print(f"[Classifier] Failed to parse JSON: {response_text!r}")
+        intent_key = "fallback"
+
+    print(f"[Classifier] intent={intent_key!r} tool={tool_name_from_classifier!r}")
+
+    # --- Execute tool if classifier specified one ---
+    if tool_name_from_classifier and tool_name_from_classifier in TOOL_REGISTRY:
+        tool_result = await execute_tool(tool_name_from_classifier, tool_args_from_classifier)
+
         if tool_result["success"]:
             action_data = tool_result["result"]
-            
-            # Clean up tool output
-            if isinstance(action_data, dict):
-                context_data = action_data.get("formatted") or action_data.get("message") or str(action_data)
-            else:
-                context_data = str(action_data)
-
-            # Generate natural follow-up response
-            follow_up_messages = chat_msgs + [
-                {"role": "assistant", "content": response_text},
-                {"role": "user", "content": f"Tool output: {context_data}. Briefly confirm this action to the user in EXACTLY TWO SENTENCES. First: confirm the tool action. Second: ask a confirmation question like 'Does this work?'. DO NOT output any XML or thought tags. DO NOT output JSON."}
-            ]
-            
-            follow_up = await client.messages.create(
-                model=model,
-                max_tokens=256,
-                system=system_msg,
-                messages=follow_up_messages
-            )
-            narration = follow_up.content[0].text.strip().strip('"\'')
-            
-            # Clean hallucinated JSON and thoughts from the follow-up response
-            cleaned_narration = _clean_response(narration)
-
             return ChatResponse(
                 type="action",
-                narration=cleaned_narration,
+                narration="",
+                intent_key=intent_key,
                 sources_used=sources_used,
                 action=action_data
             )
         else:
+            # Tool failed — return the intent key so client can still show the card
             return ChatResponse(
                 type="text",
-                narration=f"hmm, that didn't work — {tool_result.get('error', 'unknown error')}",
+                narration="",
+                intent_key=intent_key,
                 sources_used=sources_used
             )
-            
+
     return ChatResponse(
         type="text",
-        narration=_clean_response(response_text),
+        narration="",
+        intent_key=intent_key,
         sources_used=sources_used
     )
 

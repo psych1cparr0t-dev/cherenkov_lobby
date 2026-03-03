@@ -31,3 +31,15 @@ ai/server/*.pid
 *.webm
 *.mp4
 *.mov
+*.ogv
+*.mkv
+
+# Uncompressed originals — keep locally, never commit
+*_original.webm
+*_original.mp4
+*_original.mov
+*_original.ogv
+
+# Large zips and archives
+cherenkov_vercel_upload.zip
+archive/

@@ -22,8 +22,19 @@
 <body>
 
   <div id="landing-page">
-    <!-- Liminal Veil: block-mosaic video canvas -->
-    <canvas id="veil-canvas"></canvas>
+    <!-- Liminal Veil: block-mosaic video mosaic (CSS pixelation) -->
+    <div id="veil-mosaic" aria-hidden="true">
+      <div class="veil-slot" id="veil-slot-a">
+        <div class="veil-pixel-wrap">
+          <video class="veil-vid" muted playsinline preload="auto"></video>
+        </div>
+      </div>
+      <div class="veil-slot" id="veil-slot-b">
+        <div class="veil-pixel-wrap">
+          <video class="veil-vid" muted playsinline preload="auto"></video>
+        </div>
+      </div>
+    </div>
 
     <!-- Rotating Background Patterns (layered over veil) -->
     <div class="background-pattern pattern-1"></div>
@@ -62,6 +73,7 @@
 
 
 
+  <script src="scripts/cards.js"></script>
   <script src="scripts/interaction.js"></script>
 
   <!-- Background Elements (Three.js) -->
