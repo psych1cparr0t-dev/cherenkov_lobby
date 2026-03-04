@@ -39,13 +39,6 @@
   let isDrawing = false;
   let currentBlockSize = 7;
 
-  let mouseX = -1000;
-  let mouseY = -1000;
-  document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-  });
-
   const XFADE = 1.0; // crossfade seconds
 
   // Start mosaic when reveal fires
@@ -146,18 +139,6 @@
           R = Math.min(255, R * cs + cfg.lift);
           G = Math.min(255, G * cs + cfg.lift);
           B = Math.min(255, B * cs + cfg.lift + 7);
-
-          const blockX = c * cfg.block + cfg.block / 2;
-          const blockY = r * cfg.block + cfg.block / 2;
-          const dist = Math.hypot(mouseX - blockX, mouseY - blockY);
-
-          if (dist < 120) {
-            const intensity = 1 - (dist / 120);
-            R = R * (1 - intensity * 0.8) + 41 * (intensity * 0.8);
-            G = G * (1 - intensity * 0.8) + 98 * (intensity * 0.8);
-            B = B * (1 - intensity * 0.8) + 255 * (intensity * 0.8);
-          }
-
           ctx.fillStyle = `rgb(${R | 0},${G | 0},${B | 0})`;
           ctx.fillRect(c * cfg.block + 1, r * cfg.block + 1, cfg.block - 2, cfg.block - 2);
         }
