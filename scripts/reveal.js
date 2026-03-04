@@ -1,15 +1,18 @@
 // Cherenkov — Letter Proximity Reveal
 // Hovers near letters to reveal them one by one.
-// When all 9 are visible:
+// When all 9 letters are visible, waits for the last blue pulse
+// to finish settling (~2.5s), then:
 //   • "Inc." fades in
-//   • background patterns fade out (2s CSS transition)
-//   • 2.8s later → fires 'cherenkov:revealed' to start the mosaic
-//     (giving the background time to fully disappear first)
+//   • background patterns dissolve (2s)
+//   • 2.8s later → 'cherenkov:revealed' fires to start the mosaic
 
 (function () {
     const letters = document.querySelectorAll('.letter');
     const sub = document.getElementById('wordmark-sub');
     let triggered = false;
+
+    const BLUE_PULSE_DURATION = 2500; // matches bluePulse animation in CSS
+    const PATTERN_FADE_DURATION = 2800; // ms after patterns start fading before mosaic fires
 
     document.addEventListener('mousemove', (e) => {
         if (triggered) return;
@@ -28,17 +31,22 @@
         if (revealed === letters.length) {
             triggered = true;
 
-            // Inc. fades in
-            if (sub) sub.classList.add('visible');
-
-            // Background patterns start fading out immediately (2s CSS transition)
-            document.querySelectorAll('.background-pattern')
-                .forEach(el => el.classList.add('hidden'));
-
-            // Mosaic fires after patterns have fully faded — brief clear pause
+            // Wait for the last letter's blue pulse to finish settling into grey
             setTimeout(() => {
-                document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
-            }, 2800);
+
+                // Inc. fades in once letters are settled
+                if (sub) sub.classList.add('visible');
+
+                // Background patterns begin 2s dissolve
+                document.querySelectorAll('.background-pattern')
+                    .forEach(el => el.classList.add('hidden'));
+
+                // Mosaic fires after patterns are gone
+                setTimeout(() => {
+                    document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
+                }, PATTERN_FADE_DURATION);
+
+            }, BLUE_PULSE_DURATION);
         }
     });
 })();
