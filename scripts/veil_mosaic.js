@@ -103,7 +103,7 @@
     if (isDrawing) return;
     isDrawing = true;
 
-    const cfg = window.veilConfig || { block: 7, lift: 155, colorScale: 0.35, desat: 0.6, maxOp: 0.45, zoomX: 1.0, zoomY: 1.0 };
+    const cfg = window.veilConfig || { block: 7, lift: 20, colorScale: 0.92, desat: 0.05, maxOp: 0.92, zoomX: 1.0, zoomY: 1.0 };
 
     if (cfg.block !== currentBlockSize) { resize(); }
 
