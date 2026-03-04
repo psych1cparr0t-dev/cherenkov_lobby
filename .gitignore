@@ -46,6 +46,7 @@ ai/server/*.pid
 !references/liminal_veil/first_draft/solis_bridge.webm
 !references/liminal_veil/first_draft/talesh_cow.webm
 !references/liminal_veil/first_draft/wellington_car.webm
+!references/liminal_veil/first_draft/fishing_boat_8s.webm
 
 # Uncompressed originals — keep locally, never commit
 *_original.webm
