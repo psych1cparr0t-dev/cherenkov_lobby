@@ -209,7 +209,7 @@ html {
   text-transform: uppercase;
   color: #aaaaaa;
   opacity: 0;
-  transition: opacity 1.2s ease 1.8s;
+  transition: opacity 1.2s ease;
   text-align: center;
 }
 
