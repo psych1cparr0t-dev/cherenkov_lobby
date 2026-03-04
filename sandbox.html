@@ -302,6 +302,33 @@
             game.pegs.forEach((stk, pi) => stk.forEach((d, si) => { if (diskMeshes[d]) diskMeshes[d].position.set(PEG_X[pi], diskY(si), 0); }));
         }
 
+        // ─── CHERENKOV LOGO 3D ───────────────────────────────────────────────────────
+        const logoGroup = new THREE.Group();
+        logoGroup.position.set(6, 5, -3); // Upper right
+
+        // The Wireframe Cube (Gridlines)
+        const boxGeo = new THREE.BoxGeometry(3.5, 3.5, 3.5);
+        const edges = new THREE.EdgesGeometry(boxGeo);
+        const wireBox = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x444444 }));
+        logoGroup.add(wireBox);
+
+        // The Inner Cherenkov Energy Source
+        const sphereGeo = new THREE.SphereGeometry(1.1, 32, 32);
+        const sphereMat = new THREE.MeshPhysicalMaterial({
+            color: 0x54b6e8,
+            emissive: 0x2962ff,
+            emissiveIntensity: 0.6,
+            transparent: true,
+            opacity: 0.35,
+            roughness: 0.1,
+            transmission: 0.9,
+            thickness: 0.5
+        });
+        const coreSphere = new THREE.Mesh(sphereGeo, sphereMat);
+        logoGroup.add(coreSphere);
+
+        scene.add(logoGroup);
+
         // ─── 3D TIMER CARD ───────────────────────────────────────────────────────────
         const CARD_W = 3.0, CARD_H = 1.1, CARD_D = 0.09;
         const timerCanvas = document.createElement('canvas');
@@ -604,6 +631,10 @@
         function animate() {
             requestAnimationFrame(animate);
             physicsStep();
+
+            logoGroup.rotation.x += 0.003;
+            logoGroup.rotation.y += 0.005;
+
             drawTimerCard(fmt(timerMs), `${game?.moves ?? 0} moves`);
             renderer.render(scene, camera);
         }
