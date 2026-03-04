@@ -13,6 +13,7 @@
     'references/liminal_veil/first_draft/solis_bridge.webm',
     'references/liminal_veil/first_draft/talesh_cow.webm',
     'references/liminal_veil/first_draft/wellington_car.webm',
+    'references/liminal_veil/first_draft/fishing_boat_8s.webm',
   ];
 
   const canvas = document.getElementById('veil-canvas');
