@@ -2,8 +2,9 @@
 // Hovers near letters to reveal them one by one.
 // When all 9 are visible:
 //   • "Inc." fades in
-//   • background patterns fade out simultaneously
-//   • 1.2s later → fires 'cherenkov:revealed' to start the mosaic
+//   • background patterns fade out (2s CSS transition)
+//   • 2.8s later → fires 'cherenkov:revealed' to start the mosaic
+//     (giving the background time to fully disappear first)
 
 (function () {
     const letters = document.querySelectorAll('.letter');
@@ -30,14 +31,14 @@
             // Inc. fades in
             if (sub) sub.classList.add('visible');
 
-            // Background patterns fade out at the same time
+            // Background patterns start fading out immediately (2s CSS transition)
             document.querySelectorAll('.background-pattern')
                 .forEach(el => el.classList.add('hidden'));
 
-            // Mosaic starts 1.2s later (matches CSS fade-in timing)
+            // Mosaic fires after patterns have fully faded — brief clear pause
             setTimeout(() => {
                 document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
-            }, 1200);
+            }, 2800);
         }
     });
 })();
