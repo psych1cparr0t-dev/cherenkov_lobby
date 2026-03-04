@@ -9,6 +9,10 @@
     'references/liminal_veil/first_draft/colosseum_aerial_10s.webm',
     'references/liminal_veil/first_draft/floating_market_10s.webm',
     'references/liminal_veil/first_draft/starling_swarm_10s.webm',
+    'references/liminal_veil/first_draft/hong_kong_island.webm',
+    'references/liminal_veil/first_draft/solis_bridge.webm',
+    'references/liminal_veil/first_draft/talesh_cow.webm',
+    'references/liminal_veil/first_draft/wellington_car.webm',
   ];
 
   const canvas = document.getElementById('veil-canvas');
