@@ -9,8 +9,6 @@
     'references/liminal_veil/first_draft/colosseum_aerial_10s.webm',
     'references/liminal_veil/first_draft/floating_market_10s.webm',
     'references/liminal_veil/first_draft/starling_swarm_10s.webm',
-    'references/liminal_veil/first_draft/hummingbird_10s.webm',
-    'references/liminal_veil/first_draft/monkey_10s.webm',
   ];
 
   const canvas = document.getElementById('veil-canvas');
