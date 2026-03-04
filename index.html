@@ -14,36 +14,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
 
-
-
   <link rel="stylesheet" href="styles/index.css">
 </head>
 
 <body>
 
   <div id="landing-page">
-    <!-- Liminal Veil: block-mosaic video mosaic (CSS pixelation) -->
-    <div id="veil-mosaic" aria-hidden="true">
-      <div class="veil-slot" id="veil-slot-a">
-        <div class="veil-pixel-wrap">
-          <video class="veil-vid" muted playsinline preload="auto"></video>
-        </div>
-      </div>
-      <div class="veil-slot" id="veil-slot-b">
-        <div class="veil-pixel-wrap">
-          <video class="veil-vid" muted playsinline preload="auto"></video>
-        </div>
-      </div>
-    </div>
+    <!-- Liminal Veil: block-mosaic video canvas -->
+    <canvas id="veil-canvas"></canvas>
 
-    <!-- Rotating Background Patterns (layered over veil) -->
+    <!-- Rotating Background Patterns -->
     <div class="background-pattern pattern-1"></div>
     <div class="background-pattern pattern-2"></div>
     <div class="background-pattern pattern-3"></div>
     <div class="background-pattern pattern-4"></div>
-
-    <!-- Placeholder for future multimodal animation responses -->
-
 
     <!-- Wordmark -->
     <div class="wordmark-container">
@@ -57,36 +41,28 @@
         <span class="letter">K</span>
         <span class="letter">O</span>
         <span class="letter">V</span>
-        <span class="cursor" id="cursor" style="display: none;"></span>
       </h1>
+      <p class="wordmark-sub">Inc.</p>
     </div>
 
-
   </div>
 
-  <!-- Input Bar -->
-  <div class="input-bar" id="input-bar">
-    <input type="text" id="user-input" placeholder="type here..." autocomplete="off" />
-  </div>
+  <!-- Letter Proximity Reveal -->
+  <script src="scripts/reveal.js"></script>
 
-
-
-
-
-  <script src="scripts/cards.js"></script>
-  <script src="scripts/interaction.js"></script>
-
-  <!-- Background Elements (Three.js) -->
-  <script type="module" src="scripts/background_elements.js"></script>
+  <!-- Veil config: higher contrast on mobile -->
+  <script>
+    (function () {
+      var mobile = window.matchMedia('(max-width: 768px)').matches;
+      window.veilConfig = mobile
+        ? { block: 7, lift: 20, colorScale: 0.92, desat: 0.05, maxOp: 0.92, zoomX: 1.0, zoomY: 1.0 }
+        : { block: 7, lift: 155, colorScale: 0.35, desat: 0.60, maxOp: 0.45, zoomX: 1.0, zoomY: 1.0 };
+    })();
+  </script>
 
   <!-- Liminal Veil: block-mosaic video renderer -->
   <script src="scripts/veil_mosaic.js"></script>
 
-  <!-- Concierge API Config -->
-  <script>
-    // Vercel routes /api to the Python backend based on vercel.json
-    window.CONCIERGE_API_URL = '/api';
-  </script>
 </body>
 
 </html>

@@ -1,6 +1,7 @@
 (function veilMosaic() {
   let currentBlockSize = 7;
-  window.veilStarted = false; // Add flag
+  let veilGo = false;
+  document.addEventListener('cherenkov:revealed', () => { veilGo = true; });
   const SCENES = [
     'references/liminal_veil/first_draft/cherry_blossoms.webm',
     'references/liminal_veil/first_draft/mexico_city_crosswalk.webm',
@@ -118,7 +119,7 @@
 
     isDrawing = true;
 
-    const config = window.veilConfig || { block: 7, lift: 155, desat: 0.6, maxOp: 0.45, zoomX: 1.0, zoomY: 1.0 };
+    const config = window.veilConfig || { block: 7, lift: 155, colorScale: 0.35, desat: 0.6, maxOp: 0.45, zoomX: 1.0, zoomY: 1.0 };
 
     if (config.block !== currentBlockSize) {
       currentBlockSize = config.block;
@@ -172,9 +173,10 @@
           B = B * (1 - ds) + grey * ds;
 
           // Lift aggressively into the page's near-white band
-          R = Math.min(255, R * 0.35 + config.lift);
-          G = Math.min(255, G * 0.35 + config.lift);
-          B = Math.min(255, B * 0.35 + config.lift + 7);
+          const cs = config.colorScale !== undefined ? config.colorScale : 0.35;
+          R = Math.min(255, R * cs + config.lift);
+          G = Math.min(255, G * cs + config.lift);
+          B = Math.min(255, B * cs + config.lift + 7);
 
           ctx.fillStyle = `rgb(${R | 0},${G | 0},${B | 0})`;
           ctx.fillRect(c * config.block + 1, r * config.block + 1, config.block - 2, config.block - 2);
@@ -189,13 +191,13 @@
 
   function tick() {
     const config = window.veilConfig || { maxOp: 0.45 };
-    if (ready && curOp < config.maxOp && window.veilStarted) {
+    if (veilGo && curOp < config.maxOp) {
       curOp = Math.min(config.maxOp, curOp + 0.004);
     } else if (curOp > config.maxOp) {
-      curOp = config.maxOp; // Allows dynamic scaling down
+      curOp = config.maxOp;
     }
 
-    canvas.style.opacity = window.sandboxEnabled ? '0' : curOp.toFixed(3);
+    canvas.style.opacity = curOp.toFixed(3);
 
     // Even if opacity is 0, we must continue drawing so it doesn't freeze the video playhead state
     drawFrame();
