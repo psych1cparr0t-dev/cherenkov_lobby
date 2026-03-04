@@ -32,20 +32,25 @@
             // Wait for last letter's blue pulse to finish
             setTimeout(() => {
 
-                // Inc. fades in (1.2s, no delay)
+                // Inc. fades in (1.2s)
                 if (sub) sub.classList.add('visible');
 
-                // Fade patterns via inline style — avoids animation→transition flash
-                document.querySelectorAll('.background-pattern').forEach(el => {
-                    el.style.transition = `opacity ${PATTERN_FADE_MS}ms ease`;
-                    el.style.opacity = '0';
-                });
-
-                // Mosaic fires when patterns are fully gone
-                // Inc. finishes at ~1200ms, mosaic fires at 2000ms — Inc. settled first
+                // Wait for Inc. to fully appear, then dissolve the background
+                const INC_FADE_MS = 1400; // 1.2s transition + 200ms breath
                 setTimeout(() => {
-                    document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
-                }, PATTERN_FADE_MS);
+
+                    // Fade patterns via inline style — avoids animation→transition flash
+                    document.querySelectorAll('.background-pattern').forEach(el => {
+                        el.style.transition = `opacity ${PATTERN_FADE_MS}ms ease`;
+                        el.style.opacity = '0';
+                    });
+
+                    // Mosaic fires when patterns are fully gone
+                    setTimeout(() => {
+                        document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
+                    }, PATTERN_FADE_MS);
+
+                }, INC_FADE_MS);
 
             }, BLUE_PULSE_MS);
         }
