@@ -6,6 +6,8 @@ description: full git deployment workflow — compress media, stage, commit, pus
 
 > This workflow is owned by the **git agent**. The main vibedev chat does NOT handle git operations — it only builds. When the user says "deploy", "push", "ship it", or "send to git", hand off to this workflow.
 
+> ⚠️ **COORDINATION RULE**: Antigravity (the code agent) and the git agent both push to `vercel_deployment`. The git agent MUST always pull the latest `origin/main` from the submodule before running filter-repo. Failing to do this overwrites code changes made by Antigravity between deploys. **Never skip Step 0.**
+
 // turbo-all
 
 ## 💡 Compression Quick Reference (always apply before upload)
@@ -22,6 +24,24 @@ description: full git deployment workflow — compress media, stage, commit, pus
 **Naming**: always swap original to `*_original.ext` — never delete the source.
 
 See full instructions: `.agent/workflows/compress_before_commit.md`
+
+---
+
+## Step 0 — Sync vercel_deployment to latest origin/main (MANDATORY)
+
+Before touching anything else, pull the latest code from the `vercel_deployment` submodule remote. This preserves any code changes Antigravity pushed since the last deploy.
+
+```bash
+cd vercel_deployment
+git fetch origin
+git reset --hard origin/main
+cd ..
+```
+
+Verify you have the latest commit:
+```bash
+git -C vercel_deployment log --oneline -3
+```
 
 ---
 
@@ -85,6 +105,8 @@ Should show `*_original.*` patterns. If missing, add them.
 
 Run `git-filter-repo` on **both** the parent repo and any submodules to strip all media
 blobs from history before pushing. This prevents old force-added files from bloating pushes.
+
+> ⚠️ `git-filter-repo` rewrites history and removes the remote. After running it, you MUST re-add the remote AND verify the latest code commits are still present (Step 0 guarantees this if you ran it).
 
 **Parent repo:**
 ```bash
