@@ -1,16 +1,20 @@
 // Cherenkov — Letter Proximity Reveal
-// When all 9 letters are visible, waits for blue pulse to settle, then:
-//   1. "Inc." fades in immediately (1.2s)
-//   2. background patterns dissolve via JS (2s) — no animation-flash
-//   3. mosaic fires once patterns are gone (Inc. already settled by then)
+// When all 9 letters are visible:
+//   1. Wait for blue pulse to settle (2.5s)
+//   2. Inc. fades in (1.2s)
+//   3. After Inc. settles, a white overlay fades IN over the patterns (4s CSS transition)
+//      — no animation fighting, just a plain element fading
+//   4. Once overlay is opaque, mosaic fires underneath (canvas z-index:4 > overlay z-index:3)
 
 (function () {
     const letters = document.querySelectorAll('.letter');
     const sub = document.getElementById('wordmark-sub');
+    const landing = document.getElementById('landing-page');
     let triggered = false;
 
-    const BLUE_PULSE_MS = 2500; // matches bluePulse animation duration in CSS
-    const PATTERN_FADE_MS = 4000; // ms for pattern opacity fade
+    const BLUE_PULSE_MS = 2500; // matches bluePulse animation in CSS
+    const INC_SETTLE_MS = 1400; // 1.2s Inc. fade + 200ms breath
+    const OVERLAY_FADE_MS = 4000; // how long the white overlay takes to cover patterns
 
     document.addEventListener('mousemove', (e) => {
         if (triggered) return;
@@ -29,41 +33,32 @@
         if (revealed === letters.length) {
             triggered = true;
 
-            // Wait for last letter's blue pulse to finish
+            // Wait for last blue pulse to settle into grey
             setTimeout(() => {
 
-                // Inc. fades in (1.2s)
+                // Inc. fades in
                 if (sub) sub.classList.add('visible');
 
-                // Wait for Inc. to fully appear, then dissolve the background
-                const INC_FADE_MS = 1400; // 1.2s transition + 200ms breath
+                // After Inc. has settled, fade in white overlay over the patterns
                 setTimeout(() => {
 
-                    // CSS animations reassert opacity every frame and beat inline styles.
-                    // Drive the fade with rAF instead — sets style.opacity each frame,
-                    // nothing can override it.
-                    document.querySelectorAll('.background-pattern').forEach(el => {
-                        const startOp = parseFloat(window.getComputedStyle(el).opacity) || 0.3;
-                        el.style.animation = 'none';    // stop keyframes
-                        el.style.opacity = String(startOp); // lock before next paint
+                    // Create overlay — CSS transition, no animation conflict
+                    const overlay = document.createElement('div');
+                    overlay.id = 'fade-overlay';
+                    landing.appendChild(overlay);
 
-                        const duration = PATTERN_FADE_MS;
-                        const t0 = performance.now();
+                    // Force reflow so transition fires from opacity:0
+                    overlay.offsetHeight;
 
-                        (function step(now) {
-                            const progress = Math.min((now - t0) / duration, 1);
-                            el.style.opacity = String(startOp * (1 - progress));
-                            if (progress < 1) requestAnimationFrame(step);
-                            else el.style.display = 'none';
-                        })(performance.now());
-                    });
+                    // Trigger the CSS transition (defined in index.css)
+                    overlay.style.opacity = '1';
 
-                    // Mosaic fires when patterns are fully gone
+                    // Mosaic fires once overlay is opaque (canvas z-index:4 sits above overlay z-index:3)
                     setTimeout(() => {
                         document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
-                    }, PATTERN_FADE_MS);
+                    }, OVERLAY_FADE_MS);
 
-                }, INC_FADE_MS);
+                }, INC_SETTLE_MS);
 
             }, BLUE_PULSE_MS);
         }

@@ -35,7 +35,7 @@ html {
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 1;
+  z-index: 4;
   pointer-events: none;
   opacity: 0;
   transition: opacity 1.2s ease;
@@ -60,10 +60,15 @@ html {
   transition: opacity 2s ease;
 }
 
-/* Fade out patterns when mosaic appears — stop animation first so transition can take over */
-.background-pattern.hidden {
-  animation: none;
+/* White overlay that fades IN over the patterns — no animation conflict */
+#fade-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: #f5f5f5;
   opacity: 0;
+  pointer-events: none;
+  transition: opacity 4s ease;
 }
 
 .pattern-1 {
