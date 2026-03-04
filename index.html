@@ -6,24 +6,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Cherenkov — A multidisciplinary design firm.">
   <meta name="theme-color" content="#f5f5f5">
-
   <title>Cherenkov</title>
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
-
   <link rel="stylesheet" href="styles/index.css">
 </head>
 
 <body>
-
   <div id="landing-page">
+
     <!-- Liminal Veil: block-mosaic video canvas -->
     <canvas id="veil-canvas"></canvas>
 
-    <!-- Rotating Background Patterns -->
+    <!-- Rotating background patterns — fade out when mosaic reveals -->
     <div class="background-pattern pattern-1"></div>
     <div class="background-pattern pattern-2"></div>
     <div class="background-pattern pattern-3"></div>
@@ -42,15 +39,15 @@
         <span class="letter">O</span>
         <span class="letter">V</span>
       </h1>
-      <p class="wordmark-sub">Inc.</p>
+      <p class="wordmark-sub" id="wordmark-sub">Inc.</p>
     </div>
 
   </div>
 
-  <!-- Letter Proximity Reveal -->
+  <!-- Letter proximity reveal → fires cherenkov:revealed -->
   <script src="scripts/reveal.js"></script>
 
-  <!-- Veil config: higher contrast on mobile -->
+  <!-- Veil config: mobile gets higher contrast/opacity, desktop is subtle -->
   <script>
     (function () {
       var mobile = window.matchMedia('(max-width: 768px)').matches;
@@ -60,7 +57,7 @@
     })();
   </script>
 
-  <!-- Liminal Veil: block-mosaic video renderer -->
+  <!-- Block-mosaic video renderer — starts on cherenkov:revealed -->
   <script src="scripts/veil_mosaic.js"></script>
 
 </body>
