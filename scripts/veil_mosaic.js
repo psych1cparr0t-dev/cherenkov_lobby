@@ -157,7 +157,7 @@
     // Opacity gate: starts climbing the moment cherenkov:revealed fires.
     // drawFrame() handles not-yet-ready video gracefully (early return).
     if (veilGo && curOp < cfg.maxOp) {
-      curOp = Math.min(cfg.maxOp, curOp + 0.004);
+      curOp = Math.min(cfg.maxOp, curOp + 0.008);
     } else if (curOp > cfg.maxOp) {
       curOp = cfg.maxOp;
     }

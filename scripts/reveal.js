@@ -1,18 +1,16 @@
 // Cherenkov — Letter Proximity Reveal
-// Hovers near letters to reveal them one by one.
-// When all 9 letters are visible, waits for the last blue pulse
-// to finish settling (~2.5s), then:
-//   • "Inc." fades in
-//   • background patterns dissolve (2s)
-//   • 2.8s later → 'cherenkov:revealed' fires to start the mosaic
+// When all 9 letters are visible, waits for blue pulse to settle, then:
+//   1. "Inc." fades in immediately (1.2s)
+//   2. background patterns dissolve via JS (2s) — no animation-flash
+//   3. mosaic fires once patterns are gone (Inc. already settled by then)
 
 (function () {
     const letters = document.querySelectorAll('.letter');
     const sub = document.getElementById('wordmark-sub');
     let triggered = false;
 
-    const BLUE_PULSE_DURATION = 2500; // matches bluePulse animation in CSS
-    const PATTERN_FADE_DURATION = 2800; // ms after patterns start fading before mosaic fires
+    const BLUE_PULSE_MS = 2500; // matches bluePulse animation duration in CSS
+    const PATTERN_FADE_MS = 2000; // ms for pattern opacity fade
 
     document.addEventListener('mousemove', (e) => {
         if (triggered) return;
@@ -31,22 +29,25 @@
         if (revealed === letters.length) {
             triggered = true;
 
-            // Wait for the last letter's blue pulse to finish settling into grey
+            // Wait for last letter's blue pulse to finish
             setTimeout(() => {
 
-                // Inc. fades in once letters are settled
+                // Inc. fades in (1.2s, no delay)
                 if (sub) sub.classList.add('visible');
 
-                // Background patterns begin 2s dissolve
-                document.querySelectorAll('.background-pattern')
-                    .forEach(el => el.classList.add('hidden'));
+                // Fade patterns via inline style — avoids animation→transition flash
+                document.querySelectorAll('.background-pattern').forEach(el => {
+                    el.style.transition = `opacity ${PATTERN_FADE_MS}ms ease`;
+                    el.style.opacity = '0';
+                });
 
-                // Mosaic fires after patterns are gone
+                // Mosaic fires when patterns are fully gone
+                // Inc. finishes at ~1200ms, mosaic fires at 2000ms — Inc. settled first
                 setTimeout(() => {
                     document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
-                }, PATTERN_FADE_DURATION);
+                }, PATTERN_FADE_MS);
 
-            }, BLUE_PULSE_DURATION);
+            }, BLUE_PULSE_MS);
         }
     });
 })();
