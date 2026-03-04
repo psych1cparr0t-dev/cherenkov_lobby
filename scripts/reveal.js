@@ -53,10 +53,10 @@
                     // Trigger the CSS transition (defined in index.css)
                     overlay.style.opacity = '1';
 
-                    // Mosaic fires once overlay is opaque (canvas z-index:4 sits above overlay z-index:3)
+                    // Mosaic fires 1 sec sooner so it blends smoothly as the overlay finishes (canvas z-index:4 sits above overlay z-index:3)
                     setTimeout(() => {
                         document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
-                    }, OVERLAY_FADE_MS);
+                    }, OVERLAY_FADE_MS - 1000);
 
                 }, INC_SETTLE_MS);
 
