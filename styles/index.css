@@ -60,10 +60,10 @@ html {
   transition: opacity 2s ease;
 }
 
-/* Fade out patterns when mosaic appears */
+/* Fade out patterns when mosaic appears — stop animation first so transition can take over */
 .background-pattern.hidden {
-  opacity: 0 !important;
-  pointer-events: none;
+  animation: none;
+  opacity: 0;
 }
 
 .pattern-1 {
