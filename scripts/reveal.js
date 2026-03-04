@@ -10,7 +10,7 @@
     let triggered = false;
 
     const BLUE_PULSE_MS = 2500; // matches bluePulse animation duration in CSS
-    const PATTERN_FADE_MS = 2000; // ms for pattern opacity fade
+    const PATTERN_FADE_MS = 4000; // ms for pattern opacity fade
 
     document.addEventListener('mousemove', (e) => {
         if (triggered) return;
