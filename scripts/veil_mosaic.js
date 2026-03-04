@@ -7,14 +7,10 @@
     'references/liminal_veil/first_draft/whale_humpback.webm',
     'references/liminal_veil/first_draft/whales_orca.webm',
     'references/liminal_veil/first_draft/colosseum_aerial_10s.webm',
-    'references/liminal_veil/first_draft/robot_research_10s.webm',
     'references/liminal_veil/first_draft/floating_market_10s.webm',
     'references/liminal_veil/first_draft/starling_swarm_10s.webm',
-    'references/liminal_veil/first_draft/scene_4_10s.webm',
-    'references/liminal_veil/first_draft/nature1_10s.webm',
-    'references/liminal_veil/first_draft/design1_10s.webm',
-    'references/liminal_veil/first_draft/innovation1_10s.webm',
-    'references/liminal_veil/first_draft/creative1_10s.webm'
+    'references/liminal_veil/first_draft/hummingbird_10s.webm',
+    'references/liminal_veil/first_draft/monkey_10s.webm',
   ];
   const canvas = document.getElementById('veil-canvas');
   if (!canvas) return;
