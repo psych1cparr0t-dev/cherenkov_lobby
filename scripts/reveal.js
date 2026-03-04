@@ -39,10 +39,15 @@
                 const INC_FADE_MS = 1400; // 1.2s transition + 200ms breath
                 setTimeout(() => {
 
-                    // Fade patterns via inline style — avoids animation→transition flash
+                    // Fade patterns — must stop animation first (animations beat inline opacity),
+                    // then capture current value so there's no flash before the fade
                     document.querySelectorAll('.background-pattern').forEach(el => {
+                        const currentOp = window.getComputedStyle(el).opacity;
+                        el.style.animation = 'none';          // stop keyframes
+                        el.style.opacity = currentOp;       // lock in current value
+                        el.offsetHeight;                       // force reflow
                         el.style.transition = `opacity ${PATTERN_FADE_MS}ms ease`;
-                        el.style.opacity = '0';
+                        el.style.opacity = '0';             // now fade to gone
                     });
 
                     // Mosaic fires when patterns are fully gone
