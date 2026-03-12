@@ -1,0 +1,25 @@
+<svg viewBox="25 65 130 130" xmlns="http://www.w3.org/2000/svg">
+  <!-- Back face (outer rounded rect, offset up-left) -->
+  <path
+    style="fill:none;stroke:#888888;stroke-width:0.287;stroke-linejoin:round"
+    d="m 71.427572,47.914261 h 54.790018 a 14.2875,14.2875 45 0 1 14.2875,14.2875 v 48.402919 a 14.2875,14.2875 135 0 1 -14.2875,14.2875 H 71.427572 a 14.2875,14.2875 45 0 1 -14.2875,-14.2875 V 62.201761 a 14.2875,14.2875 135 0 1 14.2875,-14.2875 z"
+    transform="matrix(0.98286864,0,0,1.0807812,-20.661875,20.262862)" />
+  <!-- Front face (inner rounded rect, offset down-right) -->
+  <path
+    style="fill:none;stroke:#888888;stroke-width:0.287;stroke-linejoin:round"
+    d="m 71.427572,47.914261 h 54.790018 a 14.2875,14.2875 45 0 1 14.2875,14.2875 v 48.402919 a 14.2875,14.2875 135 0 1 -14.2875,14.2875 H 71.427572 a 14.2875,14.2875 45 0 1 -14.2875,-14.2875 V 62.201761 a 14.2875,14.2875 135 0 1 14.2875,-14.2875 z"
+    transform="matrix(0.98286864,0,0,1.0807812,7.870383,50.715758)" />
+  <!-- Cherenkov point -->
+  <circle
+    style="fill:#54b6e8;fill-opacity:0.3;stroke:#888888;stroke-width:0.287;stroke-linejoin:round"
+    cx="91.998024" cy="129.04741" r="15.258064" />
+  <!-- Connectors -->
+  <path style="fill:none;stroke:#888888;stroke-width:0.287;stroke-linejoin:round"
+    d="M 39.052883,77.222429 67.58514,107.67532" />
+  <path style="fill:none;stroke:#888888;stroke-width:0.287;stroke-linejoin:round"
+    d="m 113.17811,76.512752 28.53226,30.452888" />
+  <path style="fill:none;stroke:#888888;stroke-width:0.287;stroke-linejoin:round"
+    d="m 41.417326,152.39704 28.532257,30.4529" />
+  <path style="fill:none;stroke:#888888;stroke-width:0.287;stroke-linejoin:round"
+    d="m 113.53295,150.27624 28.53226,30.4529" />
+</svg>

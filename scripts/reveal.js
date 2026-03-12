@@ -12,6 +12,9 @@
     const landing = document.getElementById('landing-page');
     let triggered = false;
 
+    // Logo image (fades in as letters are revealed)
+    const logoMark = document.getElementById('logo-mark');
+
     const BLUE_PULSE_MS = 2500; // matches bluePulse animation in CSS
     const INC_SETTLE_MS = 1400; // 1.2s Inc. fade + 200ms breath
     const OVERLAY_FADE_MS = 4000; // how long the white overlay takes to cover patterns
@@ -29,7 +32,12 @@
             if (dist < 120) letter.classList.add('visible', 'blue-pulse');
         });
 
+        // Fade in logo as letters appear
         const revealed = document.querySelectorAll('.letter.visible').length;
+        if (logoMark && revealed >= Math.floor(letters.length / 2)) {
+            logoMark.style.opacity = '1';
+        }
+
         if (revealed === letters.length) {
             triggered = true;
 
