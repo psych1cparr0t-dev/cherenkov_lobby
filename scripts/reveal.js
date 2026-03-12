@@ -41,33 +41,21 @@
         if (revealed === letters.length) {
             triggered = true;
 
-            // Wait for last blue pulse to settle into grey
             setTimeout(() => {
-
-                // Inc. fades in
                 if (sub) sub.classList.add('visible');
 
-                // After Inc. has settled, fade in white overlay over the patterns
                 setTimeout(() => {
-
-                    // Create overlay — CSS transition, no animation conflict
                     const overlay = document.createElement('div');
                     overlay.id = 'fade-overlay';
                     landing.appendChild(overlay);
-
-                    // Force reflow so transition fires from opacity:0
                     overlay.offsetHeight;
-
-                    // Trigger the CSS transition (defined in index.css)
                     overlay.style.opacity = '1';
 
-                    // Mosaic fires 1 sec sooner so it blends smoothly as the overlay finishes (canvas z-index:4 sits above overlay z-index:3)
                     setTimeout(() => {
                         document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
                     }, OVERLAY_FADE_MS - 1000);
 
                 }, INC_SETTLE_MS);
-
             }, BLUE_PULSE_MS);
         }
     });
