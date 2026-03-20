@@ -1,178 +1,151 @@
-(function veilMosaic() {
+/**
+ * Liminal Veil: Block-Mosaic Video Bridge
+ * Responsibility: Render a low-fidelity grid of video pixel data.
+ */
+(function() {
 
-  // Only valid scenes — confirmed to exist in the repo
-  const SCENES = [
-    'references/liminal_veil/first_draft/cherry_blossoms.webm',
-    'references/liminal_veil/first_draft/mexico_city_crosswalk.webm',
-    'references/liminal_veil/first_draft/whale_humpback.webm',
-    'references/liminal_veil/first_draft/whales_orca.webm',
-    'references/liminal_veil/first_draft/colosseum_aerial_10s.webm',
-    'references/liminal_veil/first_draft/floating_market_10s.webm',
-    'references/liminal_veil/first_draft/starling_swarm_10s.webm',
-    'references/liminal_veil/first_draft/hong_kong_island.webm',
-    'references/liminal_veil/first_draft/solis_bridge.webm',
-    'references/liminal_veil/first_draft/talesh_cow.webm',
-    'references/liminal_veil/first_draft/wellington_car.webm',
-    'references/liminal_veil/first_draft/fishing_boat_8s.webm',
-  ];
+    // Only using videos confirmed in the current environment
+    const SCENES = [
+        'references/liminal_veil/first_draft/cherry_blossoms.webm',
+        'references/liminal_veil/first_draft/colosseum_aerial_10s.webm',
+        'references/liminal_veil/first_draft/floating_market_10s.webm',
+        'references/liminal_veil/first_draft/starling_swarm_10s.webm',
+        'references/liminal_veil/first_draft/nature1_10s.webm',
+        'references/liminal_veil/first_draft/robot_research_10s.webm'
+    ];
 
-  const canvas = document.getElementById('veil-canvas');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const canvas = document.getElementById('veil-canvas');
+    if (!canvas) return;
 
-  const offscreen = document.createElement('canvas');
-  const octx = offscreen.getContext('2d', { willReadFrequently: true });
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const off = document.createElement('canvas'); // Offscreen sampling buffer
+    const octx = off.getContext('2d', { willReadFrequently: true });
 
-  // Hidden video elements — never shown, just decoded
-  const vidA = document.createElement('video');
-  const vidB = document.createElement('video');
-  [vidA, vidB].forEach(v => {
-    v.muted = true;
-    v.playsInline = true;
-    v.loop = false;
-    v.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;top:-2px;left:-2px;';
-    document.body.appendChild(v);
-    v.addEventListener('error', () => skipToNext(v));
-  });
+    // Internal state
+    let ready = false;
+    let opacity = 0;
+    let currentIndex = 0;
+    let isDrawing = false;
+    let isTransitioning = false;
+    let blockSize = 7;
 
-  let currentVid = vidA, nextVid = vidB;
-  let currentIndex = 0;
-  let ready = false;
-  let curOp = 0;
-  let veilGo = false;
-  let isTransitioning = false;
-  let isDrawing = false;
-  let currentBlockSize = 7;
+    const vidA = document.createElement('video');
+    const vidB = document.createElement('video');
+    const player = [vidA, vidB];
+    let currentVid = vidA, nextVid = vidB;
 
-  const XFADE = 1.0; // crossfade seconds
+    player.forEach(v => {
+        v.muted = true;
+        v.playsInline = true;
+        v.loop = false;
+        v.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;top:-2px;left:-2px;';
+        document.body.appendChild(v);
+        v.addEventListener('error', () => skipToNext(v));
+    });
 
-  // Start mosaic when reveal fires
-  document.addEventListener('cherenkov:revealed', () => { veilGo = true; });
+    const XFADE_TIME = 1.0;
 
-  function loadScene(i, v) {
-    v.src = SCENES[i % SCENES.length];
-    v.load();
-  }
+    function init() {
+        // Mobile/Desktop config
+        const isMobile = window.matchMedia('(max-width: 768px)').matches;
+        blockSize = isMobile ? 3 : 7;
 
-  function skipToNext(v) {
-    if (v === currentVid) {
-      [currentVid, nextVid] = [nextVid, currentVid];
-      currentIndex++;
-      loadScene(currentIndex + 1, nextVid);
-      isTransitioning = false;
-      currentVid.play().catch(() => { });
-    } else {
-      currentIndex++;
-      loadScene(currentIndex + 1, nextVid);
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        off.width = Math.ceil(canvas.width / blockSize);
+        off.height = Math.ceil(canvas.height / blockSize);
+
+        loadScene(0, currentVid);
+        loadScene(1, nextVid);
+        currentVid.play().catch(() => {});
     }
-  }
 
-  currentVid.addEventListener('canplay', () => { ready = true; });
-
-  function resize() {
-    const cfg = window.veilConfig || { block: 7 };
-    currentBlockSize = cfg.block || 7;
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    offscreen.width = Math.ceil(canvas.width / currentBlockSize);
-    offscreen.height = Math.ceil(canvas.height / currentBlockSize);
-  }
-  window.addEventListener('resize', resize);
-  resize();
-
-  function checkTransition() {
-    if (!currentVid.duration || currentVid.duration === Infinity) return;
-    const timeLeft = currentVid.duration - currentVid.currentTime;
-    if (timeLeft <= XFADE && !isTransitioning) {
-      isTransitioning = true;
-      nextVid.play().catch(() => { });
+    function loadScene(i, v) {
+        v.src = SCENES[i % SCENES.length];
+        v.load();
     }
-    if (timeLeft <= 0.05 || currentVid.ended) {
-      isTransitioning = false;
-      [currentVid, nextVid] = [nextVid, currentVid];
-      currentIndex++;
-      loadScene(currentIndex + 1, nextVid);
-      currentVid.play().catch(() => { });
+
+    function skipToNext(v) {
+        if (v === currentVid) swap();
+        else loadScene(++currentIndex + 1, nextVid);
     }
-  }
 
-  function drawFrame() {
-    if (!ready || currentVid.readyState < 2) return;
-    if (isDrawing) return;
-    isDrawing = true;
+    function swap() {
+        [currentVid, nextVid] = [nextVid, currentVid];
+        loadScene(++currentIndex + 1, nextVid);
+        currentVid.play().catch(() => {});
+        isTransitioning = false;
+    }
 
-    const cfg = window.veilConfig || { block: 7, lift: 20, colorScale: 0.92, desat: 0.05, maxOp: 0.92, zoomX: 1.0, zoomY: 1.0 };
+    currentVid.addEventListener('canplay', () => { ready = true; });
 
-    if (cfg.block !== currentBlockSize) { resize(); }
+    function drawFrame() {
+        if (!ready || currentVid.readyState < 2 || isDrawing) return;
+        isDrawing = true;
 
-    try {
-      checkTransition();
+        const cfg = { lift: 20, colorScale: 0.92, desat: 0.05, maxOp: 0.92 };
 
-      const cols = offscreen.width, rows = offscreen.height;
-      const cs = cfg.colorScale !== undefined ? cfg.colorScale : 0.35;
+        try {
+            // Check crossfade
+            const timeLeft = currentVid.duration - currentVid.currentTime;
+            if (timeLeft <= XFADE_TIME && !isTransitioning) {
+                isTransitioning = true;
+                nextVid.play().catch(() => {});
+            }
+            if (timeLeft <= 0.05 || currentVid.ended) swap();
 
-      octx.clearRect(0, 0, cols, rows);
+            octx.clearRect(0, 0, off.width, off.height);
+            
+            // Blit current
+            octx.globalAlpha = 1.0;
+            octx.drawImage(currentVid, 0, 0, off.width, off.height);
 
-      function blit(v, alpha) {
-        if (v.readyState < 2) return;
-        octx.globalAlpha = alpha;
-        octx.drawImage(v, 0, 0, cols, rows);
-      }
+            // Blit next if fading
+            if (isTransitioning) {
+                const fade = 1 - (timeLeft / XFADE_TIME);
+                octx.globalAlpha = Math.max(0, Math.min(1, fade));
+                octx.drawImage(nextVid, 0, 0, off.width, off.height);
+            }
 
-      if (isTransitioning && currentVid.duration && currentVid.duration !== Infinity) {
-        const fade = Math.max(0, Math.min(1,
-          1 - (currentVid.duration - currentVid.currentTime) / XFADE));
-        blit(currentVid, 1.0);
-        blit(nextVid, fade);
-      } else {
-        blit(currentVid, 1.0);
-      }
-      octx.globalAlpha = 1.0;
+            const px = octx.getImageData(0, 0, off.width, off.height).data;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      const px = octx.getImageData(0, 0, cols, rows).data;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let r = 0; r < off.height; r++) {
+                for (let c = 0; c < off.width; c++) {
+                    const i = (r * off.width + c) * 4;
+                    let R = px[i], G = px[i+1], B = px[i+2];
+                    
+                    // Desaturate & Lift
+                    const grey = R * 0.299 + G * 0.587 + B * 0.114;
+                    R = (R * (1 - cfg.desat) + grey * cfg.desat) * cfg.colorScale + cfg.lift;
+                    G = (G * (1 - cfg.desat) + grey * cfg.desat) * cfg.colorScale + cfg.lift;
+                    B = (B * (1 - cfg.desat) + grey * cfg.desat) * cfg.colorScale + cfg.lift + 7;
 
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const i = (r * cols + c) * 4;
-          let R = px[i], G = px[i + 1], B = px[i + 2];
-          const grey = R * 0.299 + G * 0.587 + B * 0.114;
-          const ds = cfg.desat || 0;
-          R = R * (1 - ds) + grey * ds;
-          G = G * (1 - ds) + grey * ds;
-          B = B * (1 - ds) + grey * ds;
-          R = Math.min(255, R * cs + cfg.lift);
-          G = Math.min(255, G * cs + cfg.lift);
-          B = Math.min(255, B * cs + cfg.lift + 7);
-          ctx.fillStyle = `rgb(${R | 0},${G | 0},${B | 0})`;
-          ctx.fillRect(c * cfg.block + 1, r * cfg.block + 1, cfg.block - 2, cfg.block - 2);
+                    ctx.fillStyle = `rgb(${R|0},${G|0},${B|0})`;
+                    ctx.fillRect(c * blockSize + 1, r * blockSize + 1, blockSize - 2, blockSize - 2);
+                }
+            }
+        } finally {
+            isDrawing = false;
         }
-      }
-    } catch (e) {
-      console.error('veil draw error:', e);
-    } finally {
-      isDrawing = false;
     }
-  }
 
-  function tick() {
-    const cfg = window.veilConfig || { maxOp: 0.45 };
-    // Opacity gate: starts climbing the moment cherenkov:revealed fires.
-    // drawFrame() handles not-yet-ready video gracefully (early return).
-    if (veilGo && curOp < cfg.maxOp) {
-      curOp = Math.min(cfg.maxOp, curOp + 0.008);
-    } else if (curOp > cfg.maxOp) {
-      curOp = cfg.maxOp;
+    function tick() {
+        const isActive = window.Cherenkov && window.Cherenkov.getState() === 'active';
+        const isTransitioning = window.Cherenkov && window.Cherenkov.getState() === 'veil_transitioning';
+        
+        if (isActive || isTransitioning) {
+            opacity = Math.min(0.92, opacity + 0.008);
+            canvas.style.opacity = opacity.toFixed(3);
+            drawFrame();
+        }
     }
-    canvas.style.opacity = curOp.toFixed(3);
-    drawFrame();
-  }
 
-  // Boot
-  canvas.style.opacity = '0';
-  loadScene(0, currentVid);
-  loadScene(1, nextVid);
-  currentVid.play().catch(() => { });
-  setInterval(tick, 33);
+    window.addEventListener('resize', init);
+    document.addEventListener('cherenkov:load-mosaic', init);
+    
+    // Start ticker
+    setInterval(tick, 33);
 
 })();
+

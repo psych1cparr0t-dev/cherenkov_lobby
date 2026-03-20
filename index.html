@@ -7,8 +7,8 @@
   <meta name="description" content="Cherenkov — A multidisciplinary design firm.">
   <meta name="theme-color" content="#f5f5f5">
   <title>Cherenkov</title>
+  
   <link rel="icon" type="image/svg+xml" href="assets/logos/cherenkov_logo_web.svg">
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
@@ -18,16 +18,20 @@
 <body>
   <div id="landing-page">
 
-    <!-- Liminal Veil: block-mosaic video canvas -->
+    <!-- Layer 1: Liminal Veil Mosaic -->
     <canvas id="veil-canvas"></canvas>
 
-    <!-- Rotating background patterns — fade out when mosaic reveals -->
+    <!-- Layer 2: Top Corner Navigation -->
+    <div class="top-nav">
+      <a href="mailto:max@cherenkov.industries" class="nav-link" id="nav-contact">Contact</a>
+      <a href="https://mercury.com" target="_blank" class="nav-link" id="nav-fund">Fund</a>
+    </div>
+
+    <!-- Layer 3: Background Patterns (fade out on reveal) -->
     <div class="background-pattern pattern-1"></div>
     <div class="background-pattern pattern-2"></div>
-    <div class="background-pattern pattern-3"></div>
-    <div class="background-pattern pattern-4"></div>
 
-    <!-- Wordmark -->
+    <!-- Layer 4: Main Wordmark -->
     <div class="wordmark-container">
       <h1 class="wordmark" id="wordmark">
         <span class="letter">C</span>
@@ -45,20 +49,9 @@
 
   </div>
 
-  <!-- Letter proximity reveal → fires cherenkov:revealed -->
+  <!-- Modular Scripts -->
+  <script src="scripts/coordinator.js"></script>
   <script src="scripts/reveal.js"></script>
-
-  <!-- Veil config: uniform contrast/opacity for desktop and mobile -->
-  <script>
-    (function () {
-      var mobile = window.matchMedia('(max-width: 768px)').matches;
-      window.veilConfig = mobile
-        ? { block: 2, lift: 20, colorScale: 0.92, desat: 0.05, maxOp: 0.92, zoomX: 1.0, zoomY: 1.0 }
-        : { block: 7, lift: 20, colorScale: 0.92, desat: 0.05, maxOp: 0.92, zoomX: 1.0, zoomY: 1.0 };
-    })();
-  </script>
-
-  <!-- Block-mosaic video renderer — starts on cherenkov:revealed -->
   <script src="scripts/veil_mosaic.js"></script>
 
 </body>

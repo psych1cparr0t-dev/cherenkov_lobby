@@ -1,25 +1,16 @@
-// Cherenkov — Letter Proximity Reveal
-// When all 9 letters are visible:
-//   1. Wait for blue pulse to settle (2.5s)
-//   2. Inc. fades in (1.2s)
-//   3. After Inc. settles, a white overlay fades IN over the patterns (4s CSS transition)
-//      — no animation fighting, just a plain element fading
-//   4. Once overlay is opaque, mosaic fires underneath (canvas z-index:4 > overlay z-index:3)
-
-(function () {
+/**
+ * Proximity Effect: Wordmark Reveal
+ * Only responsibility: Show letters on hover and notify when all are visible.
+ */
+(function() {
     const letters = document.querySelectorAll('.letter');
-    const sub = document.getElementById('wordmark-sub');
-    const landing = document.getElementById('landing-page');
+    const logoMark = document.getElementById('logo-mark');
     let triggered = false;
 
-    // Logo image (fades in as letters are revealed)
-    const logoMark = document.getElementById('logo-mark');
+    // Radius for reveal (px)
+    const REVEAL_DIST = 120;
 
-    const BLUE_PULSE_MS = 2500; // matches bluePulse animation in CSS
-    const INC_SETTLE_MS = 1400; // 1.2s Inc. fade + 200ms breath
-    const OVERLAY_FADE_MS = 4000; // how long the white overlay takes to cover patterns
-
-    document.addEventListener('mousemove', (e) => {
+    function checkProximity(e) {
         if (triggered) return;
 
         letters.forEach((letter) => {
@@ -29,34 +20,67 @@
                 e.clientX - (rect.left + rect.width / 2),
                 e.clientY - (rect.top + rect.height / 2)
             );
-            if (dist < 120) letter.classList.add('visible', 'blue-pulse');
+            if (dist < REVEAL_DIST) {
+                letter.classList.add('visible', 'blue-pulse');
+            }
         });
 
-        // Fade in logo as letters appear
-        const revealed = document.querySelectorAll('.letter.visible').length;
-        if (logoMark && revealed >= Math.floor(letters.length / 2)) {
+        // Logo image fade-in (milestone reveal)
+        const revealedCount = document.querySelectorAll('.letter.visible').length;
+        if (logoMark && revealedCount >= Math.floor(letters.length / 2)) {
             logoMark.style.opacity = '1';
         }
 
-        if (revealed === letters.length) {
+        // Check if fully revealed
+        if (revealedCount === letters.length) {
             triggered = true;
-
-            setTimeout(() => {
-                if (sub) sub.classList.add('visible');
-
-                setTimeout(() => {
-                    const overlay = document.createElement('div');
-                    overlay.id = 'fade-overlay';
-                    landing.appendChild(overlay);
-                    overlay.offsetHeight;
-                    overlay.style.opacity = '1';
-
-                    setTimeout(() => {
-                        document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
-                    }, OVERLAY_FADE_MS - 1000);
-
-                }, INC_SETTLE_MS);
-            }, BLUE_PULSE_MS);
+            console.log('[Proximity] Wordmark fully revealed.');
+            
+            // Initializing sequence in the coordinator
+            if (window.Cherenkov) {
+                window.Cherenkov.setState(window.Cherenkov.STATE.REVEALING);
+                window.Cherenkov.startFinalSequence();
+            } else {
+                // Fallback for isolated testing
+                document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
+            }
         }
-    });
+    }
+
+    // Logic for the staggered "fry out" death – controlled by the 'active' state
+    function killLetters() {
+        const indices = Array.from({ length: letters.length }, (_, i) => i);
+        // Shuffle death order
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+
+        indices.forEach((letterIdx, order) => {
+            const delay = (order / letters.length) * 2.0 + Math.random() * 0.5;
+            const letter = letters[letterIdx];
+            letter.style.setProperty('--die-delay', `${delay.toFixed(2)}s`);
+            
+            letter.classList.remove('visible', 'blue-pulse');
+            letter.classList.add('dying');
+            
+            // Ensuring opacity remains 0 after flickering
+            setTimeout(() => { letter.style.opacity = '0'; }, (delay + 1.2) * 1000);
+        });
+
+        const sub = document.getElementById('wordmark-sub');
+        if (sub) {
+            sub.classList.add('dying');
+            
+            // Nav reveal follows final death
+            setTimeout(() => {
+                document.querySelectorAll('.nav-link').forEach(link => link.classList.add('revealed'));
+            }, 2200);
+        }
+    }
+
+    // React to global coordinator state
+    document.addEventListener('cherenkov:state:active', killLetters);
+    document.addEventListener('mousemove', checkProximity);
+
 })();

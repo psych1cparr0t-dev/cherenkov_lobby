@@ -1,25 +1,39 @@
 /* =====================================================
-   CHERENKOV — Liminal Commercial Aesthetic
-   Font: Orbitron (Google Fonts)
+   CHERENKOV — Design System
    ===================================================== */
 
-*,
-*::before,
-*::after {
+:root {
+  /* Colors */
+  --bg-primary: #f5f5f5;
+  --text-dim: #888888;
+  --text-muted: #aaaaaa;
+  --accent-blue: #2962ff;
+  --neon-blue: #5a80e6;
+
+  /* Timings (Match coordinator.js) */
+  --t-inc-reveal: 1.2s;
+  --t-veil-fade: 4s;
+  --t-neon-die: 1.2s;
+  --t-nav-reveal: 1.5s;
+}
+
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-body,
-html {
+body, html {
   height: 100dvh;
   font-family: 'Orbitron', 'Arial', sans-serif;
   overflow: hidden;
-  background-color: #f5f5f5;
+  background-color: var(--bg-primary);
 }
 
-/* --- Landing container --- */
+/* =====================================================
+   LAYOUT & CONTAINERS
+   ===================================================== */
+
 #landing-page {
   position: absolute;
   inset: 0;
@@ -29,7 +43,21 @@ html {
   overflow: hidden;
 }
 
-/* --- Mosaic canvas --- */
+/* White overlay that fades IN over patterns */
+#fade-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: var(--bg-primary);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--t-veil-fade) ease;
+}
+
+/* =====================================================
+   LIMINAL VEIL (MOSAIC)
+   ===================================================== */
+
 #veil-canvas {
   position: absolute;
   inset: 0;
@@ -37,191 +65,97 @@ html {
   height: 100%;
   z-index: 4;
   pointer-events: none;
-  opacity: 0;
+  opacity: 0; /* Managed by JS tick */
 }
 
-/* --- Rotating background patterns --- */
+/* Rotating background patterns */
 .background-pattern {
   position: absolute;
-  top: -20%;
-  left: -20%;
-  width: 140%;
-  height: 140%;
+  top: -20%; left: -20%;
+  width: 140%; height: 140%;
   background-repeat: repeat;
   background-size: 80px 80px;
-  animation:
-    backgroundShift 12s ease-in-out infinite,
-    patternRotate 40s linear infinite;
+  animation: backgroundShift 12s ease-in-out infinite, 
+             patternRotate 40s linear infinite;
   pointer-events: none;
-  transform-origin: center center;
-  will-change: transform, opacity;
   z-index: 2;
-  transition: opacity 2s ease;
+  opacity: 0.1;
+  will-change: transform, opacity;
 }
 
-/* White overlay that fades IN over the patterns — no animation conflict */
-#fade-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  background: #f5f5f5;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 4s ease;
-}
+.pattern-1 { background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, rgba(41,98,255,0.1) 50%, rgba(41,98,255,0.2) 75%); }
+.pattern-2 { background-image: linear-gradient(135deg, rgba(41,98,255,0.05) 50%, rgba(41,98,255,0.1) 75%); animation-delay: -6s; }
 
-.pattern-1 {
-  background-image: linear-gradient(45deg,
-      rgba(255, 255, 255, 0.1) 25%, rgba(224, 224, 224, 0.1) 25%,
-      rgba(41, 98, 255, 0.1) 50%, rgba(41, 98, 255, 0.2) 75%,
-      rgba(208, 208, 208, 0.1) 75%);
-}
+/* =====================================================
+   WORDMARK (TYPOGRAPHY)
+   ===================================================== */
 
-.pattern-2 {
-  background-image: linear-gradient(135deg,
-      rgba(41, 98, 255, 0.05) 25%, rgba(224, 224, 224, 0.05) 25%,
-      rgba(255, 255, 255, 0.05) 50%, rgba(41, 98, 255, 0.1) 75%,
-      rgba(208, 208, 208, 0.05) 75%);
-  animation-delay: -6s;
-}
-
-.pattern-3 {
-  background-image: linear-gradient(225deg,
-      rgba(208, 208, 208, 0.05) 25%, rgba(41, 98, 255, 0.05) 25%,
-      rgba(255, 255, 255, 0.05) 50%, rgba(224, 224, 224, 0.1) 75%,
-      rgba(41, 98, 255, 0.05) 75%);
-  animation-delay: -3s;
-}
-
-.pattern-4 {
-  background-image: linear-gradient(315deg,
-      rgba(41, 98, 255, 0.03) 25%, rgba(224, 224, 224, 0.03) 25%,
-      rgba(255, 255, 255, 0.03) 50%, rgba(41, 98, 255, 0.06) 75%,
-      rgba(208, 208, 208, 0.03) 75%);
-  animation-delay: -9s;
-  background-size: 100px 100px;
-}
-
-@keyframes backgroundShift {
-
-  0%,
-  100% {
-    opacity: 0.1;
-    transform: scale(1);
-  }
-
-  25% {
-    opacity: 0.3;
-    transform: scale(1.02);
-  }
-
-  50% {
-    opacity: 0.5;
-    transform: scale(1.03);
-  }
-
-  75% {
-    opacity: 0.3;
-    transform: scale(1.02);
-  }
-}
-
-@keyframes patternRotate {
-  0% {
-    transform: rotate(0deg) scale(1);
-    opacity: 0.15;
-  }
-
-  50% {
-    transform: rotate(180deg) scale(1.02);
-    opacity: 0.4;
-  }
-
-  100% {
-    transform: rotate(360deg) scale(1);
-    opacity: 0.15;
-  }
-}
-
-/* --- Wordmark --- */
 .wordmark-container {
   position: relative;
   z-index: 100;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0;
 }
 
 .wordmark {
-  font-family: 'Orbitron', sans-serif;
   font-size: clamp(48px, 12vw, 96px);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  color: #888888;
+  color: var(--text-dim);
   display: flex;
 }
 
 .letter {
-  color: #888888;
   opacity: 0;
   transition: opacity 0.4s ease;
 }
 
-.letter.visible {
-  opacity: 1;
-}
+.letter.visible { opacity: 1; }
 
-.letter.blue-pulse {
-  animation: bluePulse 2.5s ease-in-out;
-}
-
-@keyframes bluePulse {
-  0% {
-    opacity: 0;
-    color: #888888;
-  }
-
-  25% {
-    opacity: 0.7;
-    color: rgba(41, 98, 255, 0.8);
-  }
-
-  50% {
-    opacity: 1;
-    color: rgba(41, 98, 255, 0.6);
-  }
-
-  75% {
-    opacity: 0.9;
-    color: #888888;
-  }
-
-  100% {
-    opacity: 1;
-    color: #888888;
-  }
-}
-
-/* --- Inc. subtitle --- */
 .wordmark-sub {
-  font-family: 'Orbitron', sans-serif;
   font-size: clamp(9px, 1.2vw, 13px);
-  font-weight: 400;
   letter-spacing: 0.45em;
   text-transform: uppercase;
-  color: #aaaaaa;
+  color: var(--text-muted);
   opacity: 0;
-  transition: opacity 1.2s ease;
-  text-align: center;
+  transition: opacity var(--t-inc-reveal) ease;
+  margin-top: 8px;
 }
 
-.wordmark-sub.visible {
-  opacity: 1;
+.wordmark-sub.visible { opacity: 1; }
+
+/* =====================================================
+   NAV & LOGO
+   ===================================================== */
+
+.top-nav {
+  position: absolute;
+  top: 40px; left: 40px; right: 40px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 150;
+  pointer-events: none;
 }
 
-/* --- Logo mark --- */
+.nav-link {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+  color: var(--text-dim);
+  text-decoration: none;
+  opacity: 0;
+  pointer-events: auto;
+  transition: opacity var(--t-nav-reveal) ease, 
+              transform var(--t-nav-reveal) ease, 
+              color 0.4s ease;
+  transform: translateY(-5px);
+}
+
+.nav-link.revealed { opacity: 1; transform: translateY(0); }
+.nav-link:hover { color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.4); }
+
 .logo-mark {
   width: clamp(60px, 8vw, 100px);
   height: auto;
@@ -230,18 +164,49 @@ html {
   transition: opacity 0.8s ease;
 }
 
-/* --- Responsive --- */
-@media (max-width: 768px) and (orientation: portrait) {
-  .wordmark {
-    font-size: clamp(28px, 9vw, 40px);
-    letter-spacing: 0.15em;
-  }
+/* =====================================================
+   ANIMATIONS (NEON FRY OUT)
+   ===================================================== */
+
+.letter.dying { animation: neonDie var(--t-neon-die) ease-out forwards; animation-delay: var(--die-delay, 0s); }
+.wordmark-sub.dying { animation: subDie 1.6s ease-out forwards; }
+
+@keyframes neonDie {
+  0%   { opacity: 1;    color: var(--text-dim); }
+  15%  { opacity: 0.3;  color: #9ab4ff; }
+  25%  { opacity: 0.85; color: var(--text-dim); }
+  40%  { opacity: 0.15; color: #7a9dff; }
+  52%  { opacity: 0.7;  color: var(--text-dim); }
+  100% { opacity: 0;     color: var(--neon-blue); }
 }
 
-@media (max-height: 450px),
-(max-width: 900px) and (orientation: landscape) {
-  .wordmark {
-    font-size: clamp(24px, 12vh, 40px);
-    letter-spacing: 0.15em;
-  }
+@keyframes subDie {
+  0%   { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes backgroundShift {
+  0%, 100% { opacity: 0.1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.03); }
+}
+
+@keyframes patternRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.letter.blue-pulse { animation: bluePulse 2.5s ease-in-out; }
+@keyframes bluePulse {
+  0%, 100% { color: var(--text-dim); }
+  50% { color: var(--accent-blue); opacity: 1; }
+}
+
+/* =====================================================
+   MOBILE RESPONSIVE
+   ===================================================== */
+
+@media (max-width: 768px) {
+  .wordmark { font-size: clamp(28px, 9vw, 40px); letter-spacing: 0.15em; }
+  .top-nav { top: 25px; left: 20px; right: 20px; }
+  .nav-link { font-size: 9px; letter-spacing: 0.2em; }
 }
