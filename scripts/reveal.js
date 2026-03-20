@@ -4,17 +4,20 @@
  */
 (function() {
     const letters = document.querySelectorAll('.letter');
-    const logoMark = document.getElementById('logo-mark');
     let triggered = false;
 
     // Radius for reveal (px)
-    const REVEAL_DIST = 120;
+    const REVEAL_DIST = 140;
 
     function checkProximity(e) {
         if (triggered) return;
 
+        let revealedCount = 0;
         letters.forEach((letter) => {
-            if (letter.classList.contains('visible')) return;
+            if (letter.classList.contains('visible')) {
+                revealedCount++;
+                return;
+            }
             const rect = letter.getBoundingClientRect();
             const dist = Math.hypot(
                 e.clientX - (rect.left + rect.width / 2),
@@ -22,14 +25,9 @@
             );
             if (dist < REVEAL_DIST) {
                 letter.classList.add('visible', 'blue-pulse');
+                revealedCount++;
             }
         });
-
-        // Logo image fade-in (milestone reveal)
-        const revealedCount = document.querySelectorAll('.letter.visible').length;
-        if (logoMark && revealedCount >= Math.floor(letters.length / 2)) {
-            logoMark.style.opacity = '1';
-        }
 
         // Check if fully revealed
         if (revealedCount === letters.length) {
@@ -75,7 +73,7 @@
             // Nav reveal follows final death
             setTimeout(() => {
                 document.querySelectorAll('.nav-link').forEach(link => link.classList.add('revealed'));
-            }, 2200);
+            }, 1800);
         }
     }
 
@@ -84,3 +82,4 @@
     document.addEventListener('mousemove', checkProximity);
 
 })();
+

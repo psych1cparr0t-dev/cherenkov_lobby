@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cherenkov Gravity Fidget</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: #050508;
+            font-family: 'Inter', system-ui, sans-serif;
+            color: white;
+            cursor: grab;
+        }
+
+        body:active {
+            cursor: grabbing;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #info {
+            position: absolute;
+            top: 24px;
+            left: 28px;
+            pointer-events: none;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+            z-index: 10;
+        }
+
+        #info h1 {
+            font-size: 1.1rem;
+            font-weight: 300;
+            letter-spacing: 0.15em;
+            opacity: 0.7;
+        }
+
+        #info p {
+            margin-top: 4px;
+            font-size: 0.7rem;
+            opacity: 0.35;
+            letter-spacing: 0.08em;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="info">
+        <h1>CHERENKOV</h1>
+        <p>DRAG TO SPIN · GRAVITY FIDGET</p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // ─── Configuration ───────────────────────────────────────
+        const CUBE_SIZE = 8;
+        const CUBE_DEPTH = CUBE_SIZE;
+        const CORNER_RADIUS = 1.8;
+        const CORNER_SEGMENTS = 20;
+        const BALL_RADIUS = 1.4;
+        const GRAVITY = 0.016;
+        const FRICTION = 0.993;
+        const BOUNCE = 0.4;
+        const ROTATION_SPEED = 0.006;
+        const SPIN_DAMPING = 0.975;
+
+        // ─── Scene ───────────────────────────────────────────────
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(50, innerWidth / innerHeight, 0.1, 500);
+        camera.position.set(0, 0, 22);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(innerWidth, innerHeight);
+        renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+        renderer.setClearColor(0x050508);
+        document.body.appendChild(renderer.domElement);
+
+        // ─── Lighting ────────────────────────────────────────────
+        scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+        const keyLight = new THREE.PointLight(0x88ccff, 2, 60);
+        keyLight.position.set(14, 14, 14);
+        scene.add(keyLight);
+        const fillLight = new THREE.PointLight(0xff66aa, 1, 50);
+        fillLight.position.set(-12, -10, 10);
+        scene.add(fillLight);
+        const rimLight = new THREE.PointLight(0x6644ff, 0.8, 40);
+        rimLight.position.set(0, 12, -12);
+        scene.add(rimLight);
+
+        // ─── Group ───────────────────────────────────────────────
+        const cubeGroup = new THREE.Group();
+        scene.add(cubeGroup);
+
+        // ─── Build Rounded Rectangle Points ──────────────────────
+        function roundedRectPoints(w, h, r, segments) {
+            const pts = [];
+            const hw = w / 2, hh = h / 2;
+            // Corners: top-right, top-left, bottom-left, bottom-right
+            const corners = [
+                { cx: hw - r, cy: hh - r, startAngle: 0, },
+                { cx: -hw + r, cy: hh - r, startAngle: Math.PI / 2, },
+                { cx: -hw + r, cy: -hh + r, startAngle: Math.PI, },
+                { cx: hw - r, cy: -hh + r, startAngle: Math.PI * 1.5, },
+            ];
+            for (const c of corners) {
+                for (let i = 0; i <= segments; i++) {
+                    const a = c.startAngle + (i / segments) * (Math.PI / 2);
+                    pts.push(new THREE.Vector3(
+                        c.cx + Math.cos(a) * r,
+                        c.cy + Math.sin(a) * r,
+                        0
+                    ));
+                }
+            }
+            pts.push(pts[0].clone()); // close
+            return pts;
+        }
+
+        // ─── Build Sharp Rectangle Points ────────────────────────
+        function sharpRectPoints(w, h) {
+            const hw = w / 2, hh = h / 2;
+            return [
+                new THREE.Vector3(hw, hh, 0),
+                new THREE.Vector3(-hw, hh, 0),
+                new THREE.Vector3(-hw, -hh, 0),
+                new THREE.Vector3(hw, -hh, 0),
+                new THREE.Vector3(hw, hh, 0), // close
+            ];
+        }
+
+        // ─── Create Line Loop from Points at Z ──────────────────
+        function createFaceOutline(points, z, color, opacity) {
+            const positions = [];
+            for (const p of points) {
+                positions.push(p.x, p.y, z);
+            }
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const mat = new THREE.LineBasicMaterial({
+                color: color || 0xffffff,
+                transparent: true,
+                opacity: opacity || 0.85,
+            });
+            return new THREE.LineLoop(geo, mat);
+        }
+
+        // ─── Create Connecting Edges ─────────────────────────────
+        function createConnectingEdges(frontPts, backPts, zFront, zBack) {
+            // Connect corners of front (rounded) to corners of back (rounded)
+            // We pick the corner midpoints from each face
+            const frontCorners = getCornerPoints(frontPts);
+            const backCorners = getCornerPoints(backPts);
+
+            const lines = [];
+            for (let i = 0; i < 4; i++) {
+                const positions = [
+                    frontCorners[i].x, frontCorners[i].y, zFront,
+                    backCorners[i].x, backCorners[i].y, zBack,
+                ];
+                const geo = new THREE.BufferGeometry();
+                geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+                const mat = new THREE.LineBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.6,
+                });
+                lines.push(new THREE.Line(geo, mat));
+            }
+            return lines;
+        }
+
+        function getCornerPoints(pts) {
+            // For rounded rect: pick midpoint of each arc (where arc is at its maximum extent)
+            // For sharp rect: pick the 4 corners directly
+            const hw = CUBE_SIZE / 2, hh = CUBE_SIZE / 2;
+            return [
+                new THREE.Vector3(hw, hh, 0), // top-right
+                new THREE.Vector3(-hw, hh, 0), // top-left
+                new THREE.Vector3(-hw, -hh, 0), // bottom-left
+                new THREE.Vector3(hw, -hh, 0), // bottom-right
+            ];
+        }
+
+        // ─── Build the Oblique Prism ─────────────────────────────
+        const halfDepth = CUBE_DEPTH / 2;
+        // Diagonal offset for the back face (creates the oblique column effect)
+        const OFFSET_X = -2.5;
+        const OFFSET_Y = -2.5;
+
+        // Front face (rounded) at z = +halfDepth, centered at origin
+        const frontPts = roundedRectPoints(CUBE_SIZE, CUBE_SIZE, CORNER_RADIUS, CORNER_SEGMENTS);
+        const frontFace = createFaceOutline(frontPts, halfDepth, 0xffffff, 0.9);
+        cubeGroup.add(frontFace);
+
+        // Back face (rounded) at z = -halfDepth, offset diagonally
+        const backPts = roundedRectPoints(CUBE_SIZE, CUBE_SIZE, CORNER_RADIUS, CORNER_SEGMENTS);
+        const backPositions = [];
+        for (const p of backPts) {
+            backPositions.push(p.x + OFFSET_X, p.y + OFFSET_Y, -halfDepth);
+        }
+        const backGeo = new THREE.BufferGeometry();
+        backGeo.setAttribute('position', new THREE.Float32BufferAttribute(backPositions, 3));
+        const backMat = new THREE.LineBasicMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.55,
+        });
+        const backFace = new THREE.LineLoop(backGeo, backMat);
+        cubeGroup.add(backFace);
+
+        // Connecting edges — 1 per corner at the 45° midpoint of each arc
+        const hw = CUBE_SIZE / 2, r = CORNER_RADIUS;
+        const diag = r * Math.cos(Math.PI / 4);
+        const cornerMidpoints = [
+            [hw - r + diag, hw - r + diag],    // top-right
+            [-hw + r - diag, hw - r + diag],   // top-left
+            [-hw + r - diag, -hw + r - diag],  // bottom-left
+            [hw - r + diag, -hw + r - diag],   // bottom-right
+        ];
+
+        for (const [ex, ey] of cornerMidpoints) {
+            // Front point at (ex, ey, +halfDepth) → Back point at (ex+offset, ey+offset, -halfDepth)
+            const positions = [
+                ex, ey, halfDepth,
+                ex + OFFSET_X, ey + OFFSET_Y, -halfDepth
+            ];
+            const geo = new THREE.BufferGeometry();
+            geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            const mat = new THREE.LineBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.5,
+            });
+            cubeGroup.add(new THREE.Line(geo, mat));
+        }
+
+        // Subtle transparent face fills for depth
+        const frontShape = new THREE.Shape();
+        frontShape.moveTo(frontPts[0].x, frontPts[0].y);
+        for (let i = 1; i < frontPts.length; i++) {
+            frontShape.lineTo(frontPts[i].x, frontPts[i].y);
+        }
+        const frontFillGeo = new THREE.ShapeGeometry(frontShape);
+        const fillMat = new THREE.MeshBasicMaterial({
+            color: 0x1a2233,
+            transparent: true,
+            opacity: 0.04,
+            side: THREE.DoubleSide,
+        });
+        const frontFill = new THREE.Mesh(frontFillGeo, fillMat);
+        frontFill.position.z = halfDepth;
+        cubeGroup.add(frontFill);
+
+        const backShape = new THREE.Shape();
+        backShape.moveTo(backPts[0].x, backPts[0].y);
+        for (let i = 1; i < backPts.length; i++) {
+            backShape.lineTo(backPts[i].x, backPts[i].y);
+        }
+        const backFillGeo = new THREE.ShapeGeometry(backShape);
+        const backFill = new THREE.Mesh(backFillGeo, fillMat.clone());
+        backFill.position.set(OFFSET_X, OFFSET_Y, -halfDepth);
+        cubeGroup.add(backFill);
+
+        // ─── Cherenkov Ball ──────────────────────────────────────
+        const ballGeo = new THREE.SphereGeometry(BALL_RADIUS, 48, 48);
+        const ballMat = new THREE.MeshPhysicalMaterial({
+            color: 0xaaddff,
+            emissive: 0x3399ff,
+            emissiveIntensity: 0.5,
+            metalness: 0.15,
+            roughness: 0.05,
+            clearcoat: 1.0,
+            clearcoatRoughness: 0.05,
+        });
+        const ball = new THREE.Mesh(ballGeo, ballMat);
+        cubeGroup.add(ball);
+
+        // Glow
+        const glowGeo = new THREE.SphereGeometry(BALL_RADIUS * 1.6, 24, 24);
+        const glowMat = new THREE.MeshBasicMaterial({
+            color: 0x66bbff,
+            transparent: true,
+            opacity: 0.07,
+        });
+        const glow = new THREE.Mesh(glowGeo, glowMat);
+        cubeGroup.add(glow);
+
+        // ─── Physics ─────────────────────────────────────────────
+        const ballPos = new THREE.Vector3(0, 2, 0);
+        const ballVel = new THREE.Vector3(0, 0, 0);
+        const wallLimit = CUBE_SIZE / 2 - BALL_RADIUS;
+        const wallLimitZ = CUBE_DEPTH / 2 - BALL_RADIUS;
+
+        function updatePhysics() {
+            const worldDown = new THREE.Vector3(0, -1, 0);
+            const invQuat = cubeGroup.quaternion.clone().invert();
+            const localDown = worldDown.applyQuaternion(invQuat);
+
+            ballVel.add(localDown.multiplyScalar(GRAVITY));
+            ballVel.multiplyScalar(FRICTION);
+            ballPos.add(ballVel);
+
+            // Box walls
+            if (ballPos.x > wallLimit) { ballPos.x = wallLimit; ballVel.x *= -BOUNCE; }
+            if (ballPos.x < -wallLimit) { ballPos.x = -wallLimit; ballVel.x *= -BOUNCE; }
+            if (ballPos.y > wallLimit) { ballPos.y = wallLimit; ballVel.y *= -BOUNCE; }
+            if (ballPos.y < -wallLimit) { ballPos.y = -wallLimit; ballVel.y *= -BOUNCE; }
+            if (ballPos.z > wallLimitZ) { ballPos.z = wallLimitZ; ballVel.z *= -BOUNCE; }
+            if (ballPos.z < -wallLimitZ) { ballPos.z = -wallLimitZ; ballVel.z *= -BOUNCE; }
+
+            ball.position.copy(ballPos);
+            glow.position.copy(ballPos);
+        }
+
+        // ─── Drag Interaction ────────────────────────────────────
+        let isDragging = false;
+        let prevMouse = { x: 0, y: 0 };
+        let angVel = { x: 0, y: 0 };
+
+        function getXY(e) {
+            if (e.touches) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            return { x: e.clientX, y: e.clientY };
+        }
+
+        function onDown(e) {
+            isDragging = true;
+            const p = getXY(e);
+            prevMouse.x = p.x;
+            prevMouse.y = p.y;
+            angVel.x = 0;
+            angVel.y = 0;
+        }
+        function onMove(e) {
+            if (!isDragging) return;
+            const p = getXY(e);
+            angVel.y = (p.x - prevMouse.x) * ROTATION_SPEED;
+            angVel.x = (p.y - prevMouse.y) * ROTATION_SPEED;
+            prevMouse.x = p.x;
+            prevMouse.y = p.y;
+        }
+        function onUp() { isDragging = false; }
+
+        renderer.domElement.addEventListener('mousedown', onDown);
+        renderer.domElement.addEventListener('mousemove', onMove);
+        renderer.domElement.addEventListener('mouseup', onUp);
+        renderer.domElement.addEventListener('mouseleave', onUp);
+        renderer.domElement.addEventListener('touchstart', onDown, { passive: true });
+        renderer.domElement.addEventListener('touchmove', onMove, { passive: true });
+        renderer.domElement.addEventListener('touchend', onUp);
+
+        // ─── Animate ─────────────────────────────────────────────
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (!isDragging) {
+                angVel.x *= SPIN_DAMPING;
+                angVel.y *= SPIN_DAMPING;
+            }
+
+            const qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), angVel.x);
+            const qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), angVel.y);
+            cubeGroup.quaternion.premultiply(qx).premultiply(qy);
+
+            updatePhysics();
+
+            // Glow pulse
+            const t = performance.now() * 0.001;
+            glowMat.opacity = 0.05 + 0.03 * Math.sin(t * 2);
+            ballMat.emissiveIntensity = 0.4 + 0.2 * Math.sin(t * 1.5);
+
+            renderer.render(scene, camera);
+        }
+
+        addEventListener('resize', () => {
+            camera.aspect = innerWidth / innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(innerWidth, innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+
+</html>

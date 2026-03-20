@@ -135,8 +135,14 @@ body, html {
   top: 40px; left: 40px; right: 40px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
   z-index: 150;
   pointer-events: none;
+}
+
+.nav-group-left, .nav-group-right {
+  display: flex;
+  gap: 32px;
 }
 
 .nav-link {
@@ -149,12 +155,18 @@ body, html {
   pointer-events: auto;
   transition: opacity var(--t-nav-reveal) ease, 
               transform var(--t-nav-reveal) ease, 
-              color 0.4s ease;
+              color 0.4s ease,
+              letter-spacing 0.4s ease;
   transform: translateY(-5px);
 }
 
 .nav-link.revealed { opacity: 1; transform: translateY(0); }
-.nav-link:hover { color: #ffffff; text-shadow: 0 0 10px rgba(255,255,255,0.4); }
+.nav-link:hover { 
+  color: #ffffff; 
+  text-shadow: 0 0 10px rgba(255,255,255,0.4); 
+  letter-spacing: 0.45em;
+}
+
 
 .logo-mark {
   width: clamp(60px, 8vw, 100px);

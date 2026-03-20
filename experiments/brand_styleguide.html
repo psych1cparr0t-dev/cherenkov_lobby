@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cherenkov Brand Styleguide</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f5f5f5;
+            font-family: 'Inter', system-ui, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            color: #333;
+        }
+
+        /* ─── Layout ─────────────────────────────────── */
+        #app {
+            display: flex;
+            height: 100vh;
+        }
+
+        #canvas-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        /* ─── Sidebar ────────────────────────────────── */
+        #sidebar {
+            width: 300px;
+            background: #fff;
+            border-left: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            box-shadow: -2px 0 12px rgba(0, 0, 0, 0.04);
+        }
+
+        .sidebar-header {
+            padding: 16px 18px 8px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #999;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        /* ─── Library ────────────────────────────────── */
+        #library {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .lib-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 18px;
+            font-size: 0.78rem;
+            color: #555;
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+
+        .lib-item:hover {
+            background: #f8f8f8;
+        }
+
+        .lib-item .name {
+            font-weight: 500;
+        }
+
+        .lib-btn {
+            width: 26px;
+            height: 26px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: #888;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.12s;
+        }
+
+        .lib-btn:hover {
+            background: #eef;
+            border-color: #aac;
+            color: #446;
+        }
+
+        .lib-btn.active {
+            background: #e8f0ff;
+            border-color: #88b;
+            color: #336;
+        }
+
+        /* ─── Element List ────────────────────────────── */
+        .el-item {
+            padding: 8px 18px;
+            border-bottom: 1px solid #f5f5f5;
+            cursor: pointer;
+            font-size: 0.78rem;
+            transition: background 0.12s;
+        }
+
+        .el-item:hover {
+            background: #f5f8ff;
+        }
+
+        .el-item.selected {
+            background: #eef3ff;
+            border-left: 3px solid #4477cc;
+        }
+
+        .el-item .el-name {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .el-item .el-info {
+            font-size: 0.6rem;
+            color: #aaa;
+            margin-top: 2px;
+            font-family: 'SF Mono', 'Menlo', monospace;
+        }
+
+        /* ─── Transform Controls ──────────────────────── */
+        #controls {
+            padding: 12px 18px;
+        }
+
+        .ctrl-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .ctrl-row label {
+            font-size: 0.65rem;
+            color: #999;
+            width: 50px;
+            letter-spacing: 0.04em;
+        }
+
+        .ctrl-row input[type="range"] {
+            flex: 1;
+            margin: 0 8px;
+            accent-color: #4477cc;
+        }
+
+        .ctrl-row .val {
+            font-size: 0.6rem;
+            color: #aaa;
+            width: 42px;
+            text-align: right;
+            font-family: 'SF Mono', 'Menlo', monospace;
+        }
+
+        /* ─── Actions ─────────────────────────────────── */
+        #actions {
+            padding: 12px 18px;
+            border-top: 1px solid #eee;
+            margin-top: auto;
+        }
+
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 7px 12px;
+            margin: 0 4px 6px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fff;
+            color: #555;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.12s;
+        }
+
+        .action-btn:hover {
+            background: #f0f4ff;
+            border-color: #aac;
+        }
+
+        .action-btn.danger {
+            color: #c44;
+            border-color: #e8c4c4;
+        }
+
+        .action-btn.danger:hover {
+            background: #fff5f5;
+        }
+
+        /* ─── Canvas Elements ─────────────────────────── */
+        .brand-el {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+            transition: box-shadow 0.15s;
+        }
+
+        .brand-el:active {
+            cursor: grabbing;
+        }
+
+        .brand-el.selected-el {
+            outline: 1px dashed rgba(68, 119, 204, 0.4);
+            outline-offset: 6px;
+        }
+
+        /* Resize handle */
+        .resize-handle {
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+            width: 10px;
+            height: 10px;
+            background: #4477cc;
+            border-radius: 2px;
+            cursor: nwse-resize;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        .brand-el.selected-el .resize-handle {
+            opacity: 1;
+        }
+
+        /* ─── Preset Gallery ──────────────────────────── */
+        #presets {
+            padding: 8px 18px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .preset-thumb {
+            display: inline-block;
+            width: 54px;
+            height: 40px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 2px 4px 2px 0;
+            cursor: pointer;
+            background: #f5f5f5;
+            transition: all 0.12s;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .preset-thumb:hover {
+            border-color: #88b;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .preset-thumb.active-preset {
+            border-color: #4477cc;
+            box-shadow: 0 0 0 2px rgba(68, 119, 204, 0.2);
+        }
+
+        /* ─── Grid toggle ─────────────────────────────── */
+        #canvas-area.show-grid {
+            background-image:
+                linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        #canvas-area .center-cross {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            margin: -20px 0 0 -20px;
+            pointer-events: none;
+            opacity: 0.15;
+        }
+
+        #canvas-area .center-cross::before,
+        #canvas-area .center-cross::after {
+            content: '';
+            position: absolute;
+            background: #888;
+        }
+
+        #canvas-area .center-cross::before {
+            width: 1px;
+            height: 100%;
+            left: 50%;
+        }
+
+        #canvas-area .center-cross::after {
+            height: 1px;
+            width: 100%;
+            top: 50%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div id="canvas-area" class="show-grid">
+            <div class="center-cross"></div>
+            <!-- Brand elements are placed here dynamically -->
+        </div>
+
+        <div id="sidebar">
+            <div class="sidebar-header">Element Library</div>
+            <div id="library"></div>
+
+            <div class="sidebar-header">On Canvas</div>
+            <div id="element-list"></div>
+
+            <div class="sidebar-header">Transform</div>
+            <div id="controls">
+                <div class="ctrl-row"><label>X</label><input type="range" id="c-x" min="0" max="1600" value="400"><span
+                        class="val" id="v-x">400</span></div>
+                <div class="ctrl-row"><label>Y</label><input type="range" id="c-y" min="0" max="900" value="400"><span
+                        class="val" id="v-y">400</span></div>
+                <div class="ctrl-row"><label>Scale</label><input type="range" id="c-s" min="10" max="500"
+                        value="100"><span class="val" id="v-s">1.0</span></div>
+                <div class="ctrl-row"><label>Rotate</label><input type="range" id="c-r" min="-180" max="180"
+                        value="0"><span class="val" id="v-r">0°</span></div>
+                <div class="ctrl-row"><label>Opacity</label><input type="range" id="c-o" min="0" max="100"
+                        value="100"><span class="val" id="v-o">1.0</span></div>
+                <div class="ctrl-row"><label>Color</label><input type="color" id="c-color" value="#888888"
+                        style="width:60px;border:1px solid #ddd;border-radius:3px;height:24px;padding:1px;"><span
+                        class="val" id="v-color">#888</span></div>
+            </div>
+
+            <div class="sidebar-header">Presets</div>
+            <div id="presets"></div>
+
+            <div id="actions">
+                <button class="action-btn" id="btn-grid">▦ Grid</button>
+                <button class="action-btn" id="btn-snap">⊞ Snap</button>
+                <button class="action-btn" id="btn-clone">⧉ Clone</button>
+                <button class="action-btn" id="btn-center">⊕ Center</button>
+                <button class="action-btn danger" id="btn-delete">✕ Delete</button>
+                <button class="action-btn" id="btn-export-img">📷 Export</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ─── Brand Element Templates ─────────────────────────────
+        const TEMPLATES = {
+            logo: {
+                label: 'Logo Mark',
+                type: 'img',
+                src: '../assets/logos/cherenkov_logo_web.svg',
+                defaultW: 120,
+            },
+            title: {
+                label: 'CHERENKOV',
+                type: 'text',
+                text: 'CHERENKOV',
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 500,
+                fontSize: 72,
+                letterSpacing: '0.2em',
+            },
+            inc: {
+                label: 'Inc.',
+                type: 'text',
+                text: 'Inc.',
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 400,
+                fontSize: 13,
+                letterSpacing: '0.45em',
+            },
+            logoLarge: {
+                label: 'Logo (Large)',
+                type: 'img',
+                src: '../assets/logos/cherenkov_logo_web.svg',
+                defaultW: 300,
+            },
+            divider: {
+                label: '— Divider —',
+                type: 'text',
+                text: '—',
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 300,
+                fontSize: 24,
+                letterSpacing: '0.5em',
+            },
+        };
+
+        // ─── State ───────────────────────────────────────────────
+        let elements = {};
+        let elCounter = 0;
+        let selectedId = null;
+        let isDragging = false;
+        let isResizing = false;
+        let dragOff = { x: 0, y: 0 };
+        let snapEnabled = false;
+        const SNAP = 20;
+
+        const canvas = document.getElementById('canvas-area');
+
+        // ─── Build Library ───────────────────────────────────────
+        const libContainer = document.getElementById('library');
+        for (const [key, tpl] of Object.entries(TEMPLATES)) {
+            const item = document.createElement('div');
+            item.className = 'lib-item';
+            item.innerHTML = `<span class="name">${tpl.label}</span><button class="lib-btn" data-key="${key}">+</button>`;
+            item.querySelector('.lib-btn').addEventListener('click', () => addElement(key));
+            libContainer.appendChild(item);
+        }
+
+        // ─── Add Element ─────────────────────────────────────────
+        function addElement(templateKey, overrides = {}) {
+            const tpl = TEMPLATES[templateKey];
+            if (!tpl) return;
+
+            const id = 'el-' + (++elCounter);
+            const cx = canvas.offsetWidth / 2;
+            const cy = canvas.offsetHeight / 2;
+
+            const state = {
+                id,
+                templateKey,
+                label: tpl.label,
+                x: overrides.x ?? cx,
+                y: overrides.y ?? cy,
+                scale: overrides.scale ?? 1,
+                rotation: overrides.rotation ?? 0,
+                opacity: overrides.opacity ?? 1,
+                color: overrides.color ?? '#888888',
+            };
+
+            // Create DOM element
+            const el = document.createElement('div');
+            el.className = 'brand-el';
+            el.id = id;
+
+            if (tpl.type === 'img') {
+                const img = document.createElement('img');
+                img.src = tpl.src;
+                img.style.width = (tpl.defaultW || 100) + 'px';
+                img.style.height = 'auto';
+                img.draggable = false;
+                el.appendChild(img);
+            } else if (tpl.type === 'text') {
+                el.style.fontFamily = tpl.fontFamily;
+                el.style.fontWeight = tpl.fontWeight;
+                el.style.fontSize = tpl.fontSize + 'px';
+                el.style.letterSpacing = tpl.letterSpacing || '0';
+                el.style.textTransform = 'uppercase';
+                el.style.whiteSpace = 'nowrap';
+                el.textContent = tpl.text;
+            }
+
+            // Resize handle
+            const handle = document.createElement('div');
+            handle.className = 'resize-handle';
+            el.appendChild(handle);
+
+            canvas.appendChild(el);
+            state.el = el;
+            elements[id] = state;
+
+            applyTransform(id);
+            bindDrag(el, id, handle);
+            refreshList();
+            selectElement(id);
+            return id;
+        }
+
+        // ─── Apply Transform ─────────────────────────────────────
+        function applyTransform(id) {
+            const s = elements[id];
+            if (!s) return;
+            s.el.style.left = s.x + 'px';
+            s.el.style.top = s.y + 'px';
+            s.el.style.transform = `translate(-50%, -50%) scale(${s.scale}) rotate(${s.rotation}deg)`;
+            s.el.style.opacity = s.opacity;
+            s.el.style.color = s.color;
+            // For SVG images, apply filter for color
+            const img = s.el.querySelector('img');
+            if (img && s.color !== '#888888') {
+                // Use CSS filter for tinting — approximate
+                img.style.filter = `opacity(${s.opacity})`;
+            }
+        }
+
+        // ─── Drag / Resize ───────────────────────────────────────
+        function bindDrag(el, id, handle) {
+            el.addEventListener('mousedown', (e) => {
+                if (e.target === handle) return;
+                e.preventDefault();
+                selectElement(id);
+                isDragging = true;
+                const s = elements[id];
+                dragOff.x = e.clientX - s.x;
+                dragOff.y = e.clientY - s.y;
+            });
+
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                selectElement(id);
+                isResizing = true;
+                dragOff.x = e.clientX;
+                dragOff.y = e.clientY;
+                dragOff.startScale = elements[id].scale;
+            });
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if (isDragging && selectedId) {
+                let nx = e.clientX - dragOff.x;
+                let ny = e.clientY - dragOff.y;
+                if (snapEnabled) {
+                    nx = Math.round(nx / SNAP) * SNAP;
+                    ny = Math.round(ny / SNAP) * SNAP;
+                }
+                elements[selectedId].x = nx;
+                elements[selectedId].y = ny;
+                applyTransform(selectedId);
+                syncSliders();
+            }
+            if (isResizing && selectedId) {
+                const dx = e.clientX - dragOff.x;
+                const newScale = Math.max(0.1, dragOff.startScale + dx * 0.005);
+                elements[selectedId].scale = newScale;
+                applyTransform(selectedId);
+                syncSliders();
+            }
+        });
+
+        document.addEventListener('mouseup', () => { isDragging = false; isResizing = false; });
+
+        // ─── Selection ───────────────────────────────────────────
+        function selectElement(id) {
+            selectedId = id;
+            document.querySelectorAll('.brand-el').forEach(e => e.classList.remove('selected-el'));
+            document.querySelectorAll('.el-item').forEach(e => e.classList.remove('selected'));
+            if (id && elements[id]) {
+                elements[id].el.classList.add('selected-el');
+                const listItem = document.querySelector(`.el-item[data-id="${id}"]`);
+                if (listItem) listItem.classList.add('selected');
+                syncSliders();
+            }
+        }
+
+        function syncSliders() {
+            if (!selectedId || !elements[selectedId]) return;
+            const s = elements[selectedId];
+            document.getElementById('c-x').value = s.x;
+            document.getElementById('c-y').value = s.y;
+            document.getElementById('c-s').value = s.scale * 100;
+            document.getElementById('c-r').value = s.rotation;
+            document.getElementById('c-o').value = s.opacity * 100;
+            document.getElementById('c-color').value = s.color;
+            document.getElementById('v-x').textContent = Math.round(s.x);
+            document.getElementById('v-y').textContent = Math.round(s.y);
+            document.getElementById('v-s').textContent = s.scale.toFixed(1);
+            document.getElementById('v-r').textContent = Math.round(s.rotation) + '°';
+            document.getElementById('v-o').textContent = s.opacity.toFixed(1);
+            document.getElementById('v-color').textContent = s.color;
+
+            // Update info in list
+            const info = document.querySelector(`.el-item[data-id="${s.id}"] .el-info`);
+            if (info) info.textContent = `${Math.round(s.x)},${Math.round(s.y)} · ${s.scale.toFixed(1)}x`;
+        }
+
+        // ─── Slider Listeners ────────────────────────────────────
+        ['x', 'y', 's', 'r', 'o'].forEach(key => {
+            document.getElementById('c-' + key).addEventListener('input', (e) => {
+                if (!selectedId) return;
+                const val = parseFloat(e.target.value);
+                const s = elements[selectedId];
+                if (key === 'x') s.x = val;
+                if (key === 'y') s.y = val;
+                if (key === 's') s.scale = val / 100;
+                if (key === 'r') s.rotation = val;
+                if (key === 'o') s.opacity = val / 100;
+                applyTransform(selectedId);
+                syncSliders();
+            });
+        });
+        document.getElementById('c-color').addEventListener('input', (e) => {
+            if (!selectedId) return;
+            elements[selectedId].color = e.target.value;
+            applyTransform(selectedId);
+            syncSliders();
+        });
+
+        // ─── Element List ────────────────────────────────────────
+        const listContainer = document.getElementById('element-list');
+        function refreshList() {
+            listContainer.innerHTML = '';
+            for (const [id, s] of Object.entries(elements)) {
+                const item = document.createElement('div');
+                item.className = 'el-item' + (id === selectedId ? ' selected' : '');
+                item.dataset.id = id;
+                item.innerHTML = `<div class="el-name">${s.label}</div><div class="el-info">${Math.round(s.x)},${Math.round(s.y)} · ${s.scale.toFixed(1)}x</div>`;
+                item.addEventListener('click', () => selectElement(id));
+                listContainer.appendChild(item);
+            }
+        }
+
+        // ─── Actions ─────────────────────────────────────────────
+        document.getElementById('btn-grid').addEventListener('click', () => {
+            canvas.classList.toggle('show-grid');
+        });
+
+        document.getElementById('btn-snap').addEventListener('click', (e) => {
+            snapEnabled = !snapEnabled;
+            e.target.style.background = snapEnabled ? '#e8f0ff' : '';
+        });
+
+        document.getElementById('btn-clone').addEventListener('click', () => {
+            if (!selectedId || !elements[selectedId]) return;
+            const s = elements[selectedId];
+            addElement(s.templateKey, { x: s.x + 30, y: s.y + 30, scale: s.scale, rotation: s.rotation, opacity: s.opacity, color: s.color });
+        });
+
+        document.getElementById('btn-center').addEventListener('click', () => {
+            if (!selectedId) return;
+            elements[selectedId].x = canvas.offsetWidth / 2;
+            elements[selectedId].y = canvas.offsetHeight / 2;
+            applyTransform(selectedId);
+            syncSliders();
+        });
+
+        document.getElementById('btn-delete').addEventListener('click', () => {
+            if (!selectedId) return;
+            elements[selectedId].el.remove();
+            delete elements[selectedId];
+            selectedId = null;
+            refreshList();
+        });
+
+        document.getElementById('btn-export-img').addEventListener('click', () => {
+            // Export layout as JSON for reproducibility
+            const layout = {};
+            for (const [id, s] of Object.entries(elements)) {
+                layout[id] = { templateKey: s.templateKey, x: s.x, y: s.y, scale: s.scale, rotation: s.rotation, opacity: s.opacity, color: s.color };
+            }
+            const json = JSON.stringify(layout, null, 2);
+            navigator.clipboard.writeText(json).then(() => {
+                const btn = document.getElementById('btn-export-img');
+                btn.textContent = '✓ Copied JSON';
+                setTimeout(() => btn.textContent = '📷 Export', 2000);
+            });
+        });
+
+        // ─── Preset Layouts ──────────────────────────────────────
+        const PRESETS = [
+            {
+                name: 'Centered', items: [
+                    { key: 'logo', x: 0.5, y: 0.38, scale: 1 },
+                    { key: 'title', x: 0.5, y: 0.52, scale: 1 },
+                    { key: 'inc', x: 0.5, y: 0.58, scale: 1 },
+                ]
+            },
+            {
+                name: 'Left Stack', items: [
+                    { key: 'logo', x: 0.15, y: 0.35, scale: 1.5 },
+                    { key: 'title', x: 0.15, y: 0.52, scale: 0.6 },
+                    { key: 'inc', x: 0.15, y: 0.58, scale: 0.8 },
+                ]
+            },
+            {
+                name: 'Logo Right', items: [
+                    { key: 'title', x: 0.35, y: 0.5, scale: 1 },
+                    { key: 'inc', x: 0.35, y: 0.56, scale: 1 },
+                    { key: 'logo', x: 0.78, y: 0.5, scale: 2.5 },
+                ]
+            },
+            {
+                name: 'Big Logo', items: [
+                    { key: 'logoLarge', x: 0.5, y: 0.42, scale: 1.2 },
+                    { key: 'title', x: 0.5, y: 0.72, scale: 0.5 },
+                    { key: 'inc', x: 0.5, y: 0.78, scale: 0.8 },
+                ]
+            },
+            {
+                name: 'Inline', items: [
+                    { key: 'logo', x: 0.28, y: 0.5, scale: 0.8 },
+                    { key: 'title', x: 0.58, y: 0.5, scale: 0.8 },
+                    { key: 'inc', x: 0.82, y: 0.5, scale: 1 },
+                ]
+            },
+            {
+                name: 'Minimal', items: [
+                    { key: 'logo', x: 0.5, y: 0.5, scale: 2 },
+                ]
+            },
+        ];
+
+        const presetsContainer = document.getElementById('presets');
+        PRESETS.forEach((preset, i) => {
+            const thumb = document.createElement('div');
+            thumb.className = 'preset-thumb';
+            thumb.title = preset.name;
+            // Mini preview
+            const miniSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            miniSvg.setAttribute('viewBox', '0 0 54 40');
+            miniSvg.setAttribute('width', '54');
+            miniSvg.setAttribute('height', '40');
+            preset.items.forEach(it => {
+                const c = document.createElementNS('http://www.w3.org/2000/svg', it.key.includes('logo') ? 'rect' : 'line');
+                if (it.key.includes('logo')) {
+                    const sz = 4 * (it.scale || 1);
+                    c.setAttribute('x', it.x * 54 - sz / 2);
+                    c.setAttribute('y', it.y * 40 - sz / 2);
+                    c.setAttribute('width', sz);
+                    c.setAttribute('height', sz);
+                    c.setAttribute('rx', 1);
+                    c.setAttribute('fill', 'none');
+                    c.setAttribute('stroke', '#888');
+                    c.setAttribute('stroke-width', '0.5');
+                } else {
+                    const w = it.key === 'title' ? 20 * (it.scale || 1) : 6 * (it.scale || 1);
+                    c.setAttribute('x1', it.x * 54 - w / 2);
+                    c.setAttribute('y1', it.y * 40);
+                    c.setAttribute('x2', it.x * 54 + w / 2);
+                    c.setAttribute('y2', it.y * 40);
+                    c.setAttribute('stroke', '#888');
+                    c.setAttribute('stroke-width', it.key === 'title' ? '1.5' : '0.8');
+                }
+                miniSvg.appendChild(c);
+            });
+            thumb.appendChild(miniSvg);
+            thumb.addEventListener('click', () => loadPreset(i));
+            presetsContainer.appendChild(thumb);
+        });
+
+        function loadPreset(index) {
+            // Clear canvas
+            for (const id of Object.keys(elements)) {
+                elements[id].el.remove();
+            }
+            elements = {};
+            selectedId = null;
+
+            const preset = PRESETS[index];
+            const w = canvas.offsetWidth;
+            const h = canvas.offsetHeight;
+            preset.items.forEach(it => {
+                addElement(it.key, { x: it.x * w, y: it.y * h, scale: it.scale || 1 });
+            });
+
+            // Highlight active preset
+            document.querySelectorAll('.preset-thumb').forEach((t, i) => {
+                t.classList.toggle('active-preset', i === index);
+            });
+        }
+
+        // ─── Keyboard shortcuts ──────────────────────────────────
+        document.addEventListener('keydown', (e) => {
+            if (!selectedId) return;
+            const s = elements[selectedId];
+            const step = e.shiftKey ? 10 : 1;
+            if (e.key === 'ArrowLeft') { s.x -= step; applyTransform(selectedId); syncSliders(); e.preventDefault(); }
+            if (e.key === 'ArrowRight') { s.x += step; applyTransform(selectedId); syncSliders(); e.preventDefault(); }
+            if (e.key === 'ArrowUp') { s.y -= step; applyTransform(selectedId); syncSliders(); e.preventDefault(); }
+            if (e.key === 'ArrowDown') { s.y += step; applyTransform(selectedId); syncSliders(); e.preventDefault(); }
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                document.getElementById('btn-delete').click();
+                e.preventDefault();
+            }
+        });
+
+        // ─── Boot: load centered preset ──────────────────────────
+        loadPreset(0);
+    </script>
+</body>
+
+</html>
