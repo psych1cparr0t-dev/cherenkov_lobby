@@ -56,8 +56,10 @@ body, html {
 
 /* State-driven visibility */
 [data-state="veil_transitioning"] #fade-overlay { opacity: 1; }
+[data-state="veil_transitioning"] .background-pattern { opacity: 0; }
 [data-state="active"] #fade-overlay { opacity: 0; pointer-events: none; }
 [data-state="active"] .background-pattern { opacity: 0; }
+
 
 .wordmark-sub.visible { opacity: 1; }
 
