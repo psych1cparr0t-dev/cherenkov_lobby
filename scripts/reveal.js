@@ -59,14 +59,15 @@
         if (sub) sub.classList.add('visible');
     });
 
-    document.addEventListener('cherenkov:state:active', fadeLetters);
+    document.addEventListener('cherenkov:state:veil_transitioning', fadeLetters);
     
     // Nav reveal follows the completion of the wordmark fade-out
-    document.addEventListener('cherenkov:state:active', () => {
+    document.addEventListener('cherenkov:state:veil_transitioning', () => {
         setTimeout(() => {
             document.querySelectorAll('.nav-link').forEach(link => link.classList.add('revealed'));
-        }, 1500);
+        }, 3200); // 3.2s delay to wait for wordmark fade
     });
+
 
     // Attach strict listeners
     letters.forEach(letter => {
