@@ -45,40 +45,32 @@
         }
     }
 
-    // Logic for the staggered "fry out" death – controlled by the 'active' state
-    function killLetters() {
-        const indices = Array.from({ length: letters.length }, (_, i) => i);
-        // Shuffle death order
-        for (let i = indices.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [indices[i], indices[j]] = [indices[j], indices[i]];
-        }
-
-        indices.forEach((letterIdx, order) => {
-            const delay = (order / letters.length) * 2.0 + Math.random() * 0.5;
-            const letter = letters[letterIdx];
-            letter.style.setProperty('--die-delay', `${delay.toFixed(2)}s`);
-            
+    // Logic for the clean fade-out – controlled by the 'active' state
+    function fadeLetters() {
+        const lettersList = Array.from(letters);
+        
+        // Staggered fade from left to right
+        lettersList.forEach((letter, i) => {
+            const delay = (i / lettersList.length) * 0.8;
+            letter.style.transitionDelay = `${delay.toFixed(2)}s`;
             letter.classList.remove('visible', 'blue-pulse');
-            letter.classList.add('dying');
-            
-            // Ensuring opacity remains 0 after flickering
-            setTimeout(() => { letter.style.opacity = '0'; }, (delay + 1.2) * 1000);
         });
 
         const sub = document.getElementById('wordmark-sub');
         if (sub) {
-            sub.classList.add('dying');
+            sub.style.transitionDelay = '0.5s';
+            sub.classList.remove('visible');
             
-            // Nav reveal follows final death
+            // Nav reveal follows the wordmark fade-out
             setTimeout(() => {
                 document.querySelectorAll('.nav-link').forEach(link => link.classList.add('revealed'));
-            }, 1800);
+            }, 1500);
         }
     }
 
     // React to global coordinator state
-    document.addEventListener('cherenkov:state:active', killLetters);
+    document.addEventListener('cherenkov:state:active', fadeLetters);
+
     document.addEventListener('mousemove', checkProximity);
 
 })();

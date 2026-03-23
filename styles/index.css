@@ -109,7 +109,7 @@ body, html {
 
 .letter {
   opacity: 0;
-  transition: opacity 0.4s ease;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .letter.visible { opacity: 1; }
@@ -120,7 +120,7 @@ body, html {
   text-transform: uppercase;
   color: var(--text-muted);
   opacity: 0;
-  transition: opacity var(--t-inc-reveal) ease;
+  transition: opacity 1.2s ease;
   margin-top: 8px;
 }
 
@@ -167,7 +167,6 @@ body, html {
   letter-spacing: 0.45em;
 }
 
-
 .logo-mark {
   width: clamp(60px, 8vw, 100px);
   height: auto;
@@ -176,26 +175,7 @@ body, html {
   transition: opacity 0.8s ease;
 }
 
-/* =====================================================
-   ANIMATIONS (NEON FRY OUT)
-   ===================================================== */
 
-.letter.dying { animation: neonDie var(--t-neon-die) ease-out forwards; animation-delay: var(--die-delay, 0s); }
-.wordmark-sub.dying { animation: subDie 1.6s ease-out forwards; }
-
-@keyframes neonDie {
-  0%   { opacity: 1;    color: var(--text-dim); }
-  15%  { opacity: 0.3;  color: #9ab4ff; }
-  25%  { opacity: 0.85; color: var(--text-dim); }
-  40%  { opacity: 0.15; color: #7a9dff; }
-  52%  { opacity: 0.7;  color: var(--text-dim); }
-  100% { opacity: 0;     color: var(--neon-blue); }
-}
-
-@keyframes subDie {
-  0%   { opacity: 1; }
-  100% { opacity: 0; }
-}
 
 @keyframes backgroundShift {
   0%, 100% { opacity: 0.1; transform: scale(1); }
@@ -212,6 +192,7 @@ body, html {
   0%, 100% { color: var(--text-dim); }
   50% { color: var(--accent-blue); opacity: 1; }
 }
+
 
 /* =====================================================
    MOBILE RESPONSIVE
