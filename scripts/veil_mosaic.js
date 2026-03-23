@@ -136,15 +136,15 @@
     }
 
     function tick() {
-        const isActive = window.Cherenkov && window.Cherenkov.getState() === 'active';
-        const isTransitioning = window.Cherenkov && window.Cherenkov.getState() === 'veil_transitioning';
+        if (!window.Cherenkov) return;
+        const state = window.Cherenkov.getState();
         
-        if (isActive || isTransitioning) {
-            opacity = Math.min(0.92, opacity + 0.008);
-            canvas.style.opacity = opacity.toFixed(3);
+        // Start drawing during the transition phase, but let CSS handle the alpha
+        if (state === 'active' || state === 'veil_transitioning') {
             drawFrame();
         }
     }
+
 
     window.addEventListener('resize', init);
     document.addEventListener('cherenkov:load-mosaic', init);

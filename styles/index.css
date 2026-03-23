@@ -73,8 +73,14 @@ body, html {
   height: 100%;
   z-index: 4;
   pointer-events: none;
-  opacity: 0; /* Managed by JS tick */
+  opacity: 0;
+  transition: opacity 2.5s ease-in-out;
 }
+
+[data-state="active"] #veil-canvas {
+  opacity: 0.92;
+}
+
 
 /* Rotating background patterns (Autostereogram) */
 .background-pattern {
