@@ -155,10 +155,11 @@ body, html {
 
 .letter {
   opacity: 0;
-  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 1.5s ease-in-out;
 }
 
 .letter.visible { opacity: 1; }
+
 
 .wordmark-sub {
   font-size: clamp(9px, 1.2vw, 13px);
@@ -239,8 +240,9 @@ body, html {
 .letter.blue-pulse { animation: bluePulse 2.5s ease-in-out; }
 @keyframes bluePulse {
   0%, 100% { color: var(--text-dim); }
-  50% { color: var(--accent-blue); opacity: 1; }
+  50% { color: var(--accent-blue); }
 }
+
 
 
 /* =====================================================
