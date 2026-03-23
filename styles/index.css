@@ -54,9 +54,17 @@ body, html {
   transition: opacity var(--t-veil-fade) ease;
 }
 
+/* State-driven visibility */
+[data-state="veil_transitioning"] #fade-overlay { opacity: 1; }
+[data-state="active"] #fade-overlay { opacity: 0; pointer-events: none; }
+[data-state="active"] .background-pattern { opacity: 0; }
+
+.wordmark-sub.visible { opacity: 1; }
+
 /* =====================================================
    LIMINAL VEIL (MOSAIC)
    ===================================================== */
+
 
 #veil-canvas {
   position: absolute;
@@ -68,7 +76,7 @@ body, html {
   opacity: 0; /* Managed by JS tick */
 }
 
-/* Rotating background patterns */
+/* Rotating background patterns (Autostereogram) */
 .background-pattern {
   position: absolute;
   top: -20%; left: -20%;
@@ -80,11 +88,41 @@ body, html {
   pointer-events: none;
   z-index: 2;
   opacity: 0.1;
+  transition: opacity 2s ease;
   will-change: transform, opacity;
 }
 
-.pattern-1 { background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, rgba(41,98,255,0.1) 50%, rgba(41,98,255,0.2) 75%); }
-.pattern-2 { background-image: linear-gradient(135deg, rgba(41,98,255,0.05) 50%, rgba(41,98,255,0.1) 75%); animation-delay: -6s; }
+.pattern-1 {
+  background-image: linear-gradient(45deg,
+      rgba(255, 255, 255, 0.1) 25%, rgba(224, 224, 224, 0.1) 25%,
+      rgba(41, 98, 255, 0.1) 50%, rgba(41, 98, 255, 0.2) 75%,
+      rgba(208, 208, 208, 0.1) 75%);
+}
+
+.pattern-2 {
+  background-image: linear-gradient(135deg,
+      rgba(41, 98, 255, 0.05) 25%, rgba(224, 224, 224, 0.05) 25%,
+      rgba(255, 255, 255, 0.05) 50%, rgba(41, 98, 255, 0.1) 75%,
+      rgba(208, 208, 208, 0.05) 75%);
+  animation-delay: -6s;
+}
+
+.pattern-3 {
+  background-image: linear-gradient(225deg,
+      rgba(208, 208, 208, 0.05) 25%, rgba(41, 98, 255, 0.05) 25%,
+      rgba(255, 255, 255, 0.05) 50%, rgba(224, 224, 224, 0.1) 75%,
+      rgba(41, 98, 255, 0.05) 75%);
+  animation-delay: -3s;
+}
+
+.pattern-4 {
+  background-image: linear-gradient(315deg,
+      rgba(41, 98, 255, 0.03) 25%, rgba(224, 224, 224, 0.03) 25%,
+      rgba(255, 255, 255, 0.03) 50%, rgba(41, 98, 255, 0.06) 75%,
+      rgba(208, 208, 208, 0.03) 75%);
+  animation-delay: -9s;
+  background-size: 100px 100px;
+}
 
 /* =====================================================
    WORDMARK (TYPOGRAPHY)
@@ -179,8 +217,11 @@ body, html {
 
 @keyframes backgroundShift {
   0%, 100% { opacity: 0.1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(1.03); }
+  25% { opacity: 0.3; transform: scale(1.02); }
+  50% { opacity: 0.5; transform: scale(1.03); }
+  75% { opacity: 0.3; transform: scale(1.02); }
 }
+
 
 @keyframes patternRotate {
   0% { transform: rotate(0deg); }
