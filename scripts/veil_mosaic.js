@@ -6,12 +6,12 @@
 
     const SCENES = [
         'references/liminal_veil/first_draft/cherry_blossoms.webm',
-        'references/liminal_veil/first_draft/nature1_10s.webm',
         'references/liminal_veil/first_draft/landwasserviadukt_6s.webm',
         'references/liminal_veil/first_draft/village_life_4s.webm',
         'references/liminal_veil/first_draft/hong_kong_island_5s.webm',
         'references/liminal_veil/first_draft/semaphore_tower.webm'
     ];
+
 
     const XFADE_MS   = 1200;   // crossfade duration
     const BLOCK_DESK = 7;
