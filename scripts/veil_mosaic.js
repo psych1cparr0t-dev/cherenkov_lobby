@@ -1,10 +1,9 @@
 /**
- * Liminal Veil: Block-Mosaic Video Bridge
- * Responsibility: Render a low-fidelity grid of video pixel data.
+ * Liminal Veil — Block Mosaic
+ * Cycles all scenes sequentially with a smooth canvas crossfade.
  */
-(function() {
+(function () {
 
-    // Only using videos confirmed in the current environment
     const SCENES = [
         'references/liminal_veil/first_draft/cherry_blossoms.webm',
         'references/liminal_veil/first_draft/nature1_10s.webm',
@@ -14,146 +13,132 @@
         'references/liminal_veil/first_draft/semaphore_tower.webm'
     ];
 
-
-
-
+    const XFADE_MS   = 1200;   // crossfade duration
+    const BLOCK_DESK = 7;
+    const BLOCK_MOB  = 3;
+    const BG         = '#f5f5f5';
 
     const canvas = document.getElementById('veil-canvas');
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    const off = document.createElement('canvas'); // Offscreen sampling buffer
+    const ctx  = canvas.getContext('2d', { willReadFrequently: true });
+    const off  = document.createElement('canvas');
     const octx = off.getContext('2d', { willReadFrequently: true });
 
-    // Internal state
-    let ready = false;
-    let opacity = 0;
-    let currentIndex = 0;
-    let isDrawing = false;
-    let isTransitioning = false;
-    let blockSize = 7;
+    let blockSize  = BLOCK_DESK;
+    let sceneIdx   = 0;
+    let xfadeStart = null;   // timestamp when crossfade began
+    let running    = false;
 
-    const vidA = document.createElement('video');
-    const vidB = document.createElement('video');
-    const player = [vidA, vidB];
-    let currentVid = vidA, nextVid = vidB;
-
-    player.forEach(v => {
-        v.muted = true;
-        v.playsInline = true;
-        v.loop = false;
-        v.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;top:-2px;left:-2px;';
+    // Two video slots — current plays, next preloads
+    const makeVid = () => {
+        const v = document.createElement('video');
+        v.muted = true; v.playsInline = true; v.loop = false;
+        v.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;top:-2px;left:-2px';
         document.body.appendChild(v);
-        v.addEventListener('error', () => skipToNext(v));
-    });
+        return v;
+    };
 
-    const XFADE_TIME = 1.0;
+    let cur  = makeVid();
+    let next = makeVid();
 
-    function init() {
-        // Mobile/Desktop config
-        const isMobile = window.matchMedia('(max-width: 768px)').matches;
-        blockSize = isMobile ? 3 : 7;
+    // Promise-based load — resolves when the video can play
+    function load(vid, idx) {
+        return new Promise(resolve => {
+            vid.src = SCENES[idx % SCENES.length];
+            vid.oncanplay = () => { vid.oncanplay = null; resolve(); };
+            vid.onerror   = () => { vid.onerror   = null; resolve(); }; // skip broken files
+            vid.load();
+        });
+    }
 
-        canvas.width = window.innerWidth;
+    function resize() {
+        blockSize     = window.matchMedia('(max-width:768px)').matches ? BLOCK_MOB : BLOCK_DESK;
+        canvas.width  = window.innerWidth;
         canvas.height = window.innerHeight;
-        off.width = Math.ceil(canvas.width / blockSize);
-        off.height = Math.ceil(canvas.height / blockSize);
-
-        currentIndex = 0;
-        loadScene(0, currentVid);
-        loadScene(1, nextVid);
-        currentVid.play().catch(() => {});
+        off.width     = Math.ceil(canvas.width  / blockSize);
+        off.height    = Math.ceil(canvas.height / blockSize);
     }
 
-    function loadScene(i, v) {
-        v.src = SCENES[i % SCENES.length];
-        v.load();
-    }
+    // Draw mosaic from an offscreen sample of two videos blended at alpha
+    function drawFrame(now) {
+        const state = window.Cherenkov?.getState();
+        if (state !== 'active' && state !== 'veil_transitioning') return;
 
-    function skipToNext(v) {
-        if (v === currentVid) swap();
-        else loadScene(currentIndex + 2, nextVid);
-    }
-
-    function swap() {
-        currentIndex++;
-        [currentVid, nextVid] = [nextVid, currentVid];
-        loadScene(currentIndex + 1, nextVid);
-        currentVid.play().catch(() => {});
-        isTransitioning = false;
-    }
-
-    currentVid.addEventListener('canplay', () => { ready = true; });
-
-    function drawFrame() {
-        if (!ready || currentVid.readyState < 2 || isDrawing) return;
-        isDrawing = true;
-
-        const cfg = { lift: 20, colorScale: 0.92, desat: 0.05, maxOp: 0.92 };
-
-        try {
-            // Check crossfade
-            const timeLeft = currentVid.duration - currentVid.currentTime;
-            if (timeLeft <= XFADE_TIME && !isTransitioning) {
-                isTransitioning = true;
-                nextVid.play().catch(() => {});
+        let fade = 1; // 0 = fully cur, 1 = fully next
+        if (xfadeStart !== null) {
+            fade = Math.min(1, (now - xfadeStart) / XFADE_MS);
+            if (fade >= 1) {
+                // Crossfade done — advance
+                xfadeStart = null;
+                cur.pause();
+                [cur, next] = [next, cur];
+                sceneIdx = (sceneIdx + 1) % SCENES.length;
+                // Attach ended listener to new current, preload new next
+                cur.addEventListener('ended', onEnded, { once: true });
+                load(next, (sceneIdx + 1) % SCENES.length);
+                fade = 0;
             }
-            if (timeLeft <= 0.05 || currentVid.ended) swap();
+        }
 
-            octx.clearRect(0, 0, off.width, off.height);
-            
-            // Blit current
-            octx.globalAlpha = 1.0;
-            octx.drawImage(currentVid, 0, 0, off.width, off.height);
+        // Composite cur + next onto offscreen buffer
+        octx.clearRect(0, 0, off.width, off.height);
+        if (cur.readyState >= 2) {
+            octx.globalAlpha = 1 - fade;
+            octx.drawImage(cur, 0, 0, off.width, off.height);
+        }
+        if (fade > 0 && next.readyState >= 2) {
+            octx.globalAlpha = fade;
+            octx.drawImage(next, 0, 0, off.width, off.height);
+        }
+        octx.globalAlpha = 1;
 
-            // Blit next if fading
-            if (isTransitioning) {
-                const fade = 1 - (timeLeft / XFADE_TIME);
-                octx.globalAlpha = Math.max(0, Math.min(1, fade));
-                octx.drawImage(nextVid, 0, 0, off.width, off.height);
+        // Render blocks
+        const px = octx.getImageData(0, 0, off.width, off.height).data;
+        ctx.fillStyle = BG;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        for (let r = 0; r < off.height; r++) {
+            for (let c = 0; c < off.width; c++) {
+                const i = (r * off.width + c) * 4;
+                let R = px[i], G = px[i + 1], B = px[i + 2];
+                const grey = R * 0.299 + G * 0.587 + B * 0.114;
+                R = (R * 0.95 + grey * 0.05) * 0.92 + 20;
+                G = (G * 0.95 + grey * 0.05) * 0.92 + 20;
+                B = (B * 0.95 + grey * 0.05) * 0.92 + 27;
+                ctx.fillStyle = `rgb(${R | 0},${G | 0},${B | 0})`;
+                ctx.fillRect(c * blockSize + 1, r * blockSize + 1, blockSize - 2, blockSize - 2);
             }
-
-            const px = octx.getImageData(0, 0, off.width, off.height).data;
-            // Solid fill — prevents patterns from bleeding through inter-block gaps
-            ctx.fillStyle = '#f5f5f5';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            for (let r = 0; r < off.height; r++) {
-                for (let c = 0; c < off.width; c++) {
-                    const i = (r * off.width + c) * 4;
-                    let R = px[i], G = px[i+1], B = px[i+2];
-                    
-                    // Desaturate & Lift
-                    const grey = R * 0.299 + G * 0.587 + B * 0.114;
-                    R = (R * (1 - cfg.desat) + grey * cfg.desat) * cfg.colorScale + cfg.lift;
-                    G = (G * (1 - cfg.desat) + grey * cfg.desat) * cfg.colorScale + cfg.lift;
-                    B = (B * (1 - cfg.desat) + grey * cfg.desat) * cfg.colorScale + cfg.lift + 7;
-
-                    ctx.fillStyle = `rgb(${R|0},${G|0},${B|0})`;
-                    ctx.fillRect(c * blockSize + 1, r * blockSize + 1, blockSize - 2, blockSize - 2);
-                }
-            }
-        } finally {
-            isDrawing = false;
         }
     }
 
-    function tick() {
-        if (!window.Cherenkov) return;
-        const state = window.Cherenkov.getState();
-        
-        // Start drawing during the transition phase, but let CSS handle the alpha
-        if (state === 'active' || state === 'veil_transitioning') {
-            drawFrame();
+    function onEnded() {
+        // Start crossfade — next is already preloaded
+        next.currentTime = 0;
+        next.play().catch(() => {});
+        xfadeStart = performance.now();
+    }
+
+    function tick(now) {
+        if (running) {
+            drawFrame(now);
+            requestAnimationFrame(tick);
         }
     }
 
+    async function start() {
+        resize();
+        sceneIdx = 0;
+        await load(cur, 0);
+        cur.play().catch(() => {});
+        cur.addEventListener('ended', onEnded, { once: true });
+        // Preload slot 1
+        await load(next, 1);
+        running = true;
+        requestAnimationFrame(tick);
+    }
 
-    window.addEventListener('resize', init);
-    document.addEventListener('cherenkov:load-mosaic', init);
-    
-    // Start ticker
-    setInterval(tick, 33);
+    window.addEventListener('resize', resize);
+    document.addEventListener('cherenkov:load-mosaic', start);
 
 })();
-
