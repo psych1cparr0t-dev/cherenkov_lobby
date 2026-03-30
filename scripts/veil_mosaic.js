@@ -1,7 +1,6 @@
 /**
- * Liminal Veil — Pixelated Video Sequence
- * Phase 1: Videos play one after another.
- * Phase 2: Cherenkov pixel grid overlay — an inventive context layer.
+ * Liminal Veil — Smooth Video Sequence
+ * Direct video rendering with crossfade transitions.
  */
 (function () {
 
@@ -13,102 +12,111 @@
         'references/liminal_veil/first_draft/semaphore_tower.webm'
     ];
 
-    const BLOCK = window.matchMedia('(max-width:768px)').matches ? 2 : 6;
-
+    const XFADE_TIME = 1.5; // seconds
 
     const canvas = document.getElementById('veil-canvas');
     if (!canvas) return;
 
-    const ctx  = canvas.getContext('2d', { willReadFrequently: true });
-    const off  = document.createElement('canvas');
-    const octx = off.getContext('2d', { willReadFrequently: true });
-
+    const ctx = canvas.getContext('2d');
     let sceneIdx = 0;
-    let fadeAlpha = 1;       // 0 = transparent, 1 = opaque
-    let fadingOut = false;
-    const FADE_MS = 600;
-    let fadeStart = null;
+    let isTransitioning = false;
 
-    // Single video element — simplest possible queue
-    const vid = document.createElement('video');
-    vid.muted      = true;
-    vid.playsInline = true;
-    vid.loop       = false;
-    vid.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;top:-2px;left:-2px';
-    document.body.appendChild(vid);
+    // Helper to create video elements
+    const makeVid = () => {
+        const v = document.createElement('video');
+        v.muted = true;
+        v.playsInline = true;
+        v.loop = false;
+        v.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;top:-2px;left:-2px';
+        document.body.appendChild(v);
+        return v;
+    };
+
+    let vidA = makeVid();
+    let vidB = makeVid();
+    let current = vidA;
+    let next = vidB;
 
     function resize() {
-        canvas.width  = window.innerWidth;
+        canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        off.width     = Math.ceil(canvas.width  / BLOCK);
-        off.height    = Math.ceil(canvas.height / BLOCK);
     }
 
-    function playNext() {
-        vid.src = SCENES[sceneIdx % SCENES.length];
+    function loadScene(v, idx) {
+        v.src = SCENES[idx % SCENES.length];
+        v.load();
+    }
+
+    function swap() {
+        current.pause();
+        current = next;
+        next = (current === vidA) ? vidB : vidA;
         sceneIdx++;
-        vid.load();
-        vid.play().catch(() => {});
+        loadScene(next, sceneIdx + 1);
+        isTransitioning = false;
     }
 
-    // On scene end: begin fade-out
-    vid.addEventListener('ended', () => {
-        fadingOut = true;
-        fadeStart = null;
-    });
-
-    function draw(now) {
+    function draw() {
         requestAnimationFrame(draw);
 
-        if (window.Cherenkov?.getState() !== 'active') return;
-        if (vid.readyState < 2) return;
+        if (window.Cherenkov?.getState() !== 'active' && window.Cherenkov?.getState() !== 'veil_transitioning') return;
 
-        // Fade-out → swap → fade-in
-        if (fadingOut) {
-            if (fadeStart === null) fadeStart = now;
-            fadeAlpha = 1 - Math.min(1, (now - fadeStart) / FADE_MS);
-            if (fadeAlpha <= 0) {
-                fadingOut = false;
-                fadeStart = now;
-                fadeAlpha = 0;
-                playNext();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Calculate "cover" dimensions
+        const drawCover = (v, alpha) => {
+            if (v.readyState < 2) return;
+            const vRatio = v.videoWidth / v.videoHeight;
+            const cRatio = canvas.width / canvas.height;
+            let dw, dh, dx, dy;
+
+            if (vRatio > cRatio) {
+                dh = canvas.height;
+                dw = dh * vRatio;
+                dx = (canvas.width - dw) / 2;
+                dy = 0;
+            } else {
+                dw = canvas.width;
+                dh = dw / vRatio;
+                dx = 0;
+                dy = (canvas.height - dh) / 2;
             }
-        } else if (fadeAlpha < 1) {
-            // Fade back in
-            fadeAlpha = Math.min(1, (now - fadeStart) / FADE_MS);
+
+            ctx.globalAlpha = alpha;
+            ctx.drawImage(v, dx, dy, dw, dh);
+        };
+
+        const timeLeft = current.duration - current.currentTime;
+
+        // Check if we should start crossfading
+        if (!isTransitioning && timeLeft <= XFADE_TIME && timeLeft > 0) {
+            isTransitioning = true;
+            next.play().catch(() => {});
         }
 
-        // Sample video at block resolution
-        octx.drawImage(vid, 0, 0, off.width, off.height);
-        const px = octx.getImageData(0, 0, off.width, off.height).data;
-
-        // White base
-        ctx.fillStyle = '#f5f5f5';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Cherenkov pixel grid with fade alpha
-        ctx.globalAlpha = fadeAlpha;
-        for (let r = 0; r < off.height; r++) {
-            for (let c = 0; c < off.width; c++) {
-                const i = (r * off.width + c) * 4;
-                let R = px[i], G = px[i + 1], B = px[i + 2];
-                const grey = R * 0.299 + G * 0.587 + B * 0.114;
-                R = (R * 0.8 + grey * 0.2) + 18;
-                G = (G * 0.8 + grey * 0.2) + 18;
-                B = (B * 0.8 + grey * 0.2) + 25;
-                ctx.fillStyle = `rgb(${R | 0},${G | 0},${B | 0})`;
-                ctx.fillRect(c * BLOCK + 1, r * BLOCK + 1, BLOCK - 2, BLOCK - 2);
-            }
+        // Handle end of crossfade
+        if (isTransitioning && (timeLeft <= 0 || current.ended)) {
+            swap();
         }
+
+        if (isTransitioning) {
+            const progress = 1 - (timeLeft / XFADE_TIME);
+            drawCover(current, 1 - Math.max(0, Math.min(1, progress)));
+            drawCover(next, Math.max(0, Math.min(1, progress)));
+        } else {
+            drawCover(current, 1);
+        }
+
         ctx.globalAlpha = 1;
     }
 
     document.addEventListener('cherenkov:load-mosaic', () => {
         resize();
         window.addEventListener('resize', resize);
-        playNext();
+        loadScene(current, 0);
+        loadScene(next, 1);
+        current.play().catch(() => {});
         requestAnimationFrame(draw);
     });
-
 
 })();
