@@ -9,7 +9,8 @@
     function revealLetter(letter) {
         if (triggered || letter.classList.contains('visible')) return;
         
-        letter.classList.add('visible', 'blue-pulse');
+        letter.classList.add('visible');
+
         
         // Count revealed
         const revealedCount = document.querySelectorAll('.letter.visible').length;

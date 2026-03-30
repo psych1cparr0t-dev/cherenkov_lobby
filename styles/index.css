@@ -237,11 +237,6 @@ body, html {
   100% { transform: rotate(360deg); }
 }
 
-.letter.blue-pulse { animation: bluePulse 2.5s ease-in-out; }
-@keyframes bluePulse {
-  0%, 100% { color: var(--text-dim); }
-  50% { color: var(--accent-blue); }
-}
 
 
 
