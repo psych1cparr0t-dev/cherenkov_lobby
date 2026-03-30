@@ -34,6 +34,7 @@
     const makeVid = () => {
         const v = document.createElement('video');
         v.muted = true; v.playsInline = true; v.loop = false;
+        v.crossOrigin = 'anonymous'; // prevent canvas CORS taint
         v.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;top:-2px;left:-2px';
         document.body.appendChild(v);
         return v;
@@ -98,7 +99,13 @@
         const hasData = (cur.readyState >= 2) || (fade > 0 && next.readyState >= 2);
         if (!hasData) return;
 
-        const px = octx.getImageData(0, 0, off.width, off.height).data;
+        let px;
+        try {
+            px = octx.getImageData(0, 0, off.width, off.height).data;
+        } catch (e) {
+            // CORS taint or other canvas security error — skip frame
+            return;
+        }
 
         ctx.fillStyle = BG;
         ctx.fillRect(0, 0, canvas.width, canvas.height);

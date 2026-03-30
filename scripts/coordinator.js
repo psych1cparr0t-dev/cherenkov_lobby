@@ -53,10 +53,19 @@ window.Cherenkov = (function() {
                    document.dispatchEvent(new CustomEvent('cherenkov:load-mosaic'));
                 }, TIMING.MOSAIC_START_OFFSET * 1000);
 
-                // 5. Final State: Wordmark dies, Mosaic takes over
+                // 5. Final State: Mosaic takes over
                 setTimeout(() => {
                     setState(STATE.ACTIVE);
-                    document.dispatchEvent(new CustomEvent('cherenkov:revealed')); // Legacy trigger
+                    document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
+
+                    // Remove background layers from DOM — no more bleed possible
+                    setTimeout(() => {
+                        document.querySelectorAll('.background-pattern')
+                            .forEach(el => el.remove());
+                        const overlay = document.getElementById('fade-overlay');
+                        if (overlay) overlay.remove();
+                    }, 3000); // after canvas fade-in completes
+
                 }, TIMING.VEIL_FADE * 1000);
 
             }, TIMING.INC_BREATH * 1000);
