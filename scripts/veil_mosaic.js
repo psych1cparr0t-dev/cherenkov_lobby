@@ -94,7 +94,12 @@
         octx.globalAlpha = 1;
 
         // Render blocks
+        // Only draw block grid if we have real video data
+        const hasData = (cur.readyState >= 2) || (fade > 0 && next.readyState >= 2);
+        if (!hasData) return;
+
         const px = octx.getImageData(0, 0, off.width, off.height).data;
+
         ctx.fillStyle = BG;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 

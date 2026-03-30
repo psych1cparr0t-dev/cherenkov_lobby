@@ -43,59 +43,58 @@ body, html {
   overflow: hidden;
 }
 
-/* White overlay that fades IN over patterns */
+/* Tier 2: White cover — fades in, stays opaque permanently */
 #fade-overlay {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 2;
   background: var(--bg-primary);
   opacity: 0;
   pointer-events: none;
   transition: opacity var(--t-veil-fade) ease;
 }
 
-/* State-driven visibility */
+/* Once raised, never drops back — permanently covers Tier 1 */
 [data-state="veil_transitioning"] #fade-overlay { opacity: 1; }
-[data-state="active"] #fade-overlay { opacity: 0; pointer-events: none; }
-[data-state="active"] .background-pattern { opacity: 0; }
-
-
+[data-state="active"]             #fade-overlay { opacity: 1; }
 
 .wordmark-sub.visible { opacity: 1; }
 
-/* =====================================================
-   LIMINAL VEIL (MOSAIC)
-   ===================================================== */
-
-
+/* Tier 3: Mosaic canvas — renders on top of the white cover */
 #veil-canvas {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 4;
+  z-index: 3;
   pointer-events: none;
   opacity: 0;
   transition: opacity 2.5s ease-in-out;
 }
 
-[data-state="active"] #veil-canvas {
-  opacity: 1;
-}
+[data-state="active"] #veil-canvas { opacity: 1; }
 
 
 
-/* Rotating background patterns (Autostereogram) */
+
+/* =====================================================
+   THREE-TIER Z-INDEX SYSTEM
+   Tier 1: Autostereogram patterns (z:1)
+   Tier 2: White cover overlay     (z:2) — permanent once raised
+   Tier 3: Mosaic canvas           (z:3)
+   UI:     Nav / Wordmark          (z:100+)
+   ===================================================== */
+
 .background-pattern {
   position: absolute;
   top: -20%; left: -20%;
   width: 140%; height: 140%;
   background-repeat: repeat;
   background-size: 80px 80px;
-  animation: backgroundShift 12s ease-in-out infinite, 
+  animation: backgroundShift 12s ease-in-out infinite,
              patternRotate 40s linear infinite;
   pointer-events: none;
-  z-index: 2;
+  z-index: 1;
   opacity: 0.1;
   transition: opacity 2s ease;
   will-change: transform, opacity;
