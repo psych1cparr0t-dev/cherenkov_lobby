@@ -13,7 +13,8 @@
         'references/liminal_veil/first_draft/semaphore_tower.webm'
     ];
 
-    const BLOCK = window.matchMedia('(max-width:768px)').matches ? 4 : 8;
+    const BLOCK = window.matchMedia('(max-width:768px)').matches ? 2 : 6;
+
 
     const canvas = document.getElementById('veil-canvas');
     if (!canvas) return;
