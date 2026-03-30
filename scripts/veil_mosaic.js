@@ -24,6 +24,10 @@
     const octx = off.getContext('2d', { willReadFrequently: true });
 
     let sceneIdx = 0;
+    let fadeAlpha = 1;       // 0 = transparent, 1 = opaque
+    let fadingOut = false;
+    const FADE_MS = 600;
+    let fadeStart = null;
 
     // Single video element — simplest possible queue
     const vid = document.createElement('video');
@@ -47,29 +51,47 @@
         vid.play().catch(() => {});
     }
 
-    // Advance to next scene when current ends
-    vid.addEventListener('ended', playNext);
+    // On scene end: begin fade-out
+    vid.addEventListener('ended', () => {
+        fadingOut = true;
+        fadeStart = null;
+    });
 
-    function draw() {
+    function draw(now) {
         requestAnimationFrame(draw);
 
         if (window.Cherenkov?.getState() !== 'active') return;
         if (vid.readyState < 2) return;
 
+        // Fade-out → swap → fade-in
+        if (fadingOut) {
+            if (fadeStart === null) fadeStart = now;
+            fadeAlpha = 1 - Math.min(1, (now - fadeStart) / FADE_MS);
+            if (fadeAlpha <= 0) {
+                fadingOut = false;
+                fadeStart = now;
+                fadeAlpha = 0;
+                playNext();
+            }
+        } else if (fadeAlpha < 1) {
+            // Fade back in
+            fadeAlpha = Math.min(1, (now - fadeStart) / FADE_MS);
+        }
+
         // Sample video at block resolution
         octx.drawImage(vid, 0, 0, off.width, off.height);
         const px = octx.getImageData(0, 0, off.width, off.height).data;
 
-        // White base — prevents any bleed-through
+        // White base
         ctx.fillStyle = '#f5f5f5';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Cherenkov pixel grid — the world seen through an inventive context layer
+        // Cherenkov pixel grid with fade alpha
+        ctx.globalAlpha = fadeAlpha;
         for (let r = 0; r < off.height; r++) {
             for (let c = 0; c < off.width; c++) {
                 const i = (r * off.width + c) * 4;
                 let R = px[i], G = px[i + 1], B = px[i + 2];
-                // Slight desaturate + lift — keeps it light and readable
                 const grey = R * 0.299 + G * 0.587 + B * 0.114;
                 R = (R * 0.8 + grey * 0.2) + 18;
                 G = (G * 0.8 + grey * 0.2) + 18;
@@ -78,6 +100,7 @@
                 ctx.fillRect(c * BLOCK + 1, r * BLOCK + 1, BLOCK - 2, BLOCK - 2);
             }
         }
+        ctx.globalAlpha = 1;
     }
 
     document.addEventListener('cherenkov:load-mosaic', () => {
@@ -86,5 +109,6 @@
         playNext();
         requestAnimationFrame(draw);
     });
+
 
 })();
