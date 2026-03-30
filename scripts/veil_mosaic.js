@@ -59,6 +59,7 @@
         off.width = Math.ceil(canvas.width / blockSize);
         off.height = Math.ceil(canvas.height / blockSize);
 
+        currentIndex = 0;
         loadScene(0, currentVid);
         loadScene(1, nextVid);
         currentVid.play().catch(() => {});
@@ -71,12 +72,13 @@
 
     function skipToNext(v) {
         if (v === currentVid) swap();
-        else loadScene(++currentIndex + 1, nextVid);
+        else loadScene(currentIndex + 2, nextVid);
     }
 
     function swap() {
+        currentIndex++;
         [currentVid, nextVid] = [nextVid, currentVid];
-        loadScene(++currentIndex + 1, nextVid);
+        loadScene(currentIndex + 1, nextVid);
         currentVid.play().catch(() => {});
         isTransitioning = false;
     }
