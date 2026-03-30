@@ -8,7 +8,8 @@ window.Cherenkov = (function() {
     const TIMING = {
         BLUE_PULSE: 2.500,    // Wait for initial reveal pulse to settle
         INC_REVEAL: 1.200,    // Subtitle fade-in
-        INC_BREATH: 0.200,    // Pause before veil transition
+        INC_BREATH: 1.800,    // Pause — lets Inc. fully render before veil transition
+
         VEIL_FADE: 4.000,     // White overlay ramp-up
         MOSAIC_START_OFFSET: 3.000, // When backdrop starts loading (during veil fade)
         WORDMARK_DEATH_TOTAL: 2.500, // Total window for staggered "fry out"
