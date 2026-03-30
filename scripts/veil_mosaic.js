@@ -1,6 +1,7 @@
 /**
- * Liminal Veil — Block Mosaic
- * Cycles all scenes sequentially with a smooth canvas crossfade.
+ * Liminal Veil — Pixelated Video Sequence
+ * Phase 1: Videos play one after another.
+ * Phase 2: Cherenkov pixel grid overlay — an inventive context layer.
  */
 (function () {
 
@@ -12,11 +13,7 @@
         'references/liminal_veil/first_draft/semaphore_tower.webm'
     ];
 
-
-    const XFADE_MS   = 1200;   // crossfade duration
-    const BLOCK_DESK = 7;
-    const BLOCK_MOB  = 3;
-    const BG         = '#f5f5f5';
+    const BLOCK = window.matchMedia('(max-width:768px)').matches ? 4 : 8;
 
     const canvas = document.getElementById('veil-canvas');
     if (!canvas) return;
@@ -25,132 +22,68 @@
     const off  = document.createElement('canvas');
     const octx = off.getContext('2d', { willReadFrequently: true });
 
-    let blockSize  = BLOCK_DESK;
-    let sceneIdx   = 0;
-    let xfadeStart = null;   // timestamp when crossfade began
-    let running    = false;
+    let sceneIdx = 0;
 
-    // Two video slots — current plays, next preloads
-    const makeVid = () => {
-        const v = document.createElement('video');
-        v.muted = true; v.playsInline = true; v.loop = false;
-        v.crossOrigin = 'anonymous'; // prevent canvas CORS taint
-        v.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;top:-2px;left:-2px';
-        document.body.appendChild(v);
-        return v;
-    };
-
-    let cur  = makeVid();
-    let next = makeVid();
-
-    // Promise-based load — resolves when the video can play
-    function load(vid, idx) {
-        return new Promise(resolve => {
-            vid.src = SCENES[idx % SCENES.length];
-            vid.oncanplay = () => { vid.oncanplay = null; resolve(); };
-            vid.onerror   = () => { vid.onerror   = null; resolve(); }; // skip broken files
-            vid.load();
-        });
-    }
+    // Single video element — simplest possible queue
+    const vid = document.createElement('video');
+    vid.muted      = true;
+    vid.playsInline = true;
+    vid.loop       = false;
+    vid.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;top:-2px;left:-2px';
+    document.body.appendChild(vid);
 
     function resize() {
-        blockSize     = window.matchMedia('(max-width:768px)').matches ? BLOCK_MOB : BLOCK_DESK;
         canvas.width  = window.innerWidth;
         canvas.height = window.innerHeight;
-        off.width     = Math.ceil(canvas.width  / blockSize);
-        off.height    = Math.ceil(canvas.height / blockSize);
+        off.width     = Math.ceil(canvas.width  / BLOCK);
+        off.height    = Math.ceil(canvas.height / BLOCK);
     }
 
-    // Draw mosaic from an offscreen sample of two videos blended at alpha
-    function drawFrame(now) {
-        const state = window.Cherenkov?.getState();
-        if (state !== 'active' && state !== 'veil_transitioning') return;
+    function playNext() {
+        vid.src = SCENES[sceneIdx % SCENES.length];
+        sceneIdx++;
+        vid.load();
+        vid.play().catch(() => {});
+    }
 
-        let fade = 1; // 0 = fully cur, 1 = fully next
-        if (xfadeStart !== null) {
-            fade = Math.min(1, (now - xfadeStart) / XFADE_MS);
-            if (fade >= 1) {
-                // Crossfade done — advance
-                xfadeStart = null;
-                cur.pause();
-                [cur, next] = [next, cur];
-                sceneIdx = (sceneIdx + 1) % SCENES.length;
-                // Attach ended listener to new current, preload new next
-                cur.addEventListener('ended', onEnded, { once: true });
-                load(next, (sceneIdx + 1) % SCENES.length);
-                fade = 0;
-            }
-        }
+    // Advance to next scene when current ends
+    vid.addEventListener('ended', playNext);
 
-        // Composite cur + next onto offscreen buffer
-        octx.clearRect(0, 0, off.width, off.height);
-        if (cur.readyState >= 2) {
-            octx.globalAlpha = 1 - fade;
-            octx.drawImage(cur, 0, 0, off.width, off.height);
-        }
-        if (fade > 0 && next.readyState >= 2) {
-            octx.globalAlpha = fade;
-            octx.drawImage(next, 0, 0, off.width, off.height);
-        }
-        octx.globalAlpha = 1;
+    function draw() {
+        requestAnimationFrame(draw);
 
-        // Render blocks
-        // Only draw block grid if we have real video data
-        const hasData = (cur.readyState >= 2) || (fade > 0 && next.readyState >= 2);
-        if (!hasData) return;
+        if (window.Cherenkov?.getState() !== 'active') return;
+        if (vid.readyState < 2) return;
 
-        let px;
-        try {
-            px = octx.getImageData(0, 0, off.width, off.height).data;
-        } catch (e) {
-            // CORS taint or other canvas security error — skip frame
-            return;
-        }
+        // Sample video at block resolution
+        octx.drawImage(vid, 0, 0, off.width, off.height);
+        const px = octx.getImageData(0, 0, off.width, off.height).data;
 
-        ctx.fillStyle = BG;
+        // White base — prevents any bleed-through
+        ctx.fillStyle = '#f5f5f5';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // Cherenkov pixel grid — the world seen through an inventive context layer
         for (let r = 0; r < off.height; r++) {
             for (let c = 0; c < off.width; c++) {
                 const i = (r * off.width + c) * 4;
                 let R = px[i], G = px[i + 1], B = px[i + 2];
+                // Slight desaturate + lift — keeps it light and readable
                 const grey = R * 0.299 + G * 0.587 + B * 0.114;
-                R = (R * 0.95 + grey * 0.05) * 0.92 + 20;
-                G = (G * 0.95 + grey * 0.05) * 0.92 + 20;
-                B = (B * 0.95 + grey * 0.05) * 0.92 + 27;
+                R = (R * 0.8 + grey * 0.2) + 18;
+                G = (G * 0.8 + grey * 0.2) + 18;
+                B = (B * 0.8 + grey * 0.2) + 25;
                 ctx.fillStyle = `rgb(${R | 0},${G | 0},${B | 0})`;
-                ctx.fillRect(c * blockSize + 1, r * blockSize + 1, blockSize - 2, blockSize - 2);
+                ctx.fillRect(c * BLOCK + 1, r * BLOCK + 1, BLOCK - 2, BLOCK - 2);
             }
         }
     }
 
-    function onEnded() {
-        // Start crossfade — next is already preloaded
-        next.currentTime = 0;
-        next.play().catch(() => {});
-        xfadeStart = performance.now();
-    }
-
-    function tick(now) {
-        if (running) {
-            drawFrame(now);
-            requestAnimationFrame(tick);
-        }
-    }
-
-    async function start() {
+    document.addEventListener('cherenkov:load-mosaic', () => {
         resize();
-        sceneIdx = 0;
-        await load(cur, 0);
-        cur.play().catch(() => {});
-        cur.addEventListener('ended', onEnded, { once: true });
-        // Preload slot 1
-        await load(next, 1);
-        running = true;
-        requestAnimationFrame(tick);
-    }
-
-    window.addEventListener('resize', resize);
-    document.addEventListener('cherenkov:load-mosaic', start);
+        window.addEventListener('resize', resize);
+        playNext();
+        requestAnimationFrame(draw);
+    });
 
 })();
