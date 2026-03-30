@@ -34,9 +34,11 @@
 
         const timeLeft = current.duration - current.currentTime;
 
-        // Start crossfading
+        // Start crossfading: Next comes to front, current remains behind
         if (!isTransitioning && timeLeft <= XFADE_TIME && timeLeft > 0) {
             isTransitioning = true;
+            next.style.zIndex = '4';       // Bring new scene to front
+            current.style.zIndex = '3';
             next.play().catch(() => {});
             next.classList.add('playing');
         }
@@ -50,9 +52,15 @@
             [current, next] = [next, current];
             sceneIdx = (sceneIdx + 1) % SCENES.length;
             isTransitioning = false;
+            
+            // Wait for new 'current' to fully take the stage, then reset indices
+            current.style.zIndex = '3';
+            next.style.zIndex = '1'; // hide totally behind
+            
             loadNext();
         }
     }
+
 
     function tick() {
         checkTime();
