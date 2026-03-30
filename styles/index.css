@@ -80,8 +80,9 @@ body, html {
 }
 
 [data-state="active"] #veil-canvas {
-  opacity: 0.92;
+  opacity: 1;
 }
+
 
 
 /* Rotating background patterns (Autostereogram) */

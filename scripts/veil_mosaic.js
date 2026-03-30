@@ -114,7 +114,9 @@
             }
 
             const px = octx.getImageData(0, 0, off.width, off.height).data;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Solid fill — prevents patterns from bleeding through inter-block gaps
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             for (let r = 0; r < off.height; r++) {
                 for (let c = 0; c < off.width; c++) {
