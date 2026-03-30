@@ -1,6 +1,5 @@
 <svg viewBox="25 65 130 130" xmlns="http://www.w3.org/2000/svg">
-  <!-- White background -->
-  <rect x="25" y="65" width="130" height="130" fill="#ffffff"/>
+
   <!-- Back face (outer rounded rect, offset up-left) -->
   <path
     style="fill:none;stroke:#888888;stroke-width:0.287;stroke-linejoin:round"
