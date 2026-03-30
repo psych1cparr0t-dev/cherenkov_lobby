@@ -66,14 +66,12 @@ body, html {
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   z-index: 3;
   opacity: 0;
   transition: opacity 2s ease-in-out;
   pointer-events: none;
-  background: var(--bg-primary); /* Use a clean background fill */
 }
-
 
 .veil-video.playing { opacity: 1; }
 
