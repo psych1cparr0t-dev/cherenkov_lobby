@@ -5,11 +5,13 @@
 (function () {
 
     const SCENES = [
-        'references/liminal_veil/first_draft/cherry_blossoms.webm',
-        'references/liminal_veil/first_draft/landwasserviadukt_6s.webm',
-        'references/liminal_veil/first_draft/village_life_4s.webm',
-        'references/liminal_veil/first_draft/hong_kong_island_5s.webm',
-        'references/liminal_veil/first_draft/semaphore_tower.webm'
+        'references/liminal_veil/mosaic/scene_antarctica.webm',
+        'references/liminal_veil/mosaic/scene_cable_car.webm',
+        'references/liminal_veil/mosaic/scene_hong_kong_night.webm',
+        'references/liminal_veil/mosaic/scene_landwasserviadukt.webm',
+        'references/liminal_veil/mosaic/scene_village_life.webm',
+        'references/liminal_veil/mosaic/scene_semaphore_tower.webm',
+        'references/liminal_veil/mosaic/scene_hong_kong_day.webm'
     ];
 
     const XFADE_TIME = 2.0; // Seconds
