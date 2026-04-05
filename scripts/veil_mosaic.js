@@ -1,6 +1,6 @@
 /**
- * Liminal Veil — Native Video Player (Worldly Montage Edition)
- * High-fidelity 10s clips with a 3.5s ultra-smooth crossfade.
+ * Liminal Veil — Native Video Player (Buttery Cinema Build)
+ * High-fidelity 10s clips with a 3.0s smooth ease-in-out crossfade.
  */
 (function () {
 
@@ -21,8 +21,7 @@
         'references/liminal_veil/mosaic/scene_semaphore_tower_2.webm'
     ];
 
-    const XFADE_TIME = 3.5; // Increased for ultra-smooth buttery feel
-
+    const XFADE_TIME = 3.0; // Perfect cinematic balance
     const vidA = document.getElementById('veil-video-a');
     const vidB = document.getElementById('veil-video-b');
 
@@ -33,6 +32,7 @@
     let sceneOrder = [];
     let sceneIdx = 0;
     let isTransitioning = false;
+    let safetyTimeout = null;
 
     function shuffle(array) {
         for (let i = array.length - 1; i > 0; i--) {
@@ -43,6 +43,7 @@
 
     function loadSource(v, idx) {
         const url = sceneOrder[idx % sceneOrder.length];
+        if (!url) return;
         if (v.src.indexOf(url) === -1) {
             v.src = url;
             v.load();
@@ -58,21 +59,31 @@
     }
 
     function beginSwap() {
+        if (isTransitioning) return;
         isTransitioning = true;
+        
+        // Safety Clear
+        clearTimeout(safetyTimeout);
+        safetyTimeout = setTimeout(() => {
+            console.warn('[Veil] Transition timeout - forcing reset');
+            isTransitioning = false;
+        }, 8000); 
+
         next.currentTime = 0;
         next.style.zIndex = '4';
         current.style.zIndex = '3';
 
-        const onPlaying = () => {
-            next.removeEventListener('playing', onPlaying);
+        next.play().then(() => {
+            // Once playing starts, trigger the CSS fade
             next.classList.add('playing');
-        };
-        next.addEventListener('playing', onPlaying);
-        
-        next.play().catch(() => cleanupSwap());
+        }).catch(err => {
+            console.error('[Veil] Play failed:', err);
+            cleanupSwap();
+        });
     }
 
     function cleanupSwap() {
+        clearTimeout(safetyTimeout);
         current.classList.remove('playing');
         current.pause();
 
@@ -91,6 +102,7 @@
             if (v === current) cleanupSwap();
         });
         v.addEventListener('timeupdate', () => {
+            // Robust check: if we're near the end and were supposed to be transitioning
             if (v === current && isTransitioning && v.duration - v.currentTime < 0.1) {
                 cleanupSwap();
             }
@@ -103,7 +115,6 @@
     }
 
     document.addEventListener('cherenkov:load-mosaic', () => {
-        // Initialize randomized order
         sceneOrder = [...SCENES];
         shuffle(sceneOrder);
         
@@ -114,7 +125,10 @@
         current.play().then(() => {
             current.classList.add('playing');
             requestAnimationFrame(tick);
-        }).catch(() => {});
+        }).catch(() => {
+            // If autoplay fails, fallback to manual trigger or just keep checking
+            requestAnimationFrame(tick);
+        });
     });
 
 })();
