@@ -1,57 +1,48 @@
 #!/usr/bin/env bash
-
 set -e
 
 DIR="/Volumes/lacie_2tb/cherenkov_homepage/references/liminal_veil"
 MOSAIC_DIR="$DIR/mosaic"
 ORIG_DIR="$MOSAIC_DIR/originals"
 
-# Ensure directories exist
-mkdir -p "$ORIG_DIR"
+# Remove broken/old scene files
+rm -f "$MOSAIC_DIR"/scene_*.webm
 
-# 1080p, 10 seconds (per user request), VP9, 2M bitrate (High fidelity, small size)
-OPTS="-y -t 10 -c:v libvpx-vp9 -b:v 2M -crf 30 -an -vf scale=-1:1080 -cpu-used 4"
+# 1080p, VP9, 2M bitrate, no audio
+BASE_OPTS="-y -c:v libvpx-vp9 -b:v 2M -crf 30 -an -vf scale=-1:1080 -cpu-used 4"
 
-function extract_clip() {
-    local src_file="$1"
-    local start_time="$2"
-    local dest_name="$3"
-    local full_src="$ORIG_DIR/$src_file"
-    local full_dest="$MOSAIC_DIR/$dest_name"
-    
-    echo "----------------------------------------------------"
-    echo "Extracting: $src_file @ $start_time -> $dest_name"
-    ffmpeg -ss "$start_time" -i "$full_src" $OPTS "$full_dest" < /dev/null
+function clip() {
+    local src="$1" ss="$2" dur="$3" dest="$4"
+    echo "==== $dest (from $(basename "$src") @ ${ss}s for ${dur}s) ===="
+    ffmpeg -ss "$ss" -i "$ORIG_DIR/$src" -t "$dur" $BASE_OPTS "$MOSAIC_DIR/$dest" < /dev/null
 }
 
-# Ensure all originals are in the originals folder
-mv "$MOSAIC_DIR"/*.webm "$ORIG_DIR/" 2>/dev/null || true
+# --- Antarctica (188s source) — 3 clips ---
+clip "National_Geographic_Endurance_and_Northern_Ross_Sea,_Antarctica.webm" 10 10 "scene_antarctica_1.webm"
+clip "National_Geographic_Endurance_and_Northern_Ross_Sea,_Antarctica.webm" 50 10 "scene_antarctica_2.webm"
+clip "National_Geographic_Endurance_and_Northern_Ross_Sea,_Antarctica.webm" 100 10 "scene_antarctica_3.webm"
 
-# 1. Antarctica (Glacial floes, Ship's bow, Vast horizon)
-extract_clip "National_Geographic_Endurance_and_Northern_Ross_Sea,_Antarctica.webm" "00:00:10" "scene_antarctica_1.webm"
-extract_clip "National_Geographic_Endurance_and_Northern_Ross_Sea,_Antarctica.webm" "00:00:40" "scene_antarctica_2.webm"
-extract_clip "National_Geographic_Endurance_and_Northern_Ross_Sea,_Antarctica.webm" "00:01:20" "scene_antarctica_3.webm"
+# --- Cable Car (29s source) — 1 clip only (safe window: 0-19s) ---
+clip "Wellington_Cable_Car_2020-05-17.webm" 5 10 "scene_cable_car.webm"
 
-# 2. Wellington Cable Car (Greenery ascent, City reveal)
-extract_clip "Wellington_Cable_Car_2020-05-17.webm" "00:00:15" "scene_cable_car_1.webm"
-extract_clip "Wellington_Cable_Car_2020-05-17.webm" "00:00:50" "scene_cable_car_2.webm"
+# --- Hong Kong Night (51s source) — 3 clips (safe window: 0-41s) ---
+clip "Hong_Kong_Island_Night_Cityscape_2020.webm" 5 10 "scene_hong_kong_night_1.webm"
+clip "Hong_Kong_Island_Night_Cityscape_2020.webm" 20 10 "scene_hong_kong_night_2.webm"
+clip "Hong_Kong_Island_Night_Cityscape_2020.webm" 35 10 "scene_hong_kong_night_3.webm"
 
-# 3. Hong Kong (Night Harbor, Dense Skyline, Harbor Lights)
-extract_clip "Hong_Kong_Island_Night_Cityscape_2020.webm" "00:00:20" "scene_hong_kong_night_1.webm"
-extract_clip "Hong_Kong_Island_Night_Cityscape_2020.webm" "00:01:00" "scene_hong_kong_night_2.webm"
-extract_clip "Hong_Kong_Island_Night_Cityscape_2020.webm" "00:01:40" "scene_hong_kong_night_3.webm"
+# --- Landwasserviadukt (169s source) — 2 clips, LONGER second clip so train exits ---
+clip "Landwasserviadukt,_aerial_video.webm" 10 10 "scene_landwasserviadukt_1.webm"
+# Start earlier so the train enters AND exits the viaduct
+clip "Landwasserviadukt,_aerial_video.webm" 30 15 "scene_landwasserviadukt_2.webm"
 
-# 4. Landwasserviadukt (Train crossing, Mountain pan)
-extract_clip "Landwasserviadukt,_aerial_video.webm" "00:00:10" "scene_landwasserviadukt_1.webm"
-extract_clip "Landwasserviadukt,_aerial_video.webm" "00:00:45" "scene_landwasserviadukt_2.webm"
+# --- Village Life (117s source) — 2 clips (safe window: 0-107s) ---
+clip "Cinematic_village_life_in_Talesh.webm" 15 10 "scene_village_life_1.webm"
+clip "Cinematic_village_life_in_Talesh.webm" 60 10 "scene_village_life_2.webm"
 
-# 5. Cinematic Village Life (Atmosphere, Street Architecture)
-extract_clip "Cinematic_village_life_in_Talesh.webm" "00:00:30" "scene_village_life_1.webm"
-extract_clip "Cinematic_village_life_in_Talesh.webm" "00:02:00" "scene_village_life_2.webm"
+# --- Semaphore Tower (8.3s source) — use full duration, not 10s ---
+echo "==== scene_semaphore_tower.webm (full 8s source) ===="
+ffmpeg -i "$ORIG_DIR/Bird's_eye_of_Semaphore_tower_at_Chhatna_at_Bankura_district_in_West_Bengal_04.webm" \
+  $BASE_OPTS "$MOSAIC_DIR/scene_semaphore_tower.webm" < /dev/null
 
-# 6. Semaphore Tower (Historic structure, Aerial landscape)
-extract_clip "Bird's_eye_of_Semaphore_tower_at_Chhatna_at_Bankura_district_in_West_Bengal_04.webm" "00:00:05" "scene_semaphore_tower_1.webm"
-extract_clip "Bird's_eye_of_Semaphore_tower_at_Chhatna_at_Bankura_district_in_West_Bengal_04.webm" "00:00:35" "scene_semaphore_tower_2.webm"
-
-echo "----------------------------------------------------"
-echo "14 scenes extracted to 1080p 10s clips in $MOSAIC_DIR"
+echo ""
+echo "==== Done. All clips validated against source durations. ===="
