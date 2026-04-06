@@ -11,7 +11,7 @@ window.Cherenkov = (function() {
         INC_BREATH: 1.800,    // Pause — lets Inc. fully render before veil transition
 
         VEIL_FADE: 4.000,     // White overlay ramp-up
-        MOSAIC_START_OFFSET: 3.000, // When backdrop starts loading (during veil fade)
+        MOSAIC_START_OFFSET: 0,     // Load video immediately (buffers during veil fade)
         WORDMARK_DEATH_TOTAL: 2.500, // Total window for staggered "fry out"
         WORDMARK_DEATH_FLICKER: 1.200 // Individual letter animation duration
     };
