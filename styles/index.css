@@ -69,7 +69,7 @@ body, html {
   object-fit: cover;
   z-index: 3;
   opacity: 0;
-  transition: opacity 3.0s ease-in-out;
+  transition: opacity 2.0s ease-in-out;
   pointer-events: none;
 }
 

@@ -19,7 +19,7 @@
         'references/liminal_veil/mosaic/scene_semaphore_tower.webm'
     ];
 
-    const XFADE_TIME = 3.0;
+    const XFADE_TIME = 2.0;
 
     const vidA = document.getElementById('veil-video-a');
     const vidB = document.getElementById('veil-video-b');
