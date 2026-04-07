@@ -128,8 +128,43 @@
         });
     });
 
+    // --- Dynamic Luminance Detection ---
+    // Samples the active video's center strip to detect dark scenes.
+    // Toggles data-scene-dark on <body> so CSS can add a silver outline.
+    const sampleCanvas = document.createElement('canvas');
+    const sampleCtx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+    sampleCanvas.width = 32;
+    sampleCanvas.height = 32;
+    let lastSampleTime = 0;
+
+    function sampleLuminance() {
+        const now = performance.now();
+        if (now - lastSampleTime < 500) return; // Throttle to 2x/sec
+        lastSampleTime = now;
+
+        const v = current;
+        if (!v || v.paused || v.readyState < 2) return;
+
+        try {
+            // Sample center strip where the wordmark sits
+            sampleCtx.drawImage(v, 0, 0, 32, 32);
+            const data = sampleCtx.getImageData(0, 10, 32, 12).data; // Middle rows
+            let totalLum = 0;
+            const pixelCount = data.length / 4;
+            for (let i = 0; i < data.length; i += 4) {
+                // Perceived luminance: 0.299R + 0.587G + 0.114B
+                totalLum += 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+            }
+            const avgLum = totalLum / pixelCount;
+            document.body.dataset.sceneDark = avgLum < 100 ? 'true' : 'false';
+        } catch (e) {
+            // CORS or decode error — fail silently
+        }
+    }
+
     function tick() {
         checkTime();
+        sampleLuminance();
         requestAnimationFrame(tick);
     }
 

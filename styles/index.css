@@ -157,10 +157,20 @@ body, html {
 
 .letter {
   opacity: 0;
-  transition: opacity 1.5s ease-in-out;
+  transition: opacity 1.5s ease-in-out, text-shadow 1.5s ease;
+  text-shadow: none;
 }
 
 .letter.visible { opacity: 1; }
+
+/* Dynamic outline for dark scenes — driven by luminance sampler */
+[data-scene-dark="true"] .letter.visible {
+  text-shadow:
+    -1px -1px 0 rgba(200, 200, 200, 0.5),
+     1px -1px 0 rgba(200, 200, 200, 0.5),
+    -1px  1px 0 rgba(200, 200, 200, 0.5),
+     1px  1px 0 rgba(200, 200, 200, 0.5);
+}
 
 
 .wordmark-sub {
