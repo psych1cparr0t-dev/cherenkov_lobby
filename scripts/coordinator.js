@@ -58,6 +58,12 @@ window.Cherenkov = (function() {
                     setState(STATE.ACTIVE);
                     document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
 
+                    // Reveal nav links with a slight delay
+                    setTimeout(() => {
+                        document.querySelectorAll('.nav-link').forEach(link => {
+                            link.classList.add('revealed');
+                        });
+                    }, 500);
                     // Remove background layers from DOM — no more bleed possible
                     setTimeout(() => {
                         document.querySelectorAll('.background-pattern')
