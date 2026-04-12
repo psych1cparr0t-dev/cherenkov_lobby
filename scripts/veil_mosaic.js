@@ -175,7 +175,10 @@
     let mosaicStarted = false;
     
     function tick() {
-        if (document.hidden) { tickRunning = false; return; }
+        if (document.hidden) { 
+            tickRunning = false; 
+            return; 
+        }
         checkTime();
         sampleLuminance();
         requestAnimationFrame(tick);
@@ -190,11 +193,19 @@
     // Resume after tab switch — browsers pause video when page is hidden
     document.addEventListener('visibilitychange', () => {
         if (!document.hidden && mosaicStarted) {
+            console.log('[Veil] Visibility changed: visible. Resuming...');
             // Re-play current video (browser may have paused it)
-            if (current.paused) {
-                current.play().catch(() => {});
+            if (current && current.paused) {
+                current.play().catch(e => console.warn('[Veil] Resume play failed:', e));
+            }
+            // If we were transitioning, make sure the next video is also attempting to play
+            if (isTransitioning && next && next.paused) {
+                next.play().catch(e => console.warn('[Veil] Resume next-play failed:', e));
             }
             startTick();
+        } else if (document.hidden) {
+            console.log('[Veil] Visibility changed: hidden. Pausing loop.');
+            tickRunning = false;
         }
     });
 
