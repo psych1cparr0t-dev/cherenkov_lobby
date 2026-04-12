@@ -44,5 +44,14 @@ echo "==== scene_semaphore_tower.webm (full 8s source) ===="
 ffmpeg -i "$ORIG_DIR/Bird's_eye_of_Semaphore_tower_at_Chhatna_at_Bankura_district_in_West_Bengal_04.webm" \
   $BASE_OPTS "$MOSAIC_DIR/scene_semaphore_tower.webm" < /dev/null
 
-echo ""
+# --- New Clips (Wikimedia Sourced) ---
+clip "nyc_timelapse.ogv" 10 10 "scene_nyc_1.webm"
+clip "mumbai_timelapse.webm" 5 10 "scene_mumbai_1.webm"
+clip "snowy_landscape.webm" 5 10 "scene_snowy_1.webm"
+clip "bhopal_night.webm" 3 10 "scene_bhopal_1.webm"
+clip "mountain_fog_1.webm" 10 10 "scene_mountain_fog_1.webm"
+clip "mountain_fog_2.ogv" 0 6 "scene_mountain_fog_2.webm"
+clip "ocean_waves.ogv" 0 6 "scene_ocean_waves_1.webm"
+clip "train_station.webm" 5 10 "scene_train_station_1.webm"
+clip "lightning_storm.ogg" 5 10 "scene_lightning_1.webm"
 echo "==== Done. All clips validated against source durations. ===="
