@@ -199,9 +199,15 @@ body, html {
   pointer-events: none;
 }
 
-.nav-group-left, .nav-group-right {
+.nav-group-left, .nav-group-right, .nav-group-center {
   display: flex;
   gap: 32px;
+}
+
+.nav-group-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .nav-link {

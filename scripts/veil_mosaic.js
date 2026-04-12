@@ -16,7 +16,16 @@
         'references/liminal_veil/mosaic/scene_landwasserviadukt_2.webm',
         'references/liminal_veil/mosaic/scene_village_life_1.webm',
         'references/liminal_veil/mosaic/scene_village_life_2.webm',
-        'references/liminal_veil/mosaic/scene_semaphore_tower.webm'
+        'references/liminal_veil/mosaic/scene_semaphore_tower.webm',
+        'references/liminal_veil/mosaic/scene_nyc_1.webm',
+        'references/liminal_veil/mosaic/scene_mumbai_1.webm',
+        'references/liminal_veil/mosaic/scene_snowy_1.webm',
+        'references/liminal_veil/mosaic/scene_bhopal_1.webm',
+        'references/liminal_veil/mosaic/scene_mountain_fog_1.webm',
+        'references/liminal_veil/mosaic/scene_mountain_fog_2.webm',
+        'references/liminal_veil/mosaic/scene_ocean_waves_1.webm',
+        'references/liminal_veil/mosaic/scene_train_station_1.webm',
+        'references/liminal_veil/mosaic/scene_lightning_1.webm'
     ];
 
     const XFADE_TIME = 2.0;
@@ -162,13 +171,35 @@
         }
     }
 
+    let tickRunning = false;
+    let mosaicStarted = false;
+    
     function tick() {
+        if (document.hidden) { tickRunning = false; return; }
         checkTime();
         sampleLuminance();
         requestAnimationFrame(tick);
     }
 
+    function startTick() {
+        if (tickRunning) return;
+        tickRunning = true;
+        requestAnimationFrame(tick);
+    }
+
+    // Resume after tab switch — browsers pause video when page is hidden
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && mosaicStarted) {
+            // Re-play current video (browser may have paused it)
+            if (current.paused) {
+                current.play().catch(() => {});
+            }
+            startTick();
+        }
+    });
+
     document.addEventListener('cherenkov:load-mosaic', () => {
+        mosaicStarted = true;
         sceneOrder = [...SCENES];
         shuffle(sceneOrder);
 
@@ -178,9 +209,9 @@
 
         current.play().then(() => {
             current.classList.add('playing');
-            requestAnimationFrame(tick);
+            startTick();
         }).catch(() => {
-            requestAnimationFrame(tick);
+            startTick();
         });
     });
 
