@@ -25,7 +25,16 @@
         'references/liminal_veil/mosaic/scene_mountain_fog_2.webm',
         'references/liminal_veil/mosaic/scene_ocean_waves_1.webm',
         'references/liminal_veil/mosaic/scene_train_station_1.webm',
-        'references/liminal_veil/mosaic/scene_lightning_1.webm'
+        'references/liminal_veil/mosaic/scene_lightning_1.webm',
+        'references/liminal_veil/mosaic/scene_arctic_fjords.webm',
+        'references/liminal_veil/mosaic/scene_buelenhorn_aerial.webm',
+        'references/liminal_veil/mosaic/scene_chicago_night.webm',
+        'references/liminal_veil/mosaic/scene_fuji_sunset.webm',
+        'references/liminal_veil/mosaic/scene_ljubljana_night.webm',
+        'references/liminal_veil/mosaic/scene_miniaturized_port.webm',
+        'references/liminal_veil/mosaic/scene_mumbai_marine_drive.webm',
+        'references/liminal_veil/mosaic/scene_train_liminka.webm',
+        'references/liminal_veil/mosaic/scene_nyc_timelapse.webm'
     ];
 
     const XFADE_TIME = 2.0;
