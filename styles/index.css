@@ -163,8 +163,8 @@ body, html {
 
 .letter.visible { opacity: 1; }
 
-/* Dynamic outline for dark scenes — driven by luminance sampler */
-[data-scene-dark="true"] .letter.visible {
+/* Border for dark scenes — permanently on for testing */
+.letter.visible {
   text-shadow:
     -1px -1px 0 rgba(200, 200, 200, 0.5),
      1px -1px 0 rgba(200, 200, 200, 0.5),
