@@ -46,3 +46,4 @@ ai/server/*.pid
 # Large zips and archives
 cherenkov_vercel_upload.zip
 archive/
+.wrangler/
