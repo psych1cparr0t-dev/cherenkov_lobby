@@ -1,0 +1,53 @@
+[
+  {
+    "scene_group": "Antarctica",
+    "segments": [
+      { "id": "scene_antarctica_1", "original_source": "https://upload.wikimedia.org/wikipedia/commons/a/a7/National_Geographic_Endurance_and_Northern_Ross_Sea%2C_Antarctica.webm", "r2_key": "mosaic/scene_antarctica_1.webm" },
+      { "id": "scene_antarctica_2", "original_source": "https://upload.wikimedia.org/wikipedia/commons/a/a7/National_Geographic_Endurance_and_Northern_Ross_Sea%2C_Antarctica.webm", "r2_key": "mosaic/scene_antarctica_2.webm" },
+      { "id": "scene_antarctica_3", "original_source": "https://upload.wikimedia.org/wikipedia/commons/a/a7/National_Geographic_Endurance_and_Northern_Ross_Sea%2C_Antarctica.webm", "r2_key": "mosaic/scene_antarctica_3.webm" }
+    ]
+  },
+  {
+    "scene_group": "Hong Kong Night",
+    "segments": [
+      { "id": "scene_hong_kong_night_1", "original_source": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Hong_Kong_Island_Night_Cityscape_2020.webm", "r2_key": "mosaic/scene_hong_kong_night_1.webm" },
+      { "id": "scene_hong_kong_night_2", "original_source": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Hong_Kong_Island_Night_Cityscape_2020.webm", "r2_key": "mosaic/scene_hong_kong_night_2.webm" },
+      { "id": "scene_hong_kong_night_3", "original_source": "https://upload.wikimedia.org/wikipedia/commons/8/8d/Hong_Kong_Island_Night_Cityscape_2020.webm", "r2_key": "mosaic/scene_hong_kong_night_3.webm" }
+    ]
+  },
+  {
+    "scene_group": "Landwasserviadukt",
+    "segments": [
+      { "id": "scene_landwasserviadukt_1", "original_source": "https://upload.wikimedia.org/wikipedia/commons/7/72/Landwasserviadukt%2C_aerial_video.webm", "r2_key": "mosaic/scene_landwasserviadukt_1.webm" },
+      { "id": "scene_landwasserviadukt_2", "original_source": "https://upload.wikimedia.org/wikipedia/commons/7/72/Landwasserviadukt%2C_aerial_video.webm", "r2_key": "mosaic/scene_landwasserviadukt_2.webm" }
+    ]
+  },
+  {
+    "scene_group": "Village Life",
+    "segments": [
+      { "id": "scene_village_life_1", "original_source": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Cinematic_village_life_in_Talesh.webm", "r2_key": "mosaic/scene_village_life_1.webm" },
+      { "id": "scene_village_life_2", "original_source": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Cinematic_village_life_in_Talesh.webm", "r2_key": "mosaic/scene_village_life_2.webm" }
+    ]
+  },
+  {
+    "scene_group": "Single Shots",
+    "segments": [
+      { "id": "scene_cable_car", "original_source": "https://upload.wikimedia.org/wikipedia/commons/6/66/Wellington_Cable_Car_2020-05-17.webm", "r2_key": "mosaic/scene_cable_car.webm" },
+      { "id": "scene_semaphore_tower", "original_source": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Bird%27s_eye_of_Semaphore_tower_at_Chhatna_at_Bankura_district_in_West_Bengal_04.webm", "r2_key": "mosaic/scene_semaphore_tower.webm" }
+    ]
+  },
+  {
+    "scene_group": "New Clips (Extended)",
+    "segments": [
+      { "id": "scene_nyc_1", "original_source": "https://upload.wikimedia.org/wikipedia/commons/9/9a/Time_Lapse_of_New_York_City.ogv", "r2_key": "mosaic/scene_nyc_1.webm" },
+      { "id": "scene_mumbai_1", "original_source": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Timelapse_at_Marine_Drive_Mumbai.webm", "r2_key": "mosaic/scene_mumbai_1.webm" },
+      { "id": "scene_snowy_1", "original_source": "https://upload.wikimedia.org/wikipedia/commons/0/05/Aerial_view_of_snowy_landscape.webm", "r2_key": "mosaic/scene_snowy_1.webm" },
+      { "id": "scene_bhopal_1", "original_source": "https://upload.wikimedia.org/wikipedia/commons/4/45/Night_landscape_of_Bhopal_city.webm", "r2_key": "mosaic/scene_bhopal_1.webm" },
+      { "id": "scene_mountain_fog_1", "original_source": "https://upload.wikimedia.org/wikipedia/commons/0/06/Fog_covering_mountain_time_lapse.webm", "r2_key": "mosaic/scene_mountain_fog_1.webm" },
+      { "id": "scene_mountain_fog_2", "original_source": "https://upload.wikimedia.org/wikipedia/commons/4/4d/Talkeetna_Mountain_fog_time_lapse.ogv", "r2_key": "mosaic/scene_mountain_fog_2.webm" },
+      { "id": "scene_ocean_waves_1", "original_source": "https://upload.wikimedia.org/wikipedia/commons/0/08/Ocean_surface_waves_06.ogv", "r2_key": "mosaic/scene_ocean_waves_1.webm" },
+      { "id": "scene_train_station_1", "original_source": "https://upload.wikimedia.org/wikipedia/commons/6/6a/Train_passing_liminka_station.webm", "r2_key": "mosaic/scene_train_station_1.webm" },
+      { "id": "scene_lightning_1", "original_source": "https://upload.wikimedia.org/wikipedia/commons/6/66/Lightning_storm_over_Colorado%2C_USA.ogg", "r2_key": "mosaic/scene_lightning_1.webm" }
+    ]
+  }
+]

@@ -4,30 +4,13 @@
  */
 (function () {
 
-    const SCENES = [
-        'references/liminal_veil/mosaic/scene_antarctica_1.webm',
-        'references/liminal_veil/mosaic/scene_antarctica_2.webm',
-        'references/liminal_veil/mosaic/scene_antarctica_3.webm',
-        'references/liminal_veil/mosaic/scene_cable_car.webm',
-        'references/liminal_veil/mosaic/scene_hong_kong_night_1.webm',
-        'references/liminal_veil/mosaic/scene_hong_kong_night_2.webm',
-        'references/liminal_veil/mosaic/scene_hong_kong_night_3.webm',
-        'references/liminal_veil/mosaic/scene_landwasserviadukt_1.webm',
-        'references/liminal_veil/mosaic/scene_landwasserviadukt_2.webm',
-        'references/liminal_veil/mosaic/scene_village_life_1.webm',
-        'references/liminal_veil/mosaic/scene_village_life_2.webm',
-        'references/liminal_veil/mosaic/scene_semaphore_tower.webm',
-        'references/liminal_veil/mosaic/scene_nyc_1.webm',
-        'references/liminal_veil/mosaic/scene_mumbai_1.webm',
-        'references/liminal_veil/mosaic/scene_snowy_1.webm',
-        'references/liminal_veil/mosaic/scene_bhopal_1.webm',
-        'references/liminal_veil/mosaic/scene_mountain_fog_1.webm',
-        'references/liminal_veil/mosaic/scene_mountain_fog_2.webm',
-        'references/liminal_veil/mosaic/scene_ocean_waves_1.webm',
-        'references/liminal_veil/mosaic/scene_train_station_1.webm',
-        'references/liminal_veil/mosaic/scene_lightning_1.webm'
-    ];
+    // Path to the metadata manifest (hosted on R2)
+    const MANIFEST_URL = 'https://pub-27dac5c9109f4094b9094b56fd08c2f6.r2.dev/mosaic_manifest.json';
+    
+    // Cloudflare R2 Config
+    const R2_DOMAIN = 'pub-27dac5c9109f4094b9094b56fd08c2f6.r2.dev'; 
 
+    let SCENES = [];
     const XFADE_TIME = 2.0;
 
     const vidA = document.getElementById('veil-video-a');
@@ -209,7 +192,31 @@
         }
     });
 
-    document.addEventListener('cherenkov:load-mosaic', () => {
+    document.addEventListener('cherenkov:load-mosaic', async () => {
+        try {
+            const resp = await fetch(MANIFEST_URL);
+            const data = await resp.json();
+            
+            // Flatten all groups into a single array of URLs
+            SCENES = [];
+            data.forEach(group => {
+                group.segments.forEach(seg => {
+                    if (R2_DOMAIN) {
+                        SCENES.push(`https://${R2_DOMAIN}/${seg.r2_key}`);
+                    } else {
+                        // Fallback to local path if no R2 domain is provided
+                        SCENES.push(`references/liminal_veil/${seg.r2_key}`);
+                    }
+                });
+            });
+
+            console.log(`[Veil] Loaded ${SCENES.length} scenes from manifest.`);
+        } catch (e) {
+            console.warn('[Veil] Failed to load manifest, using default fallback logic.');
+            // Basic fallback if fetch fails
+            SCENES = ['references/liminal_veil/mosaic/scene_antarctica_1.webm'];
+        }
+
         mosaicStarted = true;
         sceneOrder = [...SCENES];
         shuffle(sceneOrder);
