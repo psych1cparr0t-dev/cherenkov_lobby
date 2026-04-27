@@ -4,8 +4,8 @@
  */
 (function () {
 
-    // The primary atmospheric asset (using dev URL until DNS propagates)
-    const AMBIENT_VIDEO_URL = 'https://pub-27dac5c9109f4094b9094b56fd08c2f6.r2.dev/ambient_clouds_sea.webm';
+    // The primary atmospheric asset (hosted on Cloudflare R2)
+    const AMBIENT_VIDEO_URL = 'https://assets.cherenkov.industries/ambient_clouds_sea.webm';
     
     const vidA = document.getElementById('veil-video-a');
     const vidB = document.getElementById('veil-video-b'); // Kept for DOM structure compatibility
