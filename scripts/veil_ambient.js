@@ -5,7 +5,7 @@
 (function () {
 
     // The primary atmospheric asset (hosted on Cloudflare R2)
-    const AMBIENT_VIDEO_URL = 'https://assets.cherenkov.industries/ambient_clouds_sea.webm';
+    const AMBIENT_VIDEO_URL = 'https://assets.cherenkov.industries/kanchenjunga_delogo.mp4';
     
     const vidA = document.getElementById('veil-video-a');
     const vidB = document.getElementById('veil-video-b'); // Kept for DOM structure compatibility

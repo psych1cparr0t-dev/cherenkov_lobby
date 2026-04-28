@@ -60,13 +60,19 @@ body, html {
 
 .wordmark-sub.visible { opacity: 1; }
 
-/* Tier 3: Native Video Layer — maximum fidelity */
+/* Tier 3: Native Video Layer — framed and centered */
 .veil-video {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 800px;
+  height: auto;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
+  border-radius: 8px; /* Adds a nice frame effect */
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1);
   z-index: 3;
   opacity: 0;
   transition: opacity 2.0s ease-in-out;
