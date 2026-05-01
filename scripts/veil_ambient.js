@@ -4,8 +4,8 @@
  */
 (function () {
 
-    // The primary atmospheric asset (hosted on Cloudflare R2)
-    const AMBIENT_VIDEO_URL = 'https://assets.cherenkov.industries/kanchenjunga_delogo_smaller.mp4?v=2';
+    // The primary atmospheric asset (hosted locally for now)
+    const AMBIENT_VIDEO_URL = 'assets/kanchenjunga_perfect_loop.mp4';
     
     const vidA = document.getElementById('veil-video-a');
     const vidB = document.getElementById('veil-video-b'); // Kept for DOM structure compatibility
