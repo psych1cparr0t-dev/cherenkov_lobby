@@ -181,7 +181,7 @@ body, html {
   font-size: clamp(8px, 1vw, 11px);
   letter-spacing: 0.45em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-dim);
   opacity: 0;
   transition: opacity 1.2s ease;
   margin-top: 8px;
@@ -218,7 +218,7 @@ body, html {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.35em;
-  color: var(--text-dim);
+  color: #ffffff;
   text-decoration: none;
   opacity: 0;
   pointer-events: auto;
