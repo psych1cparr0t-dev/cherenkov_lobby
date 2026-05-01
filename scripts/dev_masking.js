@@ -1,7 +1,6 @@
 /**
  * Dev Tool: Polygon Masking
- * Allows clicking around the screen to draw a polygon.
- * Outputs the responsive CSS `clip-path: polygon(...)` using percentages.
+ * Allows clicking around the screen to draw multiple polygon layers.
  */
 (function() {
     window.addEventListener('load', () => {
@@ -18,9 +17,11 @@
         uiContainer.style.fontSize = '12px';
         uiContainer.style.border = '1px solid #0ff';
         uiContainer.style.boxShadow = '0 0 10px rgba(0,255,255,0.2)';
+        uiContainer.style.maxWidth = '300px';
 
         let isActive = false;
         let points = [];
+        let savedMasks = [];
         
         // Create SVG Layer for drawing
         const svgNS = "http://www.w3.org/2000/svg";
@@ -48,17 +49,21 @@
 
         uiContainer.innerHTML = `
             <div style="font-weight:bold; margin-bottom: 8px;">DEV MASKING TOOL</div>
-            <div style="margin-bottom: 8px; font-size: 10px; color: #888;">Outline a mountain ridge to generate a CSS clip-path mask.</div>
-            <button id="toggle-mask-btn" style="cursor: pointer; background:#000; color:#0ff; border:1px solid #0ff; padding: 4px 8px;">Start Drawing</button>
-            <button id="clear-mask-btn" style="cursor: pointer; background:#000; color:#0ff; border:1px solid #0ff; padding: 4px 8px;">Clear</button>
-            <button id="close-shape-btn" style="cursor: pointer; background:#000; color:#0ff; border:1px solid #0ff; padding: 4px 8px;">Close Shape</button>
-            <div id="mask-output" style="margin-top: 12px; width: 250px; word-wrap: break-word; font-size: 10px; color: #aaa; user-select: all;"></div>
+            <div style="margin-bottom: 8px; font-size: 10px; color: #888;">Outline a mountain ridge to generate a CSS clip-path mask. Click "Save Layer" to keep it and start drawing the next one.</div>
+            
+            <div style="display:flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
+                <button id="toggle-mask-btn" style="cursor: pointer; background:#000; color:#0ff; border:1px solid #0ff; padding: 4px 8px;">Start Drawing</button>
+                <button id="save-mask-btn" style="cursor: pointer; background:#000; color:#0f0; border:1px solid #0f0; padding: 4px 8px;">Save Layer</button>
+                <button id="clear-mask-btn" style="cursor: pointer; background:#000; color:#f00; border:1px solid #f00; padding: 4px 8px;">Clear Current</button>
+            </div>
+            
+            <div id="mask-output" style="margin-top: 12px; max-height: 300px; overflow-y: auto; word-wrap: break-word; font-size: 9px; color: #aaa; user-select: all;"></div>
         `;
         document.body.appendChild(uiContainer);
 
         const toggleBtn = document.getElementById('toggle-mask-btn');
+        const saveBtn = document.getElementById('save-mask-btn');
         const clearBtn = document.getElementById('clear-mask-btn');
-        const closeBtn = document.getElementById('close-shape-btn');
         const output = document.getElementById('mask-output');
 
         function updatePolygon() {
@@ -72,7 +77,13 @@
             const w = window.innerWidth;
             const h = window.innerHeight;
             const cssPts = points.map(p => `${((p.x/w)*100).toFixed(2)}% ${((p.y/h)*100).toFixed(2)}%`).join(', ');
-            output.innerHTML = `clip-path: polygon(${cssPts});`;
+            
+            // Re-render UI
+            let outHTML = savedMasks.map((m, i) => `<strong style="color:#0f0;">Layer ${i+1}</strong><br>${m}`).join('<br><br>');
+            if (points.length > 2) {
+                outHTML += `${savedMasks.length > 0 ? '<br><br>' : ''}<strong style="color:#0ff;">Current Layer</strong><br>clip-path: polygon(${cssPts});`;
+            }
+            output.innerHTML = outHTML;
         }
 
         toggleBtn.addEventListener('click', () => {
@@ -87,25 +98,38 @@
                 svgLayer.style.pointerEvents = 'none';
                 previewLine.setAttribute('stroke', 'transparent');
                 document.body.style.userSelect = 'auto';
-                console.log(`%c[DevMask] Generated Mask:\n${output.innerText}`, "color: #0ff;");
             }
+        });
+
+        saveBtn.addEventListener('click', () => {
+            if (points.length < 3) return;
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const cssPts = points.map(p => `${((p.x/w)*100).toFixed(2)}% ${((p.y/h)*100).toFixed(2)}%`).join(', ');
+            const clipPath = `clip-path: polygon(${cssPts});`;
+            
+            savedMasks.push(clipPath);
+            
+            // "Freeze" the visual on screen so user sees what they've already drawn
+            const frozenPolygon = document.createElementNS(svgNS, "polygon");
+            frozenPolygon.setAttribute('fill', 'rgba(0, 255, 0, 0.1)');
+            frozenPolygon.setAttribute('stroke', 'rgba(0, 255, 0, 0.5)');
+            frozenPolygon.setAttribute('stroke-width', '1');
+            frozenPolygon.setAttribute('points', polygon.getAttribute('points'));
+            svgLayer.insertBefore(frozenPolygon, polygon);
+            
+            // Reset for next drawing
+            points = [];
+            updatePolygon();
+            previewLine.setAttribute('stroke', 'transparent');
+            
+            console.log(`%c[DevMask] Saved Layer ${savedMasks.length}:\n${clipPath}`, "color: #0f0; font-weight: bold;");
         });
 
         clearBtn.addEventListener('click', () => {
             points = [];
             updatePolygon();
-            output.innerHTML = '';
             previewLine.setAttribute('stroke', 'transparent');
-        });
-        
-        closeBtn.addEventListener('click', () => {
-             if (points.length > 2) {
-                 isActive = false;
-                 toggleBtn.innerText = 'Start Drawing';
-                 svgLayer.style.pointerEvents = 'none';
-                 previewLine.setAttribute('stroke', 'transparent');
-                 console.log(`%c[DevMask] Generated Mask:\n${output.innerText}`, "color: #0ff;");
-             }
         });
 
         svgLayer.addEventListener('mousedown', (e) => {
