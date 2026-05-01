@@ -5,7 +5,7 @@
 (function () {
 
     // The primary atmospheric asset (hosted locally until uploaded to R2)
-    const AMBIENT_VIDEO_URL = 'assets/kanchenjunga_delogo_tight.mp4';
+    const AMBIENT_VIDEO_URL = 'assets/kanchenjunga_delogo_monolith.mp4';
     
     const vidA = document.getElementById('veil-video-a');
     const vidB = document.getElementById('veil-video-b'); // Kept for DOM structure compatibility
