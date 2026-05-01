@@ -29,7 +29,8 @@
             { scale: 0.25, y: 0.25, x: 0 },  // Layer 1 – foreground left
             { scale: 0.25, y: 0.25, x: 0 },  // Layer 2 – foreground right
             { scale: 0.18, y: 0.18, x: 0 },  // Layer 3 – far right
-            { scale: 0,    y: 0,    x: 0 }   // Wordmark Title (fixed, no parallax)
+            { scale: 0,    y: 0,    x: 0 },  // Wordmark Title (fixed, no parallax)
+            { scale: 0,    y: 0,    x: 0 }   // Contact Nav
         ];
 
         const baseVideo = document.getElementById('veil-video-a');
@@ -115,7 +116,9 @@
         });
 
         const wordmark = document.querySelector('.wordmark-container');
+        const topNav = document.querySelector('.top-nav');
         const wordmarkRateIndex = masks.length; // index after all video layers
+        const navRateIndex = masks.length + 1;
 
         let isTicking = false;
 
@@ -141,6 +144,14 @@
                 const wy = scrollPercent * wRate.y * 100;
                 const wx = scrollPercent * wRate.x * 100;
                 wordmark.style.transform = `translate(calc(-50% + ${wx}px), ${wy}px) scale(${ws})`;
+            }
+
+            const nRate = window.PARALLAX_RATES[navRateIndex];
+            if (topNav && nRate) {
+                const ns = 1 + scrollPercent * nRate.scale;
+                const ny = scrollPercent * nRate.y * 100;
+                const nx = scrollPercent * nRate.x * 100;
+                topNav.style.transform = `translate(${nx}px, ${ny}px) scale(${ns})`;
             }
 
             isTicking = false;
