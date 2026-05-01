@@ -59,6 +59,7 @@
                     <button id="toggle-mask-btn" style="cursor: pointer; background:#000; color:#0ff; border:1px solid #0ff; padding: 4px 8px;">Start Drawing</button>
                     <button id="save-mask-btn" style="cursor: pointer; background:#000; color:#0f0; border:1px solid #0f0; padding: 4px 8px;">Save Layer</button>
                     <button id="clear-mask-btn" style="cursor: pointer; background:#000; color:#f00; border:1px solid #f00; padding: 4px 8px;">Clear Current</button>
+                    <button id="clear-all-btn" style="cursor: pointer; background:#f00; color:#fff; border:1px solid #f00; padding: 4px 8px;">Clear All</button>
                 </div>
                 
                 <div id="mask-output" style="margin-top: 12px; max-height: 300px; overflow-y: auto; word-wrap: break-word; font-size: 9px; color: #aaa; user-select: all;"></div>
@@ -84,6 +85,7 @@
         const toggleBtn = document.getElementById('toggle-mask-btn');
         const saveBtn = document.getElementById('save-mask-btn');
         const clearBtn = document.getElementById('clear-mask-btn');
+        const clearAllBtn = document.getElementById('clear-all-btn');
         const output = document.getElementById('mask-output');
 
         function updatePolygon() {
@@ -132,6 +134,7 @@
             
             // "Freeze" the visual on screen so user sees what they've already drawn
             const frozenPolygon = document.createElementNS(svgNS, "polygon");
+            frozenPolygon.setAttribute('class', 'frozen-polygon');
             frozenPolygon.setAttribute('fill', 'rgba(0, 255, 0, 0.1)');
             frozenPolygon.setAttribute('stroke', 'rgba(0, 255, 0, 0.5)');
             frozenPolygon.setAttribute('stroke-width', '1');
@@ -148,6 +151,18 @@
 
         clearBtn.addEventListener('click', () => {
             points = [];
+            updatePolygon();
+            previewLine.setAttribute('stroke', 'transparent');
+        });
+
+        clearAllBtn.addEventListener('click', () => {
+            savedMasks = [];
+            points = [];
+            
+            // Remove all frozen polygons
+            const frozenPolygons = svgLayer.querySelectorAll('.frozen-polygon');
+            frozenPolygons.forEach(p => p.remove());
+            
             updatePolygon();
             previewLine.setAttribute('stroke', 'transparent');
         });
