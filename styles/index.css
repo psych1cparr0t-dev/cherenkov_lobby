@@ -183,7 +183,6 @@ body, html {
   text-transform: uppercase;
   color: var(--text-dim);
   opacity: 0;
-  transition: opacity 1.2s ease;
   margin-top: 8px;
 }
 
@@ -223,9 +222,7 @@ body, html {
   opacity: 0;
   pointer-events: auto;
   transition: opacity var(--t-nav-reveal) ease, 
-              transform var(--t-nav-reveal) ease, 
-              color 0.4s ease,
-              letter-spacing 0.4s ease;
+              transform var(--t-nav-reveal) ease;
   transform: translateY(-5px);
 }
 
@@ -233,7 +230,6 @@ body, html {
 .nav-link:hover { 
   color: #ffffff; 
   text-shadow: 0 0 10px rgba(255,255,255,0.4); 
-  letter-spacing: 0.45em;
 }
 
 .logo-mark {
