@@ -16,14 +16,12 @@
             "polygon(0.35% 98.52%, 0.35% 83.85%, 1.48% 81.46%, 2.79% 81.34%, 3.58% 82.59%, 4.02% 84.19%, 4.72% 83.05%, 5.41% 81.23%, 5.94% 79.29%, 6.90% 78.04%, 7.86% 77.82%, 9.08% 77.70%, 10.74% 77.93%, 12.58% 77.82%, 13.45% 78.84%, 13.71% 78.95%, 14.76% 79.18%, 16.16% 77.82%, 17.55% 76.22%, 18.17% 76.00%, 19.39% 75.77%, 20.44% 77.25%, 21.48% 76.11%, 23.14% 75.20%, 24.02% 74.63%, 25.33% 76.00%, 26.46% 76.34%, 27.86% 75.43%, 29.08% 76.68%, 29.78% 75.88%, 30.74% 77.25%, 32.23% 78.84%, 33.10% 79.86%, 34.59% 80.66%, 35.46% 81.91%, 35.98% 82.37%, 36.59% 81.57%, 38.17% 82.48%, 37.90% 83.85%, 39.56% 85.21%, 40.96% 86.58%, 41.83% 87.83%, 42.97% 89.53%, 44.19% 91.24%, 44.72% 91.58%, 45.41% 88.96%, 46.11% 88.05%, 46.90% 88.74%, 47.95% 87.49%, 48.56% 87.71%, 49.61% 88.51%, 50.74% 88.05%, 51.79% 88.51%, 52.58% 88.74%, 54.06% 87.03%, 54.76% 86.46%, 55.63% 86.12%, 56.42% 85.21%, 57.73% 83.85%, 58.34% 82.37%, 60.70% 81.80%, 61.40% 80.20%, 62.53% 79.29%, 63.67% 80.55%, 64.89% 80.32%, 64.98% 81.46%, 65.76% 80.89%, 66.81% 80.09%, 68.30% 80.09%, 69.08% 81.11%, 70.04% 81.46%, 70.66% 81.34%, 71.44% 81.23%, 72.23% 80.55%, 73.36% 81.34%, 74.15% 79.86%, 75.20% 81.00%, 75.90% 81.80%, 77.38% 81.57%, 78.17% 82.48%, 77.90% 82.71%, 78.95% 82.48%, 79.21% 83.50%, 79.65% 84.53%, 81.05% 84.41%, 82.01% 84.53%, 82.97% 83.50%, 83.49% 83.39%, 84.10% 84.53%, 83.93% 85.55%, 85.15% 85.78%, 86.03% 85.78%, 86.11% 84.76%, 86.90% 85.67%, 87.77% 86.35%, 88.12% 87.26%, 89.17% 88.05%, 91.44% 89.53%, 93.10% 89.19%, 92.75% 90.44%, 93.89% 91.13%, 96.16% 92.49%, 96.59% 93.52%, 97.12% 94.54%, 97.38% 95.79%, 99.13% 95.34%, 98.52% 99.09%, 100% 100%, 0% 100%)"
         ];
 
-        // The parallax rates for each layer (how much they scale/translate on scroll)
-        // Layer 0 = background, slowest
-        // Layer 3 = foreground, fastest
-        const parallaxRates = [
-            { scale: 0.05, y: 0.05 },  // Base Layer (sky/far mountains)
-            { scale: 0.1, y: 0.1 },    // Layer 3
-            { scale: 0.2, y: 0.2 },    // Layer 2
-            { scale: 0.4, y: 0.4 }     // Layer 1 (closest)
+        // Make the rates globally accessible so a dev tool can tweak them in real-time
+        window.PARALLAX_RATES = [
+            { scale: 0.05, y: 0.05, x: 0 },  // Base Layer (sky/far mountains)
+            { scale: 0.1, y: 0.1, x: 0 },    // Layer 3
+            { scale: 0.2, y: 0.2, x: 0 },    // Layer 2
+            { scale: 0.4, y: 0.4, x: 0 }     // Layer 1 (closest)
         ];
 
         const baseVideo = document.getElementById('veil-video-a');
@@ -147,11 +145,12 @@
             
             // Scale and translate the layers based on their configured rates
             layerElements.forEach((el, index) => {
-                const rate = parallaxRates[index];
+                const rate = window.PARALLAX_RATES[index];
                 const scale = 1 + (scrollPercent * rate.scale);
-                const translateY = scrollPercent * rate.y * 100; // push down slightly as it scales
+                const translateY = scrollPercent * rate.y * 100; // vertical movement
+                const translateX = scrollPercent * rate.x * 100; // horizontal movement
                 
-                el.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+                el.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
                 el.style.transformOrigin = 'bottom center'; // scale from bottom
             });
 
