@@ -139,7 +139,7 @@ body, html {
    ===================================================== */
 
 .wordmark-container {
-  position: absolute;
+  position: fixed;
   bottom: calc(18% + 12px);
   left: 50%;
   transform: translateX(-50%);
@@ -193,7 +193,7 @@ body, html {
    ===================================================== */
 
 .top-nav {
-  position: absolute;
+  position: fixed;
   top: 40px; left: 40px; right: 40px;
   display: flex;
   justify-content: space-between;

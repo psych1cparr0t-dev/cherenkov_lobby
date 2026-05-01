@@ -29,7 +29,7 @@
             { scale: 0.25, y: 0.25, x: 0 },  // Layer 1 – foreground left
             { scale: 0.25, y: 0.25, x: 0 },  // Layer 2 – foreground right
             { scale: 0.18, y: 0.18, x: 0 },  // Layer 3 – far right
-            { scale: 0,    y: 0.3,  x: 0 }   // Wordmark Title
+            { scale: 0,    y: 0,    x: 0 }   // Wordmark Title (fixed, no parallax)
         ];
 
         const baseVideo = document.getElementById('veil-video-a');
