@@ -45,7 +45,7 @@
         parallaxContainer.style.width = '100vw';
         parallaxContainer.style.height = '100vh';
         parallaxContainer.style.overflow = 'hidden';
-        parallaxContainer.style.zIndex = '-1';
+        parallaxContainer.style.zIndex = '3'; // Keep it above the white fade-overlay (z-index: 2)
         
         // Move base video into the container
         baseVideo.parentNode.insertBefore(parallaxContainer, baseVideo);
