@@ -45,6 +45,8 @@ window.Cherenkov = (function() {
                 // 3. Wait, then show Inc
                 setTimeout(() => {
                     setState(STATE.INC_VISIBLE);
+                    const sub = document.getElementById('wordmark-sub');
+                    if (sub) sub.classList.add('visible');
                     
                     // 4. Wait, then drop down Nav
                     setTimeout(() => {
