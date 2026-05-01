@@ -62,10 +62,23 @@
         baseVideo.style.height = '100vh';
         baseVideo.style.objectFit = 'cover';
 
-        // HQ architectural concept (behind blur)
+        // HQ architectural concept (behind blur) — silhouette of a massive structure
         const hqEl = document.createElement('div');
         hqEl.id = 'hq-concept';
-        hqEl.style.cssText = 'position:absolute;top:40%;left:50%;transform:translate(-50%,-50%);width:200px;height:350px;background:linear-gradient(180deg,rgba(255,255,255,0.8) 0%,rgba(200,200,200,0.1) 100%);box-shadow:0 0 50px rgba(255,255,255,0.4);border-radius:2px;clip-path:polygon(20% 0%,80% 0%,100% 100%,0% 100%);z-index:1;';
+        hqEl.style.position = 'absolute';
+        hqEl.style.bottom = '0';
+        hqEl.style.left = '50%';
+        hqEl.style.transform = 'translateX(-50%)';
+        hqEl.style.width = '420px';
+        hqEl.style.height = '110vh';
+        hqEl.style.backgroundImage = 'url(/assets/hq_silhouette.png)';
+        hqEl.style.backgroundSize = 'contain';
+        hqEl.style.backgroundRepeat = 'no-repeat';
+        hqEl.style.backgroundPosition = 'bottom center';
+        hqEl.style.opacity = '0.55';
+        hqEl.style.mixBlendMode = 'multiply';
+        hqEl.style.zIndex = '1';
+        hqEl.style.pointerEvents = 'none';
         parallaxContainer.appendChild(hqEl);
 
         // Glass blur monolith
