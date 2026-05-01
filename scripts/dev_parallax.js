@@ -56,7 +56,7 @@
             if (!window.PARALLAX_RATES) return;
             inputsContainer.innerHTML = '';
             
-            const labels = ["Base Layer (0)", "Layer 3 (Far)", "Layer 2 (Mid)", "Layer 1 (Close)", "Wordmark Title"];
+            const labels = ["Base (Sky)", "Layer 4 (Left Mid)", "Current (Left-Centre)", "Layer 5 (Gap Fill)", "Layer 1 (FG Left)", "Layer 2 (FG Right)", "Layer 3 (Far Right)", "Wordmark Title"];
             
             window.PARALLAX_RATES.forEach((rate, index) => {
                 const row = document.createElement('div');
