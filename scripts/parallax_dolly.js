@@ -31,7 +31,9 @@
         // We will insert our new video layers right after the base video.
         const parent = baseVideo.parentElement;
         
-        // Ensure parent can scroll
+        // Ensure parent and html can scroll
+        document.documentElement.style.height = '300vh';
+        document.documentElement.style.overflowY = 'auto';
         document.body.style.height = '300vh'; // Make page scrollable
         document.body.style.overflowY = 'auto'; // allow scrolling
         
