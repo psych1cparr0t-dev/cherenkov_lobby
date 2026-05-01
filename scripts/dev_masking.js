@@ -141,6 +141,19 @@
             frozenPolygon.setAttribute('points', polygon.getAttribute('points'));
             svgLayer.insertBefore(frozenPolygon, polygon);
             
+            // Auto-apply to the live parallax DOM so the user can test scroll!
+            // Assuming the user draws foreground (Layer 1) -> midground -> background
+            // veil-video-layer-3 is foreground, veil-video-layer-1 is background
+            const domLayerIndex = 4 - savedMasks.length; 
+            if (domLayerIndex >= 1 && domLayerIndex <= 3) {
+                const liveVideoLayer = document.getElementById(`veil-video-layer-${domLayerIndex}`);
+                if (liveVideoLayer) {
+                    liveVideoLayer.style.clipPath = `polygon(${cssPts})`;
+                    liveVideoLayer.style.webkitClipPath = `polygon(${cssPts})`;
+                    console.log(`%c[DevMask] Auto-applied to veil-video-layer-${domLayerIndex}!`, "color: #ff0; font-weight: bold;");
+                }
+            }
+            
             // Reset for next drawing
             points = [];
             updatePolygon();
