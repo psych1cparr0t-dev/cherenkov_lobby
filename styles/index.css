@@ -24,10 +24,9 @@
 }
 
 body, html {
-  height: 100dvh;
   font-family: 'Orbitron', 'Arial', sans-serif;
-  overflow: hidden;
   background-color: var(--bg-primary);
+  /* height and overflow are controlled by parallax_dolly.js */
 }
 
 /* =====================================================
@@ -45,9 +44,9 @@ body, html {
 
 /* Tier 2: White cover — fades in, stays opaque permanently */
 #fade-overlay {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: 10; /* Must be above the parallax container (z-index 3) */
   background: var(--bg-primary);
   opacity: 0;
   pointer-events: none;
@@ -140,7 +139,7 @@ body, html {
 
 .wordmark-container {
   position: fixed;
-  bottom: 19.37%;
+  bottom: 10%;
   left: 50%;
   transform: translateX(-50%) scale(1.00);
   z-index: 100;
