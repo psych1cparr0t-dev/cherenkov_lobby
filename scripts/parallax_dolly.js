@@ -21,7 +21,8 @@
             { scale: 0.05, y: 0.05, x: 0 },  // Base Layer (sky/far mountains)
             { scale: 0.1, y: 0.1, x: 0 },    // Layer 3
             { scale: 0.2, y: 0.2, x: 0 },    // Layer 2
-            { scale: 0.4, y: 0.4, x: 0 }     // Layer 1 (closest)
+            { scale: 0.4, y: 0.4, x: 0 },    // Layer 1 (closest)
+            { scale: 0, y: 0.3, x: 0 }       // Wordmark Title
         ];
 
         const baseVideo = document.getElementById('veil-video-a');
@@ -138,7 +139,10 @@
             }, 100);
         });
 
-        // --- THE SCROLL PARALLAX LOGIC ---
+        const hqLayer = document.getElementById('hq-concept');
+        const blurLayer = document.getElementById('glass-monolith');
+        const wordmark = document.querySelector('.wordmark-container');
+
         let lastScrollY = window.scrollY;
         let isTicking = false;
 
@@ -157,8 +161,18 @@
             });
 
             // Parallax the HQ and Glass Monolith too
-            hqLayer.style.transform = `translate(-50%, calc(-50% + ${scrollPercent * 150}px)) scale(${1 + (scrollPercent * 0.1)})`;
-            blurLayer.style.transform = `translate(-50%, calc(-50% + ${scrollPercent * 100}px)) scale(${1 + (scrollPercent * 0.05)})`;
+            if (hqLayer) hqLayer.style.transform = `translate(-50%, calc(-50% + ${scrollPercent * 150}px)) scale(${1 + (scrollPercent * 0.1)})`;
+            if (blurLayer) blurLayer.style.transform = `translate(-50%, calc(-50% + ${scrollPercent * 100}px)) scale(${1 + (scrollPercent * 0.05)})`;
+            
+            // Parallax the Wordmark Title
+            if (wordmark && window.PARALLAX_RATES[4]) {
+                const wRate = window.PARALLAX_RATES[4];
+                const wScale = 1 + (scrollPercent * wRate.scale);
+                const wTranslateY = scrollPercent * wRate.y * 100;
+                const wTranslateX = scrollPercent * wRate.x * 100;
+                // Preserve the -50% translateX centering from CSS
+                wordmark.style.transform = `translate(calc(-50% + ${wTranslateX}px), ${wTranslateY}px) scale(${wScale})`;
+            }
             
             isTicking = false;
         }
