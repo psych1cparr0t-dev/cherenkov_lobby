@@ -6,18 +6,18 @@ window.Cherenkov = (function() {
     
     // TIMING SOURCE OF TRUTH (Seconds)
     const TIMING = {
-        TITLE_DELAY: 0.500,    // Initial delay before letters start showing
-        INC_DELAY: 1.000,      // Delay before Inc appears after title
-        NAV_DELAY: 1.000,      // Delay before Nav drops down after Inc
-        AMBIENT_DELAY: 1.000   // Delay before video fades in
+        AMBIENT_DELAY: 0.100,  // Start video immediately
+        TITLE_DELAY: 1.500,    // Delay before "CHERENKOV" fades in over video
+        INC_DELAY: 1.000,      // Delay before "Inc." appears after title
+        NAV_DELAY: 1.000       // Delay before Contact button drops down
     };
 
     const STATE = {
         HIDDEN: 'hidden',
+        ACTIVE: 'active',      // Video playing
         TITLE_VISIBLE: 'title_visible',
         INC_VISIBLE: 'inc_visible',
-        NAV_VISIBLE: 'nav_visible',
-        ACTIVE: 'active' // Video playing
+        NAV_VISIBLE: 'nav_visible'
     };
 
     let currentState = STATE.HIDDEN;
@@ -30,42 +30,35 @@ window.Cherenkov = (function() {
     }
 
     function startSequence() {
-        // 1. Initial wait, then show title
+        // 1. Immediately start Ambient Video
         setTimeout(() => {
-            setState(STATE.TITLE_VISIBLE);
-            const letters = document.querySelectorAll('.letter');
-            letters.forEach(l => l.classList.add('visible'));
-
-            // 2. Wait, then show Inc
+            setState(STATE.ACTIVE);
+            document.dispatchEvent(new CustomEvent('cherenkov:load-mosaic'));
+            document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
+            
+            // 2. Wait, then show CHERENKOV title
             setTimeout(() => {
-                setState(STATE.INC_VISIBLE);
-                
-                // 3. Wait, then drop down Nav
+                setState(STATE.TITLE_VISIBLE);
+                const letters = document.querySelectorAll('.letter');
+                letters.forEach(l => l.classList.add('visible'));
+
+                // 3. Wait, then show Inc
                 setTimeout(() => {
-                    setState(STATE.NAV_VISIBLE);
-                    document.querySelectorAll('.nav-link').forEach(link => {
-                        link.classList.add('revealed');
-                    });
+                    setState(STATE.INC_VISIBLE);
                     
-                    // 4. Wait, then start Video/Ambient
+                    // 4. Wait, then drop down Nav
                     setTimeout(() => {
-                        setState(STATE.ACTIVE);
-                        document.dispatchEvent(new CustomEvent('cherenkov:load-mosaic'));
-                        document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
-                        
-                        // Clean up fade overlay if it still exists
-                        setTimeout(() => {
-                            const overlay = document.getElementById('fade-overlay');
-                            if (overlay) overlay.remove();
-                        }, 1000);
+                        setState(STATE.NAV_VISIBLE);
+                        document.querySelectorAll('.nav-link').forEach(link => {
+                            link.classList.add('revealed');
+                        });
+                    }, TIMING.NAV_DELAY * 1000);
 
-                    }, TIMING.AMBIENT_DELAY * 1000);
+                }, TIMING.INC_DELAY * 1000);
 
-                }, TIMING.NAV_DELAY * 1000);
+            }, TIMING.TITLE_DELAY * 1000);
 
-            }, TIMING.INC_DELAY * 1000);
-
-        }, TIMING.TITLE_DELAY * 1000);
+        }, TIMING.AMBIENT_DELAY * 1000);
     }
 
     // Automatically start on load
