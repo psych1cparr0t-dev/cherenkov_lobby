@@ -6,18 +6,18 @@ window.Cherenkov = (function() {
     
     // TIMING SOURCE OF TRUTH (Seconds)
     const TIMING = {
-        INC_REVEAL: 1.200,    // Subtitle fade-in
-        INC_BREATH: 1.800,    // Pause — lets Inc. fully render before veil transition
-
-        VEIL_FADE: 4.000,     // White overlay ramp-up
-        MOSAIC_START_OFFSET: 0,     // Load video immediately (buffers during veil fade)
+        TITLE_DELAY: 0.500,    // Initial delay before letters start showing
+        INC_DELAY: 1.000,      // Delay before Inc appears after title
+        NAV_DELAY: 1.000,      // Delay before Nav drops down after Inc
+        AMBIENT_DELAY: 1.000   // Delay before video fades in
     };
 
     const STATE = {
         HIDDEN: 'hidden',
+        TITLE_VISIBLE: 'title_visible',
         INC_VISIBLE: 'inc_visible',
-        VEIL_TRANSITIONING: 'veil_transitioning', // Background going white
-        ACTIVE: 'active'        // Mosaic running, wordmark gone
+        NAV_VISIBLE: 'nav_visible',
+        ACTIVE: 'active' // Video playing
     };
 
     let currentState = STATE.HIDDEN;
@@ -30,53 +30,47 @@ window.Cherenkov = (function() {
     }
 
     function startSequence() {
-        // Automatically reveal wordmark and start transition
-        const letters = document.querySelectorAll('.letter');
-        letters.forEach(l => l.classList.add('visible'));
-
-        // 2. Inc Reveal
+        // 1. Initial wait, then show title
         setTimeout(() => {
-            setState(STATE.INC_VISIBLE);
-            
-            // 3. Veil Transition
+            setState(STATE.TITLE_VISIBLE);
+            const letters = document.querySelectorAll('.letter');
+            letters.forEach(l => l.classList.add('visible'));
+
+            // 2. Wait, then show Inc
             setTimeout(() => {
-                setState(STATE.VEIL_TRANSITIONING);
+                setState(STATE.INC_VISIBLE);
                 
-                // 4. Start Mosaic backdrop loading early
+                // 3. Wait, then drop down Nav
                 setTimeout(() => {
-                   document.dispatchEvent(new CustomEvent('cherenkov:load-mosaic'));
-                }, TIMING.MOSAIC_START_OFFSET * 1000);
-
-                // 5. Final State: Mosaic takes over
-                setTimeout(() => {
-                    setState(STATE.ACTIVE);
-                    document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
-
-                    // Reveal nav links with a slight delay
+                    setState(STATE.NAV_VISIBLE);
+                    document.querySelectorAll('.nav-link').forEach(link => {
+                        link.classList.add('revealed');
+                    });
+                    
+                    // 4. Wait, then start Video/Ambient
                     setTimeout(() => {
-                        document.querySelectorAll('.nav-link').forEach(link => {
-                            link.classList.add('revealed');
-                        });
-                    }, 500);
+                        setState(STATE.ACTIVE);
+                        document.dispatchEvent(new CustomEvent('cherenkov:load-mosaic'));
+                        document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
+                        
+                        // Clean up fade overlay if it still exists
+                        setTimeout(() => {
+                            const overlay = document.getElementById('fade-overlay');
+                            if (overlay) overlay.remove();
+                        }, 1000);
 
-                    // Remove background layers from DOM — no more bleed possible
-                    setTimeout(() => {
-                        document.querySelectorAll('.background-pattern')
-                            .forEach(el => el.remove());
-                        const overlay = document.getElementById('fade-overlay');
-                        if (overlay) overlay.remove();
-                    }, 3000); // after canvas fade-in completes
+                    }, TIMING.AMBIENT_DELAY * 1000);
 
-                }, TIMING.VEIL_FADE * 1000);
+                }, TIMING.NAV_DELAY * 1000);
 
-            }, TIMING.INC_BREATH * 1000);
+            }, TIMING.INC_DELAY * 1000);
 
-        }, TIMING.BLUE_PULSE * 1000);
+        }, TIMING.TITLE_DELAY * 1000);
     }
 
     // Automatically start on load
     window.addEventListener('load', () => {
-        setTimeout(startSequence, 500);
+        startSequence();
     });
 
     return {
