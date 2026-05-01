@@ -93,40 +93,50 @@
         // Array to hold all video elements to scale them on scroll
         const layerElements = [baseVideo]; // Index 0 is base
 
-        // 3. Create duplicate video elements for the foreground masks
-        // We loop 1 to 3 to create the layers above the HQ/Blur
-        for (let i = 1; i <= 3; i++) {
-            const clone = baseVideo.cloneNode(true);
-            clone.id = `veil-video-layer-${i}`;
-            clone.style.position = 'absolute';
-            clone.style.top = '0';
-            clone.style.left = '0';
-            clone.style.width = '100vw';
-            clone.style.height = '100vh';
-            clone.style.objectFit = 'cover';
-            clone.style.pointerEvents = 'none'; // pass clicks through
-            clone.style.zIndex = (i + 2).toString(); // above blur
-            
-            // Apply the user's mask!
-            if (masks[i]) {
-                clone.style.clipPath = masks[i];
-                clone.style.webkitClipPath = masks[i];
-            }
+        document.addEventListener('cherenkov:load-mosaic', () => {
+            // Wait a tick for veil_ambient to set the baseVideo.src
+            setTimeout(() => {
+                // 3. Create duplicate video elements for the foreground masks
+                for (let i = 1; i <= 3; i++) {
+                    const clone = baseVideo.cloneNode(true);
+                    clone.id = `veil-video-layer-${i}`;
+                    clone.style.position = 'absolute';
+                    clone.style.top = '0';
+                    clone.style.left = '0';
+                    clone.style.width = '100vw';
+                    clone.style.height = '100vh';
+                    clone.style.objectFit = 'cover';
+                    clone.style.pointerEvents = 'none'; // pass clicks through
+                    clone.style.zIndex = (i + 2).toString(); // above blur
+                    
+                    // The src might not be copied if it was just set dynamically, so force it
+                    clone.src = baseVideo.src;
+                    
+                    // Apply the user's mask!
+                    if (masks[i]) {
+                        clone.style.clipPath = masks[i];
+                        clone.style.webkitClipPath = masks[i];
+                    }
 
-            parallaxContainer.appendChild(clone);
-            layerElements.push(clone);
+                    parallaxContainer.appendChild(clone);
+                    layerElements.push(clone);
 
-            // Sync playback with base video
-            baseVideo.addEventListener('play', () => clone.play());
-            baseVideo.addEventListener('pause', () => clone.pause());
-            baseVideo.addEventListener('seeked', () => clone.currentTime = baseVideo.currentTime);
-            // Continual sync check (since multiple videos can drift)
-            setInterval(() => {
-                if (Math.abs(clone.currentTime - baseVideo.currentTime) > 0.1) {
-                    clone.currentTime = baseVideo.currentTime;
+                    // Sync playback with base video
+                    baseVideo.addEventListener('play', () => clone.play());
+                    baseVideo.addEventListener('pause', () => clone.pause());
+                    baseVideo.addEventListener('seeked', () => clone.currentTime = baseVideo.currentTime);
+                    
+                    // If base is already playing, play clone
+                    if (!baseVideo.paused) clone.play();
+
+                    setInterval(() => {
+                        if (Math.abs(clone.currentTime - baseVideo.currentTime) > 0.1) {
+                            clone.currentTime = baseVideo.currentTime;
+                        }
+                    }, 1000);
                 }
-            }, 1000);
-        }
+            }, 100);
+        });
 
         // --- THE SCROLL PARALLAX LOGIC ---
         let lastScrollY = window.scrollY;
