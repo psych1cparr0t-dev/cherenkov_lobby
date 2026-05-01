@@ -14,18 +14,22 @@
         let startX, startScale;
         let currentScale = 1;
 
+        // Make the container hug the text to act as a proper bounding box
+        container.style.width = 'max-content';
+        container.style.border = '1px dashed rgba(0, 255, 0, 0.5)';
+
         // Make the container obviously draggable
         container.style.cursor = 'grab';
         container.style.userSelect = 'none';
 
-        // Add a visual resize handle to the bottom right
+        // Add a visual resize handle to the bottom right of the bounding box
         const handle = document.createElement('div');
         handle.style.position = 'absolute';
-        handle.style.bottom = '-10px'; 
-        handle.style.right = '-20px'; 
+        handle.style.bottom = '-12px'; 
+        handle.style.right = '-12px'; 
         handle.style.width = '24px';
         handle.style.height = '24px';
-        handle.style.backgroundColor = 'rgba(0, 255, 0, 0.4)';
+        handle.style.backgroundColor = 'rgba(0, 255, 0, 0.6)';
         handle.style.border = '2px solid #0f0';
         handle.style.cursor = 'nwse-resize';
         handle.style.borderRadius = '50%';
