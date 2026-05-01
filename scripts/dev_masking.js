@@ -8,7 +8,7 @@
         // Create UI Container
         const uiContainer = document.createElement('div');
         uiContainer.style.position = 'fixed';
-        uiContainer.style.bottom = '20px';
+        uiContainer.style.top = '20px';
         uiContainer.style.right = '20px';
         uiContainer.style.background = 'rgba(0,0,0,0.85)';
         uiContainer.style.color = '#0ff';
