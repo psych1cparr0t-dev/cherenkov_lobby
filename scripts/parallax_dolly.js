@@ -22,15 +22,15 @@
 
         // Rates: one per mask entry (index 0 = base, 1-6 = layers, 7 = wordmark)
         window.PARALLAX_RATES = [
-            { scale: 0.02, y: 0.02, x: 0 },  // Base (sky)
-            { scale: 0.06, y: 0.06, x: 0 },  // Layer 4 – left mid-ground
-            { scale: 0.08, y: 0.08, x: 0 },  // Current – left-centre mid
-            { scale: 0.12, y: 0.12, x: 0 },  // Layer 5 – centre gap fill
-            { scale: 0.25, y: 0.25, x: 0 },  // Layer 1 – foreground left
-            { scale: 0.25, y: 0.25, x: 0 },  // Layer 2 – foreground right
-            { scale: 0.18, y: 0.18, x: 0 },  // Layer 3 – far right
-            { scale: 0,    y: 0,    x: 0 },  // Wordmark Title (fixed, no parallax)
-            { scale: 0,    y: 0,    x: 0 }   // Contact Nav
+            { scale: 0.02, y: 0, x: 0 },  // Base (sky)
+            { scale: 0.06, y: 0, x: 0 },  // Layer 4 – left mid-ground
+            { scale: 0.08, y: 0, x: 0 },  // Current – left-centre mid
+            { scale: 0.12, y: 0, x: 0 },  // Layer 5 – centre gap fill
+            { scale: 0.25, y: 0, x: 0 },  // Layer 1 – foreground left
+            { scale: 0.25, y: 0, x: 0 },  // Layer 2 – foreground right
+            { scale: 0.18, y: 0, x: 0 },  // Layer 3 – far right
+            { scale: 0,    y: 0, x: 0 },  // Wordmark Title
+            { scale: 0,    y: 0, x: 0 }   // Contact Nav
         ];
 
         const baseVideo = document.getElementById('veil-video-a');
@@ -62,29 +62,7 @@
         baseVideo.style.height = '100vh';
         baseVideo.style.objectFit = 'cover';
 
-        // HQ architectural concept (behind blur) — silhouette of a massive structure
-        const hqEl = document.createElement('div');
-        hqEl.id = 'hq-concept';
-        hqEl.style.position = 'absolute';
-        hqEl.style.bottom = '0';
-        hqEl.style.left = '50%';
-        hqEl.style.transform = 'translateX(-50%)';
-        hqEl.style.width = '420px';
-        hqEl.style.height = '110vh';
-        hqEl.style.backgroundImage = 'url(/assets/hq_silhouette.png)';
-        hqEl.style.backgroundSize = 'contain';
-        hqEl.style.backgroundRepeat = 'no-repeat';
-        hqEl.style.backgroundPosition = 'bottom center';
-        hqEl.style.opacity = '0.45';
-        hqEl.style.zIndex = '1';
-        hqEl.style.pointerEvents = 'none';
-        parallaxContainer.appendChild(hqEl);
-
-        // Glass blur monolith
-        const blurEl = document.createElement('div');
-        blurEl.id = 'glass-monolith';
-        blurEl.style.cssText = 'position:absolute;top:30%;left:50%;transform:translate(-50%,-50%);width:300px;height:500px;backdrop-filter:blur(15px) contrast(1.1) brightness(1.2);-webkit-backdrop-filter:blur(15px) contrast(1.1) brightness(1.2);border-radius:4px;z-index:2;';
-        parallaxContainer.appendChild(blurEl);
+        // (Tower and glass monolith removed — reserved for future reveal)
 
         // Array: index 0 = base video
         const layerElements = [baseVideo];
