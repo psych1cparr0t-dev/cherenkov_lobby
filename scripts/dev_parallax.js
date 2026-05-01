@@ -87,8 +87,13 @@
             });
         }
 
-        // Wait slightly for parallax_dolly.js to initialize the global object
-        setTimeout(renderInputs, 500);
+        // Poll until parallax_dolly.js has initialized PARALLAX_RATES
+        const readyInterval = setInterval(() => {
+            if (window.PARALLAX_RATES) {
+                clearInterval(readyInterval);
+                renderInputs();
+            }
+        }, 100);
 
         copyBtn.addEventListener('click', () => {
             if (!window.PARALLAX_RATES) return;

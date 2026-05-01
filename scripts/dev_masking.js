@@ -27,11 +27,22 @@
         const svgNS = "http://www.w3.org/2000/svg";
         const svgLayer = document.createElementNS(svgNS, "svg");
         svgLayer.style.position = 'fixed';
-        svgLayer.style.inset = '0';
-        svgLayer.style.width = '100vw';
-        svgLayer.style.height = '100vh';
+        svgLayer.style.top = '0';
+        svgLayer.style.left = '0';
+        svgLayer.style.width = '100%';
+        svgLayer.style.height = '100%';
         svgLayer.style.zIndex = '99998'; // Just below UI
         svgLayer.style.pointerEvents = 'none'; // Only intercept clicks when active
+
+        function syncSVGViewBox() {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            svgLayer.setAttribute('viewBox', `0 0 ${w} ${h}`);
+            svgLayer.setAttribute('width', w);
+            svgLayer.setAttribute('height', h);
+        }
+        syncSVGViewBox();
+        window.addEventListener('resize', syncSVGViewBox);
         
         const polygon = document.createElementNS(svgNS, "polygon");
         polygon.setAttribute('fill', 'rgba(0, 255, 255, 0.1)');
