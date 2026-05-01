@@ -75,8 +75,7 @@
         hqEl.style.backgroundSize = 'contain';
         hqEl.style.backgroundRepeat = 'no-repeat';
         hqEl.style.backgroundPosition = 'bottom center';
-        hqEl.style.opacity = '0.55';
-        hqEl.style.mixBlendMode = 'multiply';
+        hqEl.style.opacity = '0.45';
         hqEl.style.zIndex = '1';
         hqEl.style.pointerEvents = 'none';
         parallaxContainer.appendChild(hqEl);
@@ -148,7 +147,8 @@
                 el.style.transformOrigin = 'bottom center';
             });
 
-            if (hqEl) hqEl.style.transform = `translate(-50%, calc(-50% + ${scrollPercent * 150}px)) scale(${1 + scrollPercent * 0.1})`;
+            // Parallax the HQ — slide up gently as user scrolls, preserve bottom anchor
+            if (hqEl) hqEl.style.transform = `translateX(-50%) translateY(${-scrollPercent * 80}px)`;
             if (blurEl) blurEl.style.transform = `translate(-50%, calc(-50% + ${scrollPercent * 100}px)) scale(${1 + scrollPercent * 0.05})`;
 
             const wRate = window.PARALLAX_RATES[wordmarkRateIndex];
