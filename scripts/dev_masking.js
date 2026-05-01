@@ -48,18 +48,38 @@
         document.body.appendChild(svgLayer);
 
         uiContainer.innerHTML = `
-            <div style="font-weight:bold; margin-bottom: 8px;">DEV MASKING TOOL</div>
-            <div style="margin-bottom: 8px; font-size: 10px; color: #888;">Outline a mountain ridge to generate a CSS clip-path mask. Click "Save Layer" to keep it and start drawing the next one.</div>
-            
-            <div style="display:flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
-                <button id="toggle-mask-btn" style="cursor: pointer; background:#000; color:#0ff; border:1px solid #0ff; padding: 4px 8px;">Start Drawing</button>
-                <button id="save-mask-btn" style="cursor: pointer; background:#000; color:#0f0; border:1px solid #0f0; padding: 4px 8px;">Save Layer</button>
-                <button id="clear-mask-btn" style="cursor: pointer; background:#000; color:#f00; border:1px solid #f00; padding: 4px 8px;">Clear Current</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; margin-bottom: 8px;">
+                <span>DEV MASKING TOOL</span>
+                <button id="minimize-mask-btn" style="cursor: pointer; background:none; color:#0ff; border:none; padding: 0 4px; font-weight:bold;">—</button>
             </div>
-            
-            <div id="mask-output" style="margin-top: 12px; max-height: 300px; overflow-y: auto; word-wrap: break-word; font-size: 9px; color: #aaa; user-select: all;"></div>
+            <div id="mask-menu-content">
+                <div style="margin-bottom: 8px; font-size: 10px; color: #888;">Outline a mountain ridge to generate a CSS clip-path mask. Click "Save Layer" to keep it and start drawing the next one.</div>
+                
+                <div style="display:flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px;">
+                    <button id="toggle-mask-btn" style="cursor: pointer; background:#000; color:#0ff; border:1px solid #0ff; padding: 4px 8px;">Start Drawing</button>
+                    <button id="save-mask-btn" style="cursor: pointer; background:#000; color:#0f0; border:1px solid #0f0; padding: 4px 8px;">Save Layer</button>
+                    <button id="clear-mask-btn" style="cursor: pointer; background:#000; color:#f00; border:1px solid #f00; padding: 4px 8px;">Clear Current</button>
+                </div>
+                
+                <div id="mask-output" style="margin-top: 12px; max-height: 300px; overflow-y: auto; word-wrap: break-word; font-size: 9px; color: #aaa; user-select: all;"></div>
+            </div>
         `;
         document.body.appendChild(uiContainer);
+
+        const minimizeBtn = document.getElementById('minimize-mask-btn');
+        const menuContent = document.getElementById('mask-menu-content');
+        
+        minimizeBtn.addEventListener('click', () => {
+            if (menuContent.style.display === 'none') {
+                menuContent.style.display = 'block';
+                minimizeBtn.innerText = '—';
+                uiContainer.style.background = 'rgba(0,0,0,0.85)';
+            } else {
+                menuContent.style.display = 'none';
+                minimizeBtn.innerText = '+';
+                uiContainer.style.background = 'rgba(0,0,0,0.3)';
+            }
+        });
 
         const toggleBtn = document.getElementById('toggle-mask-btn');
         const saveBtn = document.getElementById('save-mask-btn');
