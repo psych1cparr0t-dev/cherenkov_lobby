@@ -22,24 +22,24 @@
 
         // Rates: one per mask entry (index 0 = base, 1-6 = layers, 7 = wordmark)
         window.PARALLAX_RATES = [
-            { scale: 0.02, y: 0, x: 0 },  // Base (sky)
-            { scale: 0.06, y: 0, x: 0 },  // Layer 4 – left mid-ground
-            { scale: 0.08, y: 0, x: 0 },  // Current – left-centre mid
-            { scale: 0.12, y: 0, x: 0 },  // Layer 5 – centre gap fill
-            { scale: 0.25, y: 0, x: 0 },  // Layer 1 – foreground left
-            { scale: 0.25, y: 0, x: 0 },  // Layer 2 – foreground right
-            { scale: 0.18, y: 0, x: 0 },  // Layer 3 – far right
-            { scale: 0,    y: 0, x: 0 },  // Wordmark Title
-            { scale: 0,    y: 0, x: 0 }   // Contact Nav
+            { scale: 0.05, y: 0,    x: 0 },  // Base (sky) — barely moves
+            { scale: 0.10, y: 0.20, x: 0 },  // Layer 4 – left mid-ground
+            { scale: 0.15, y: 0.30, x: 0 },  // Current – left-centre mid
+            { scale: 0.18, y: 0.40, x: 0 },  // Layer 5 – centre gap fill
+            { scale: 0.40, y: 0.80, x: 0 },  // Layer 1 – foreground left
+            { scale: 0.40, y: 0.80, x: 0 },  // Layer 2 – foreground right
+            { scale: 0.28, y: 0.55, x: 0 },  // Layer 3 – far right
+            { scale: 0,    y: 0,    x: 0 },  // Wordmark Title
+            { scale: 0,    y: 0,    x: 0 }   // Contact Nav
         ];
 
         const baseVideo = document.getElementById('veil-video-a');
         if (!baseVideo) return;
 
-        // Original working approach: make body the scroll container.
-        // This keeps window.scrollY reliable across all browsers.
-        document.body.style.height = '300vh';
-        document.body.style.overflowY = 'auto';
+        // Pure wheel-driven scroll progress — no browser scroll container needed.
+        // Accumulates deltaY directly; immune to body/html overflow propagation quirks.
+        let scrollProgress = 0;
+        const SCROLL_SENSITIVITY = 1 / 1500; // full scene in ~1500px of wheel delta
 
         // Fixed container for all parallax layers
         const parallaxContainer = document.createElement('div');
@@ -114,8 +114,7 @@
         let isTicking = false;
 
         function updateParallax() {
-            const scrollMax = document.body.scrollHeight - window.innerHeight;
-            const scrollPercent = scrollMax > 0 ? window.scrollY / scrollMax : 0;
+            const scrollPercent = scrollProgress;
 
             layerElements.forEach((el, index) => {
                 const rate = window.PARALLAX_RATES[index];
@@ -157,8 +156,23 @@
             }
         };
 
-        window.addEventListener('scroll', onScroll, { passive: true });
-        window.addEventListener('wheel', onScroll, { passive: true });
+        // Wheel — primary driver, guaranteed to work regardless of scroll container
+        window.addEventListener('wheel', (e) => {
+            scrollProgress = Math.max(0, Math.min(1, scrollProgress + e.deltaY * SCROLL_SENSITIVITY));
+            onScroll();
+        }, { passive: true });
+
+        // Arrow keys / trackpad momentum fallback
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'PageDown') {
+                scrollProgress = Math.min(1, scrollProgress + 0.05);
+                onScroll();
+            } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+                scrollProgress = Math.max(0, scrollProgress - 0.05);
+                onScroll();
+            }
+        });
+
 
 
         updateParallax();
