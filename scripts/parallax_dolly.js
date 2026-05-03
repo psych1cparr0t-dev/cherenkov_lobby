@@ -36,23 +36,10 @@
         const baseVideo = document.getElementById('veil-video-a');
         if (!baseVideo) return;
 
-        // Scroll setup — append a tall spacer so the native scrollbar appears,
-        // but drive parallax from wheel events directly (avoids window.scrollY unreliability)
-        const spacer = document.createElement('div');
-        spacer.style.position = 'absolute';
-        spacer.style.top = '0';
-        spacer.style.left = '0';
-        spacer.style.width = '1px';
-        spacer.style.height = '300vh';
-        spacer.style.pointerEvents = 'none';
-        spacer.style.visibility = 'hidden';
-        document.body.appendChild(spacer);
-        document.documentElement.style.overflowY = 'scroll';
-        document.body.style.overflowY = 'visible';
-
-        // Manual scroll progress: driven by wheel events for reliability
-        let scrollProgress = 0; // 0 = top, 1 = bottom
-        const SCROLL_SPEED = 0.0006; // tune: how fast wheel moves through the scene
+        // Original working approach: make body the scroll container.
+        // This keeps window.scrollY reliable across all browsers.
+        document.body.style.height = '300vh';
+        document.body.style.overflowY = 'auto';
 
         // Fixed container for all parallax layers
         const parallaxContainer = document.createElement('div');
@@ -64,8 +51,8 @@
         parallaxContainer.style.overflow = 'hidden';
         parallaxContainer.style.zIndex = '3';
 
-        // Append parallax container to body directly (avoids #landing-page clipping)
-        document.body.appendChild(parallaxContainer);
+        // Insert parallax container before the base video (original DOM position)
+        baseVideo.parentNode.insertBefore(parallaxContainer, baseVideo);
         parallaxContainer.appendChild(baseVideo);
 
         baseVideo.style.position = 'absolute';
@@ -89,35 +76,21 @@
                     clone.style.position = 'absolute';
                     clone.style.top = '0';
                     clone.style.left = '0';
-                    clone.style.width = '100%';
-                    clone.style.height = '100%';
+                    clone.style.width = '100vw';
+                    clone.style.height = '100vh';
                     clone.style.objectFit = 'cover';
                     clone.style.pointerEvents = 'none';
-                    clone.style.zIndex = 'auto';
+                    clone.style.zIndex = (i + 2).toString();
                     clone.src = baseVideo.src;
 
-                    // Wrapper div: clip-path lives here (position:absolute = element-box-relative %)
-                    // Transform also applied here so the mask boundary moves with the scale.
-                    // If clip-path were on the video (position:fixed ancestor chain), browsers
-                    // treat percentages as viewport-relative and the mask stays frozen on screen.
-                    const wrapper = document.createElement('div');
-                    wrapper.style.position = 'absolute';
-                    wrapper.style.top = '0';
-                    wrapper.style.left = '0';
-                    wrapper.style.width = '100%';
-                    wrapper.style.height = '100%';
-                    wrapper.style.pointerEvents = 'none';
-                    wrapper.style.zIndex = (i + 2).toString();
-                    wrapper.style.transformOrigin = 'bottom center';
-
+                    // Clip-path directly on the video clone — simple and it works
                     if (masks[i]) {
-                        wrapper.style.clipPath = masks[i];
-                        wrapper.style.webkitClipPath = masks[i];
+                        clone.style.clipPath = masks[i];
+                        clone.style.webkitClipPath = masks[i];
                     }
 
-                    wrapper.appendChild(clone);
-                    parallaxContainer.appendChild(wrapper);
-                    layerElements.push(wrapper);  // transform targets the wrapper now
+                    parallaxContainer.appendChild(clone);
+                    layerElements.push(clone);
 
                     baseVideo.addEventListener('play', () => clone.play());
                     baseVideo.addEventListener('pause', () => clone.pause());
@@ -141,7 +114,8 @@
         let isTicking = false;
 
         function updateParallax() {
-            const scrollPercent = scrollProgress;
+            const scrollMax = document.body.scrollHeight - window.innerHeight;
+            const scrollPercent = scrollMax > 0 ? window.scrollY / scrollMax : 0;
 
             layerElements.forEach((el, index) => {
                 const rate = window.PARALLAX_RATES[index];
@@ -183,21 +157,8 @@
             }
         };
 
-        // Wheel event is the most reliable cross-browser way to drive parallax
-        window.addEventListener('wheel', (e) => {
-            scrollProgress = Math.max(0, Math.min(1, scrollProgress + e.deltaY * SCROLL_SPEED));
-            // Also sync the native scrollbar position to match
-            const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
-            window.scrollTo({ top: scrollProgress * scrollMax, behavior: 'instant' });
-            onScroll();
-        }, { passive: true });
-
-        // Keep window scroll listener as fallback (keyboard arrows, trackpad momentum, etc.)
-        window.addEventListener('scroll', () => {
-            const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
-            if (scrollMax > 0) scrollProgress = window.scrollY / scrollMax;
-            onScroll();
-        }, { passive: true });
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('wheel', onScroll, { passive: true });
 
 
         updateParallax();
