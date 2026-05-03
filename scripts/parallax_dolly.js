@@ -36,11 +36,23 @@
         const baseVideo = document.getElementById('veil-video-a');
         if (!baseVideo) return;
 
-        // Enable page scroll
-        document.documentElement.style.height = '300vh';
-        document.documentElement.style.overflowY = 'auto';
-        document.body.style.height = '300vh';
-        document.body.style.overflowY = 'auto';
+        // Scroll setup — append a tall spacer so the native scrollbar appears,
+        // but drive parallax from wheel events directly (avoids window.scrollY unreliability)
+        const spacer = document.createElement('div');
+        spacer.style.position = 'absolute';
+        spacer.style.top = '0';
+        spacer.style.left = '0';
+        spacer.style.width = '1px';
+        spacer.style.height = '300vh';
+        spacer.style.pointerEvents = 'none';
+        spacer.style.visibility = 'hidden';
+        document.body.appendChild(spacer);
+        document.documentElement.style.overflowY = 'scroll';
+        document.body.style.overflowY = 'visible';
+
+        // Manual scroll progress: driven by wheel events for reliability
+        let scrollProgress = 0; // 0 = top, 1 = bottom
+        const SCROLL_SPEED = 0.0006; // tune: how fast wheel moves through the scene
 
         // Fixed container for all parallax layers
         const parallaxContainer = document.createElement('div');
@@ -52,7 +64,8 @@
         parallaxContainer.style.overflow = 'hidden';
         parallaxContainer.style.zIndex = '3';
 
-        baseVideo.parentNode.insertBefore(parallaxContainer, baseVideo);
+        // Append parallax container to body directly (avoids #landing-page clipping)
+        document.body.appendChild(parallaxContainer);
         parallaxContainer.appendChild(baseVideo);
 
         baseVideo.style.position = 'absolute';
@@ -113,7 +126,7 @@
         let isTicking = false;
 
         function updateParallax() {
-            const scrollPercent = window.scrollY / (document.body.scrollHeight - window.innerHeight) || 0;
+            const scrollPercent = scrollProgress;
 
             layerElements.forEach((el, index) => {
                 const rate = window.PARALLAX_RATES[index];
@@ -148,12 +161,29 @@
             isTicking = false;
         }
 
-        window.addEventListener('scroll', () => {
+        const onScroll = () => {
             if (!isTicking) {
                 window.requestAnimationFrame(updateParallax);
                 isTicking = true;
             }
-        });
+        };
+
+        // Wheel event is the most reliable cross-browser way to drive parallax
+        window.addEventListener('wheel', (e) => {
+            scrollProgress = Math.max(0, Math.min(1, scrollProgress + e.deltaY * SCROLL_SPEED));
+            // Also sync the native scrollbar position to match
+            const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
+            window.scrollTo({ top: scrollProgress * scrollMax, behavior: 'instant' });
+            onScroll();
+        }, { passive: true });
+
+        // Keep window scroll listener as fallback (keyboard arrows, trackpad momentum, etc.)
+        window.addEventListener('scroll', () => {
+            const scrollMax = document.documentElement.scrollHeight - window.innerHeight;
+            if (scrollMax > 0) scrollProgress = window.scrollY / scrollMax;
+            onScroll();
+        }, { passive: true });
+
 
         updateParallax();
     });

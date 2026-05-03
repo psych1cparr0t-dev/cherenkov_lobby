@@ -39,7 +39,7 @@ body, html {
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
+  /* overflow: hidden removed — clips position:fixed parallax children in Safari/Chrome */
 }
 
 /* Tier 2: White cover — fades in, stays opaque permanently */
@@ -139,7 +139,7 @@ body, html {
 
 .wordmark-container {
   position: fixed;
-  bottom: 10%;
+  bottom: 20%;
   left: 50%;
   transform: translateX(-50%) scale(1.00);
   z-index: 100;
