@@ -89,20 +89,35 @@
                     clone.style.position = 'absolute';
                     clone.style.top = '0';
                     clone.style.left = '0';
-                    clone.style.width = '100vw';
-                    clone.style.height = '100vh';
+                    clone.style.width = '100%';
+                    clone.style.height = '100%';
                     clone.style.objectFit = 'cover';
                     clone.style.pointerEvents = 'none';
-                    clone.style.zIndex = (i + 2).toString();
+                    clone.style.zIndex = 'auto';
                     clone.src = baseVideo.src;
 
+                    // Wrapper div: clip-path lives here (position:absolute = element-box-relative %)
+                    // Transform also applied here so the mask boundary moves with the scale.
+                    // If clip-path were on the video (position:fixed ancestor chain), browsers
+                    // treat percentages as viewport-relative and the mask stays frozen on screen.
+                    const wrapper = document.createElement('div');
+                    wrapper.style.position = 'absolute';
+                    wrapper.style.top = '0';
+                    wrapper.style.left = '0';
+                    wrapper.style.width = '100%';
+                    wrapper.style.height = '100%';
+                    wrapper.style.pointerEvents = 'none';
+                    wrapper.style.zIndex = (i + 2).toString();
+                    wrapper.style.transformOrigin = 'bottom center';
+
                     if (masks[i]) {
-                        clone.style.clipPath = masks[i];
-                        clone.style.webkitClipPath = masks[i];
+                        wrapper.style.clipPath = masks[i];
+                        wrapper.style.webkitClipPath = masks[i];
                     }
 
-                    parallaxContainer.appendChild(clone);
-                    layerElements.push(clone);
+                    wrapper.appendChild(clone);
+                    parallaxContainer.appendChild(wrapper);
+                    layerElements.push(wrapper);  // transform targets the wrapper now
 
                     baseVideo.addEventListener('play', () => clone.play());
                     baseVideo.addEventListener('pause', () => clone.pause());
