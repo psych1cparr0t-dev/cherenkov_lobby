@@ -115,6 +115,7 @@
 
         function updateParallax() {
             const scrollPercent = scrollProgress;
+            console.log("updateParallax", scrollPercent);
 
             layerElements.forEach((el, index) => {
                 const rate = window.PARALLAX_RATES[index];
@@ -127,8 +128,8 @@
             });
 
             // Parallax the HQ — slide up gently as user scrolls, preserve bottom anchor
-            if (hqEl) hqEl.style.transform = `translateX(-50%) translateY(${-scrollPercent * 80}px)`;
-            if (blurEl) blurEl.style.transform = `translate(-50%, calc(-50% + ${scrollPercent * 100}px)) scale(${1 + scrollPercent * 0.05})`;
+            // if (hqEl) hqEl.style.transform = `translateX(-50%) translateY(${-scrollPercent * 80}px)`;
+            // if (blurEl) blurEl.style.transform = `translate(-50%, calc(-50% + ${scrollPercent * 100}px)) scale(${1 + scrollPercent * 0.05})`;
 
             const wRate = window.PARALLAX_RATES[wordmarkRateIndex];
             if (wordmark && wRate) {

@@ -266,3 +266,23 @@ body, html {
   .top-nav { top: 25px; left: 20px; right: 20px; }
   .nav-link { font-size: 9px; letter-spacing: 0.2em; }
 }
+
+@media (max-height: 700px) {
+  .wordmark-container { bottom: 20%; }
+}
+
+@media (max-height: 500px) {
+  .wordmark-container { bottom: 26%; }
+}
+
+@media (max-height: 400px) {
+  .wordmark-container { bottom: 32%; }
+}
+
+@media (min-aspect-ratio: 21/9) {
+  .wordmark-container { bottom: 22%; }
+}
+
+@media (min-aspect-ratio: 3/1) {
+  .wordmark-container { bottom: 30%; }
+}
