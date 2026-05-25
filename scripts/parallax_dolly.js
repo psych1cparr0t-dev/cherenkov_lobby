@@ -22,13 +22,13 @@
 
         // Rates: one per mask entry (index 0 = base, 1-6 = layers, 7 = wordmark)
         window.PARALLAX_RATES = [
-            { scale: 0.05, y: 0,    x: 0 },  // Base (sky) — barely moves
-            { scale: 0.10, y: 0.20, x: 0 },  // Layer 4 – left mid-ground
-            { scale: 0.15, y: 0.30, x: 0 },  // Current – left-centre mid
-            { scale: 0.18, y: 0.40, x: 0 },  // Layer 5 – centre gap fill
-            { scale: 0.40, y: 0.80, x: 0 },  // Layer 1 – foreground left
-            { scale: 0.40, y: 0.80, x: 0 },  // Layer 2 – foreground right
-            { scale: 0.28, y: 0.55, x: 0 },  // Layer 3 – far right
+            { scale: 0,    y: 0,    x: 0 },  // Base (sky) — static
+            { scale: 0.05, y: 0.10, x: 0 },  // Layer 4 – left mid-ground
+            { scale: 0.08, y: 0.15, x: 0 },  // Current – left-centre mid
+            { scale: 0.09, y: 0.20, x: 0 },  // Layer 5 – centre gap fill
+            { scale: 0.20, y: 0.40, x: 0 },  // Layer 1 – foreground left
+            { scale: 0.20, y: 0.40, x: 0 },  // Layer 2 – foreground right
+            { scale: 0.14, y: 0.28, x: 0 },  // Layer 3 – far right
             { scale: 0,    y: 0,    x: 0 },  // Wordmark Title
             { scale: 0,    y: 0,    x: 0 }   // Contact Nav
         ];
@@ -112,10 +112,11 @@
         const navRateIndex = masks.length + 1;
 
         let isTicking = false;
+        let targetProgress = 0;      // Where we want to be
+        const LERP_SPEED = 0.08;     // Smooth easing factor (lower = smoother)
 
         function updateParallax() {
             const scrollPercent = scrollProgress;
-            console.log("updateParallax", scrollPercent);
 
             layerElements.forEach((el, index) => {
                 const rate = window.PARALLAX_RATES[index];
@@ -126,10 +127,6 @@
                 el.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
                 el.style.transformOrigin = 'bottom center';
             });
-
-            // Parallax the HQ — slide up gently as user scrolls, preserve bottom anchor
-            // if (hqEl) hqEl.style.transform = `translateX(-50%) translateY(${-scrollPercent * 80}px)`;
-            // if (blurEl) blurEl.style.transform = `translate(-50%, calc(-50% + ${scrollPercent * 100}px)) scale(${1 + scrollPercent * 0.05})`;
 
             const wRate = window.PARALLAX_RATES[wordmarkRateIndex];
             if (wordmark && wRate) {
@@ -150,27 +147,43 @@
             isTicking = false;
         }
 
-        const onScroll = () => {
-            if (!isTicking) {
-                window.requestAnimationFrame(updateParallax);
-                isTicking = true;
+        // Smooth animation loop — lerps scrollProgress toward targetProgress
+        function animationLoop() {
+            const delta = targetProgress - scrollProgress;
+            if (Math.abs(delta) > 0.0005) {
+                scrollProgress += delta * LERP_SPEED;
+                if (!isTicking) {
+                    window.requestAnimationFrame(updateParallax);
+                    isTicking = true;
+                }
             }
-        };
+            requestAnimationFrame(animationLoop);
+        }
+        animationLoop();
 
-        // Wheel — primary driver, guaranteed to work regardless of scroll container
+        // Wheel — primary driver
         window.addEventListener('wheel', (e) => {
-            scrollProgress = Math.max(0, Math.min(1, scrollProgress + e.deltaY * SCROLL_SENSITIVITY));
-            onScroll();
+            targetProgress = Math.max(0, Math.min(1, targetProgress + e.deltaY * SCROLL_SENSITIVITY));
+        }, { passive: true });
+
+        // Touch support for mobile
+        let touchStartY = 0;
+        window.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            const deltaY = touchStartY - e.touches[0].clientY;
+            touchStartY = e.touches[0].clientY;
+            targetProgress = Math.max(0, Math.min(1, targetProgress + deltaY * SCROLL_SENSITIVITY));
         }, { passive: true });
 
         // Arrow keys / trackpad momentum fallback
         window.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowDown' || e.key === 'PageDown') {
-                scrollProgress = Math.min(1, scrollProgress + 0.05);
-                onScroll();
+                targetProgress = Math.min(1, targetProgress + 0.05);
             } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
-                scrollProgress = Math.max(0, scrollProgress - 0.05);
-                onScroll();
+                targetProgress = Math.max(0, targetProgress - 0.05);
             }
         });
 
@@ -179,3 +192,4 @@
         updateParallax();
     });
 })();
+
