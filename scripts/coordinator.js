@@ -40,7 +40,9 @@ window.Cherenkov = (function() {
             setTimeout(() => {
                 setState(STATE.TITLE_VISIBLE);
                 const letters = document.querySelectorAll('.letter');
-                letters.forEach(l => l.classList.add('visible'));
+                letters.forEach((l, i) => {
+                    setTimeout(() => l.classList.add('visible'), i * 80);
+                });
 
                 // 3. Wait, then show Inc
                 setTimeout(() => {

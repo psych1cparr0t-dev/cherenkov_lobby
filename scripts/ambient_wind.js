@@ -18,90 +18,6 @@
     let masterGain = null;
     let isPlaying = false;
     let isInitialized = false;
-    let muteButton = null;
-
-    // ── Create the mute/unmute toggle ──────────────────────────────
-    function createMuteToggle() {
-        muteButton = document.createElement('button');
-        muteButton.id = 'ambient-toggle';
-        muteButton.setAttribute('aria-label', 'Toggle ambient sound');
-        muteButton.innerHTML = `
-            <svg class="icon-sound-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-            </svg>
-            <svg class="icon-sound-off" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-                <line x1="23" y1="9" x2="17" y2="15"/>
-                <line x1="17" y1="9" x2="23" y2="15"/>
-            </svg>
-        `;
-
-        Object.assign(muteButton.style, {
-            position: 'fixed',
-            bottom: '28px',
-            right: '28px',
-            zIndex: '200',
-            background: 'rgba(255, 255, 255, 0.08)',
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            borderRadius: '50%',
-            width: '44px',
-            height: '44px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            color: 'rgba(255, 255, 255, 0.7)',
-            transition: 'all 0.4s cubic-bezier(0.22, 1, 0.36, 1)',
-            opacity: '0',
-            transform: 'translateY(10px)',
-            padding: '0',
-            outline: 'none'
-        });
-
-        // Hover effects
-        muteButton.addEventListener('mouseenter', () => {
-            muteButton.style.background = 'rgba(255, 255, 255, 0.14)';
-            muteButton.style.color = 'rgba(255, 255, 255, 0.95)';
-            muteButton.style.transform = 'translateY(0) scale(1.08)';
-        });
-        muteButton.addEventListener('mouseleave', () => {
-            muteButton.style.background = 'rgba(255, 255, 255, 0.08)';
-            muteButton.style.color = 'rgba(255, 255, 255, 0.7)';
-            muteButton.style.transform = 'translateY(0) scale(1)';
-        });
-
-        document.body.appendChild(muteButton);
-
-        // Reveal with delay
-        setTimeout(() => {
-            muteButton.style.opacity = '1';
-            muteButton.style.transform = 'translateY(0)';
-        }, 3500);
-
-        muteButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleAmbient();
-        });
-
-        updateToggleIcon();
-    }
-
-    function updateToggleIcon() {
-        if (!muteButton) return;
-        const onIcon = muteButton.querySelector('.icon-sound-on');
-        const offIcon = muteButton.querySelector('.icon-sound-off');
-        if (isPlaying) {
-            onIcon.style.display = 'block';
-            offIcon.style.display = 'none';
-        } else {
-            onIcon.style.display = 'none';
-            offIcon.style.display = 'block';
-        }
-    }
 
     // ── Web Audio Synthesis ────────────────────────────────────────
 
@@ -244,34 +160,9 @@
         masterGain.gain.linearRampToValueAtTime(MASTER_VOLUME, audioCtx.currentTime + FADE_IN_DURATION);
 
         isPlaying = true;
-        updateToggleIcon();
-    }
-
-    function stopAmbient() {
-        if (!audioCtx || !masterGain) return;
-
-        masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
-        masterGain.gain.setValueAtTime(masterGain.gain.value, audioCtx.currentTime);
-        masterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.0);
-
-        isPlaying = false;
-        updateToggleIcon();
-    }
-
-    function toggleAmbient() {
-        if (isPlaying) {
-            stopAmbient();
-        } else {
-            startAmbient();
-        }
     }
 
     // ── Bootstrap ──────────────────────────────────────────────────
-
-    // Wait for the experience to be ready, then create controls
-    document.addEventListener('cherenkov:load-mosaic', () => {
-        createMuteToggle();
-    });
 
     // Auto-start on first user interaction (browser policy requires gesture)
     let hasInteracted = false;

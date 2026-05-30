@@ -45,20 +45,7 @@ body, html {
   /* overflow: hidden removed — clips position:fixed parallax children in Safari/Chrome */
 }
 
-/* Tier 2: White cover — fades in, stays opaque permanently */
-#fade-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 10; /* Must be above the parallax container (z-index 3) */
-  background: var(--bg-primary);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--t-veil-fade) ease;
-}
 
-/* Once raised, never drops back — permanently covers Tier 1 */
-[data-state="veil_transitioning"] #fade-overlay { opacity: 1; }
-[data-state="active"]             #fade-overlay { opacity: 1; }
 
 .wordmark-sub.visible { opacity: 1; }
 
@@ -71,13 +58,19 @@ body, html {
   object-fit: cover;
   z-index: 3;
   opacity: 0;
-  transition: opacity 2.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: scale(1.08);
+  filter: blur(20px);
+  transition: opacity 4s ease, transform 8s cubic-bezier(0.22, 1, 0.36, 1), filter 4s ease;
   pointer-events: none;
-  will-change: opacity, transform;
+  will-change: opacity, transform, filter;
   image-rendering: high-quality;
 }
 
-.veil-video.playing { opacity: 1; }
+.veil-video.playing { 
+  opacity: 1; 
+  transform: scale(1);
+  filter: blur(0);
+}
 
 
 
@@ -165,16 +158,19 @@ body, html {
 
 .letter {
   opacity: 0;
-  transition: opacity 1.8s cubic-bezier(0.22, 1, 0.36, 1),
-              text-shadow 2s ease,
-              transform 1.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 2.5s cubic-bezier(0.22, 1, 0.36, 1),
+              text-shadow 2.5s ease,
+              transform 2.5s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 2.5s cubic-bezier(0.22, 1, 0.36, 1);
   text-shadow: none;
-  transform: translateY(4px);
+  transform: translateY(20px) scale(0.95);
+  filter: blur(12px);
 }
 
 .letter.visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
+  filter: blur(0px);
 }
 
 /* .letter.visible now defined inline above */
@@ -196,9 +192,16 @@ body, html {
   color: var(--text-dim);
   opacity: 0;
   margin-top: 8px;
+  transform: translateY(10px);
+  filter: blur(8px);
+  transition: opacity 3s ease, transform 3s cubic-bezier(0.22, 1, 0.36, 1), filter 3s ease;
 }
 
-.wordmark-sub.visible { opacity: 1; }
+.wordmark-sub.visible { 
+  opacity: 1; 
+  transform: translateY(0);
+  filter: blur(0px);
+}
 
 /* =====================================================
    NAV & LOGO
@@ -375,16 +378,8 @@ body, html {
   font-weight: 500;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  margin-bottom: 8px;
-  color: rgba(255, 255, 255, 0.95);
-}
-
-.contact-subtitle {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.45);
-  letter-spacing: 0.04em;
   margin-bottom: 32px;
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .contact-form {
@@ -401,16 +396,19 @@ body, html {
 .form-group textarea {
   width: 100%;
   background: rgba(255, 255, 255, 0.04);
-  border: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 8px 8px 0 0;
-  padding: 20px 14px 8px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 15px rgba(0, 0, 0, 0.05);
+  padding: 22px 16px 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
   color: rgba(255, 255, 255, 0.9);
   outline: none;
-  transition: border-color 0.3s ease, background 0.3s ease;
+  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
   resize: none;
+  letter-spacing: 0.05em;
 }
 
 .form-group textarea {
@@ -420,45 +418,34 @@ body, html {
 .form-group input:focus,
 .form-group textarea:focus {
   background: rgba(255, 255, 255, 0.07);
-  border-bottom-color: rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+              0 0 12px rgba(255, 255, 255, 0.1),
+              0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .form-group label {
   position: absolute;
-  top: 14px;
-  left: 14px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.35);
+  top: 15px;
+  left: 16px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
   pointer-events: none;
   transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  letter-spacing: 0.03em;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
 }
 
 .form-group input:focus ~ label,
 .form-group input:not(:placeholder-shown) ~ label,
 .form-group textarea:focus ~ label,
 .form-group textarea:not(:placeholder-shown) ~ label {
-  top: 4px;
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.55);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.input-line {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 0;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(89, 128, 230, 0.8), rgba(89, 128, 230, 0.2));
-  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.form-group input:focus ~ .input-line,
-.form-group textarea:focus ~ .input-line {
-  width: 100%;
+  top: 6px;
+  left: 16px;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.12em;
 }
 
 .contact-submit {

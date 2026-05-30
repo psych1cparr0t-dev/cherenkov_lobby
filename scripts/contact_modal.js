@@ -14,22 +14,18 @@
             <div class="contact-modal" role="dialog" aria-modal="true" aria-labelledby="contact-heading">
                 <button class="contact-close" aria-label="Close contact form">&times;</button>
                 <h2 id="contact-heading" class="contact-title">Get in Touch</h2>
-                <p class="contact-subtitle">We'd love to hear from you.</p>
                 <form id="contact-form" class="contact-form" autocomplete="off">
                     <div class="form-group">
                         <input type="text" id="contact-name" name="name" required placeholder=" " />
                         <label for="contact-name">Name</label>
-                        <div class="input-line"></div>
                     </div>
                     <div class="form-group">
                         <input type="email" id="contact-email" name="email" required placeholder=" " />
                         <label for="contact-email">Email</label>
-                        <div class="input-line"></div>
                     </div>
                     <div class="form-group">
                         <textarea id="contact-message" name="message" rows="4" required placeholder=" "></textarea>
                         <label for="contact-message">Message</label>
-                        <div class="input-line"></div>
                     </div>
                     <button type="submit" class="contact-submit">
                         <span class="submit-text">Send Message</span>
@@ -110,7 +106,7 @@
         // Compose mailto (fallback — always works, no backend needed)
         const subject = encodeURIComponent(`Contact from ${name}`);
         const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`);
-        const mailtoUrl = `mailto:contact@cherenkov.industries?subject=${subject}&body=${body}`;
+        const mailtoUrl = `mailto:max@cherenkov.industries?subject=${subject}&body=${body}`;
 
         // Brief pause for UX, then open mail client
         setTimeout(() => {
