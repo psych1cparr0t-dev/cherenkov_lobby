@@ -181,4 +181,20 @@
     document.addEventListener('keydown', onFirstInteraction);
     document.addEventListener('touchstart', onFirstInteraction);
 
+    // Try to autoplay immediately on load (will succeed if browser policy allows)
+    window.addEventListener('load', () => {
+        try {
+            startAmbient();
+            if (audioCtx && audioCtx.state === 'running') {
+                hasInteracted = true;
+                document.removeEventListener('click', onFirstInteraction);
+                document.removeEventListener('wheel', onFirstInteraction);
+                document.removeEventListener('keydown', onFirstInteraction);
+                document.removeEventListener('touchstart', onFirstInteraction);
+            }
+        } catch (e) {
+            // Fail silently, fallback to interaction listeners
+        }
+    });
+
 })();

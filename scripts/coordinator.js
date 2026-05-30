@@ -6,7 +6,7 @@ window.Cherenkov = (function() {
     
     // TIMING SOURCE OF TRUTH (Seconds)
     const TIMING = {
-        AMBIENT_DELAY: 0.100,  // Start video immediately
+        AMBIENT_DELAY: 2.200,  // Delay before video fades in (audio prelude)
         TITLE_DELAY: 1.500,    // Delay before "CHERENKOV" fades in over video
         INC_DELAY: 1.000,      // Delay before "Inc." appears after title
         NAV_DELAY: 1.000       // Delay before Contact button drops down

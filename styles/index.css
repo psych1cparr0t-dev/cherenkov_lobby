@@ -29,7 +29,9 @@ body, html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  /* height and overflow are controlled by parallax_dolly.js */
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* =====================================================
@@ -42,7 +44,7 @@ body, html {
   display: flex;
   justify-content: center;
   align-items: center;
-  /* overflow: hidden removed — clips position:fixed parallax children in Safari/Chrome */
+  overflow: hidden;
 }
 
 
@@ -58,18 +60,20 @@ body, html {
   object-fit: cover;
   z-index: 3;
   opacity: 0;
-  transform: scale(1.08);
+  transform: scale(1.08) translate3d(0, 0, 0);
   filter: blur(20px);
   transition: opacity 4s ease, transform 8s cubic-bezier(0.22, 1, 0.36, 1), filter 4s ease;
   pointer-events: none;
   will-change: opacity, transform, filter;
   image-rendering: high-quality;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .veil-video.playing { 
   opacity: 1; 
-  transform: scale(1);
-  filter: blur(0);
+  transform: scale(1.0001) translate3d(0, 0, 0);
+  filter: blur(0px);
 }
 
 
