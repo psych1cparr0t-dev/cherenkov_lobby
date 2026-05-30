@@ -219,6 +219,7 @@ body, html {
   align-items: center;
   z-index: 150;
   pointer-events: none;
+  display: none !important; /* Temporarily hidden */
 }
 
 .nav-group-left, .nav-group-right, .nav-group-center {
