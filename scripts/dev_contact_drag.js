@@ -1,11 +1,13 @@
 /**
  * Dev Tool: Drag, Drop, and Resize Contact Icon
- * Allows moving the contact icon horizontally, vertically, and scaling it.
+ * Auto-calculates native video coordinates for smart-repositioning!
  */
 (function() {
     window.addEventListener('load', () => {
         const container = document.querySelector('.bottom-contact-container');
         if (!container) return;
+
+        const VIDEO_ASPECT = 16 / 9;
 
         let isDragging = false;
         let isResizing = false;
@@ -15,24 +17,20 @@
         let currentScale = 1;
         let currentBottomPx, currentLeftPx;
 
-        // Make the container hug the icon to act as a proper bounding box
+        // Visual setup
         container.style.width = 'max-content';
         container.style.border = '1px dashed rgba(0, 255, 0, 0.5)';
         container.style.cursor = 'grab';
-        container.style.pointerEvents = 'auto'; // allow dragging on container
+        container.style.pointerEvents = 'auto';
 
-        // Ensure links don't trigger click while dragging
         const link = container.querySelector('a');
         if (link) {
             link.addEventListener('click', (e) => {
-                if (isDragging || isResizing) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
+                if (isDragging || isResizing) { e.preventDefault(); e.stopPropagation(); }
             });
         }
 
-        // Add a visual resize handle
+        // Resize Handle
         const handle = document.createElement('div');
         handle.style.position = 'absolute';
         handle.style.bottom = '-8px'; 
@@ -47,7 +45,7 @@
         handle.title = "Drag to resize";
         container.appendChild(handle);
 
-        // Create a readout UI
+        // Readout UI
         const readout = document.createElement('div');
         readout.style.position = 'fixed';
         readout.style.bottom = '20px';
@@ -63,12 +61,40 @@
         readout.style.borderRadius = '8px';
         document.body.appendChild(readout);
 
+        function calculateVideoBounds() {
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+            const winAspect = winW / winH;
+            let vidW, vidH, offsetX, offsetY;
+            if (winAspect > VIDEO_ASPECT) {
+                vidW = winW; vidH = winW / VIDEO_ASPECT;
+                offsetX = 0; offsetY = (winH - vidH) / 2;
+            } else {
+                vidW = winH * VIDEO_ASPECT; vidH = winH;
+                offsetX = (winW - vidW) / 2; offsetY = 0;
+            }
+            return { vidW, vidH, offsetX, offsetY, winW, winH };
+        }
+
         function updateReadout(bottomPx, leftPx, scale) {
-            const vh = window.innerHeight;
-            const vw = window.innerWidth;
-            const bottomPercent = ((bottomPx / vh) * 100).toFixed(2);
-            const leftPercent = ((leftPx / vw) * 100).toFixed(2);
-            readout.innerHTML = `<strong style="color:#fff">CONTACT DEV TOOL</strong><br><br>Drag icon to move.<br>Drag green dot to resize.<br><br><span style="color:#aaa">/* Update styles/index.css */</span><br><br><b>.bottom-contact-container {</b><br>  bottom: ${bottomPercent}%;<br>  left: ${leftPercent}%;<br>  transform: translateX(-50%) scale(${scale.toFixed(2)});<br><b>}</b>`;
+            const bounds = calculateVideoBounds();
+            const topPx = bounds.winH - bottomPx;
+            
+            // Calculate native coordinates
+            const nX = (leftPx - bounds.offsetX) / bounds.vidW;
+            const nY = (topPx - bounds.offsetY) / bounds.vidH;
+
+            readout.innerHTML = `<strong style="color:#fff">CONTACT DEV TOOL</strong><br>
+            <span style="color:#aaa">Position auto-saved to localStorage.</span><br><br>
+            <span style="color:#0f0">Native X: ${nX.toFixed(4)}</span><br>
+            <span style="color:#0f0">Native Y: ${nY.toFixed(4)}</span><br><br>
+            <span style="color:#aaa">/* To hardcode forever, put this in pin_to_video.js */</span><br><br>
+            <b>const nativeX = ${nX.toFixed(4)};</b><br>
+            <b>const nativeY = ${nY.toFixed(4)};</b><br>`;
+            
+            // Save to local storage so pin_to_video.js can use it!
+            localStorage.setItem('cherenkov_pin_x', nX);
+            localStorage.setItem('cherenkov_pin_y', nY);
         }
 
         const initialStyle = window.getComputedStyle(container);
@@ -102,8 +128,8 @@
 
         window.addEventListener('mousemove', (e) => {
             if (isDragging) {
-                const deltaY = startY - e.clientY; // moving mouse up increases bottom
-                const deltaX = e.clientX - startX; // moving mouse right increases left
+                const deltaY = startY - e.clientY; 
+                const deltaX = e.clientX - startX; 
                 const newBottomPx = currentBottomPx + deltaY;
                 const newLeftPx = currentLeftPx + deltaX;
                 container.style.bottom = `${newBottomPx}px`;
@@ -114,7 +140,6 @@
                 const newScale = Math.max(0.1, startScale + (deltaX / 100));
                 currentScale = newScale;
                 container.style.transform = `translateX(-50%) scale(${newScale})`;
-                updateReadout(currentBottomPx, currentLeftPx, currentScale);
             }
         });
 
@@ -126,6 +151,9 @@
                 const style = window.getComputedStyle(container);
                 currentBottomPx = parseFloat(style.bottom) || currentBottomPx;
                 currentLeftPx = parseFloat(style.left) || currentLeftPx;
+                
+                // If pin_to_video.js is active, tell it to snap to the new exact coordinate
+                if (window.forcePinUpdate) window.forcePinUpdate();
             }
         };
 

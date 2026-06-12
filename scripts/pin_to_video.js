@@ -43,16 +43,23 @@
     }
 
     function initNativeCoords() {
-        // We use the CSS percentage provided by the user as the baseline 
-        // to reverse-engineer the exact native video pixel they pointed to.
         const icon = document.querySelector('.bottom-contact-container');
         if (!icon) return;
 
-        const style = window.getComputedStyle(icon);
+        // 1. Check if the dev tool has saved a custom native coordinate
+        const savedX = localStorage.getItem('cherenkov_pin_x');
+        const savedY = localStorage.getItem('cherenkov_pin_y');
+
+        if (savedX !== null && savedY !== null) {
+            nativeX = parseFloat(savedX);
+            nativeY = parseFloat(savedY);
+            return;
+        }
+
+        // 2. Fallback to hardcoded coordinates
         const winW = window.innerWidth;
         const winH = window.innerHeight;
         
-        // Use the hardcoded percentages from the user's dev tool layout
         // (Update these numbers when swapping to a new premium video asset)
         const targetLeftPx = winW * 0.413; 
         const targetBottomPx = winH * 0.6985;
@@ -64,6 +71,12 @@
         nativeX = (targetLeftPx - bounds.offsetX) / bounds.vidW;
         nativeY = (targetTopPx - bounds.offsetY) / bounds.vidH;
     }
+
+    // Expose for the dev tool to call when dragging stops
+    window.forcePinUpdate = function() {
+        initNativeCoords();
+        updatePinnedElements();
+    };
 
     function updatePinnedElements() {
         const icon = document.querySelector('.bottom-contact-container');
