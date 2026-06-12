@@ -58,8 +58,8 @@
 
         // 2. Fallback to hardcoded native coordinates (found via dev tool)
         // (Update these numbers when swapping to a new premium video asset)
-        nativeX = 0.4276; 
-        nativeY = 0.3134;
+        nativeX = 0.4269; 
+        nativeY = 0.3281;
     }
 
     // Expose for the dev tool to call when dragging stops
