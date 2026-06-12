@@ -54,7 +54,7 @@
         
         // Use the hardcoded percentages from the user's dev tool layout
         // (Update these numbers when swapping to a new premium video asset)
-        const targetLeftPx = winW * 0.408; 
+        const targetLeftPx = winW * 0.413; 
         const targetBottomPx = winH * 0.6985;
         const targetTopPx = winH - targetBottomPx;
 
