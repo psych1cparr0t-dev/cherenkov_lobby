@@ -284,7 +284,7 @@ body, html {
 .bottom-contact-container {
   position: fixed;
   bottom: 69.85%;
-  left: 42.63%;
+  left: 41.9%;
   transform: translateX(-50%) scale(1.26);
   z-index: 150;
   pointer-events: none;
