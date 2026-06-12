@@ -6,23 +6,18 @@ window.Cherenkov = (function() {
     
     // TIMING SOURCE OF TRUTH (Seconds)
     const TIMING = {
-        BLUE_PULSE: 2.500,    // Wait for initial reveal pulse to settle
-        INC_REVEAL: 1.200,    // Subtitle fade-in
-        INC_BREATH: 1.800,    // Pause — lets Inc. fully render before veil transition
-
-        VEIL_FADE: 4.000,     // White overlay ramp-up
-        MOSAIC_START_OFFSET: 0,     // Load video immediately (buffers during veil fade)
-        WORDMARK_DEATH_TOTAL: 2.500, // Total window for staggered "fry out"
-        WORDMARK_DEATH_FLICKER: 1.200 // Individual letter animation duration
+        AMBIENT_DELAY: 2.200,  // Delay before video fades in (audio prelude)
+        TITLE_DELAY: 1.500,    // Delay before "CHERENKOV" fades in over video
+        INC_DELAY: 1.000,      // Delay before "Inc." appears after title
+        NAV_DELAY: 1.000       // Delay before Contact button drops down
     };
 
     const STATE = {
         HIDDEN: 'hidden',
-        REVEALING: 'revealing', // Letters appearing
-        SETTLING: 'settling',   // Pulse finishing
+        ACTIVE: 'active',      // Video playing
+        TITLE_VISIBLE: 'title_visible',
         INC_VISIBLE: 'inc_visible',
-        VEIL_TRANSITIONING: 'veil_transitioning', // Background going white
-        ACTIVE: 'active'        // Mosaic running, wordmark gone
+        NAV_VISIBLE: 'nav_visible'
     };
 
     let currentState = STATE.HIDDEN;
@@ -34,56 +29,50 @@ window.Cherenkov = (function() {
         document.dispatchEvent(new CustomEvent(`cherenkov:state:${newState}`));
     }
 
-    function startFinalSequence() {
-        if (currentState !== STATE.REVEALING) return;
-        
-        // 1. Settling
-        setState(STATE.SETTLING);
-
-        // 2. Inc Reveal
+    function startSequence() {
+        // 1. Immediately start Ambient Video
         setTimeout(() => {
-            setState(STATE.INC_VISIBLE);
+            setState(STATE.ACTIVE);
+            document.dispatchEvent(new CustomEvent('cherenkov:load-mosaic'));
+            document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
             
-            // 3. Veil Transition
+            // 2. Wait, then show CHERENKOV title
             setTimeout(() => {
-                setState(STATE.VEIL_TRANSITIONING);
-                
-                // 4. Start Mosaic backdrop loading early
-                setTimeout(() => {
-                   document.dispatchEvent(new CustomEvent('cherenkov:load-mosaic'));
-                }, TIMING.MOSAIC_START_OFFSET * 1000);
+                setState(STATE.TITLE_VISIBLE);
+                const letters = document.querySelectorAll('.letter');
+                letters.forEach(l => l.classList.add('visible'));
 
-                // 5. Final State: Mosaic takes over
+                // 3. Wait, then show Inc
                 setTimeout(() => {
-                    setState(STATE.ACTIVE);
-                    document.dispatchEvent(new CustomEvent('cherenkov:revealed'));
-
-                    // Reveal nav links with a slight delay
+                    setState(STATE.INC_VISIBLE);
+                    const sub = document.getElementById('wordmark-sub');
+                    if (sub) sub.classList.add('visible');
+                    
+                    // 4. Wait, then drop down Nav and fade in contact icon
                     setTimeout(() => {
-                        document.querySelectorAll('.nav-link').forEach(link => {
-                            link.classList.add('revealed');
+                        setState(STATE.NAV_VISIBLE);
+                        document.querySelectorAll('.nav-link, .contact-icon').forEach(el => {
+                            el.classList.add('revealed');
                         });
-                    }, 500);
-                    // Remove background layers from DOM — no more bleed possible
-                    setTimeout(() => {
-                        document.querySelectorAll('.background-pattern')
-                            .forEach(el => el.remove());
-                        const overlay = document.getElementById('fade-overlay');
-                        if (overlay) overlay.remove();
-                    }, 3000); // after canvas fade-in completes
+                    }, TIMING.NAV_DELAY * 1000);
 
-                }, TIMING.VEIL_FADE * 1000);
+                }, TIMING.INC_DELAY * 1000);
 
-            }, TIMING.INC_BREATH * 1000);
+            }, TIMING.TITLE_DELAY * 1000);
 
-        }, TIMING.BLUE_PULSE * 1000);
+        }, TIMING.AMBIENT_DELAY * 1000);
     }
+
+    // Automatically start on load
+    window.addEventListener('load', () => {
+        startSequence();
+    });
 
     return {
         STATE,
         TIMING,
         setState,
-        startFinalSequence,
+        startSequence,
         getState: () => currentState
     };
 
