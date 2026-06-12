@@ -24,10 +24,14 @@
 }
 
 body, html {
-  height: 100dvh;
   font-family: 'Orbitron', 'Arial', sans-serif;
-  overflow: hidden;
   background-color: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 /* =====================================================
@@ -43,20 +47,7 @@ body, html {
   overflow: hidden;
 }
 
-/* Tier 2: White cover — fades in, stays opaque permanently */
-#fade-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background: var(--bg-primary);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--t-veil-fade) ease;
-}
 
-/* Once raised, never drops back — permanently covers Tier 1 */
-[data-state="veil_transitioning"] #fade-overlay { opacity: 1; }
-[data-state="active"]             #fade-overlay { opacity: 1; }
 
 .wordmark-sub.visible { opacity: 1; }
 
@@ -69,11 +60,21 @@ body, html {
   object-fit: cover;
   z-index: 3;
   opacity: 0;
-  transition: opacity 2.0s ease-in-out;
+  transform: scale(1.08) translate3d(0, 0, 0);
+  filter: blur(20px);
+  transition: opacity 4s ease, transform 8s cubic-bezier(0.22, 1, 0.36, 1), filter 4s ease;
   pointer-events: none;
+  will-change: opacity, transform, filter;
+  image-rendering: high-quality;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-.veil-video.playing { opacity: 1; }
+.veil-video.playing { 
+  opacity: 1; 
+  transform: scale(1.0001) translate3d(0, 0, 0);
+  filter: blur(0px);
+}
 
 
 
@@ -139,32 +140,47 @@ body, html {
    ===================================================== */
 
 .wordmark-container {
-  position: relative;
+  position: fixed;
+  top: 72%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 100;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
 }
 
 .wordmark {
-  font-size: clamp(48px, 12vw, 96px);
+  font-size: clamp(16px, 2.6vw, 28px);
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.3em;
   color: var(--text-dim);
   display: flex;
 }
 
 .letter {
   opacity: 0;
-  transition: opacity 1.5s ease-in-out, text-shadow 1.5s ease;
+  transition: opacity 2.5s cubic-bezier(0.22, 1, 0.36, 1),
+              text-shadow 2.5s ease,
+              transform 2.5s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 2.5s cubic-bezier(0.22, 1, 0.36, 1);
   text-shadow: none;
+  transform: translateY(20px) scale(0.95);
+  filter: blur(12px);
 }
 
-.letter.visible { opacity: 1; }
-
-/* Border for dark scenes — permanently on for testing */
 .letter.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  filter: blur(0px);
+}
+
+/* .letter.visible now defined inline above */
+
+/* Dynamic outline for dark scenes — driven by luminance sampler */
+[data-scene-dark="true"] .letter.visible {
   text-shadow:
     -1px -1px 0 rgba(200, 200, 200, 0.5),
      1px -1px 0 rgba(200, 200, 200, 0.5),
@@ -174,29 +190,36 @@ body, html {
 
 
 .wordmark-sub {
-  font-size: clamp(9px, 1.2vw, 13px);
+  font-size: clamp(8px, 1vw, 11px);
   letter-spacing: 0.45em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-dim);
   opacity: 0;
-  transition: opacity 1.2s ease;
   margin-top: 8px;
+  transform: translateY(10px);
+  filter: blur(8px);
+  transition: opacity 3s ease, transform 3s cubic-bezier(0.22, 1, 0.36, 1), filter 3s ease;
 }
 
-.wordmark-sub.visible { opacity: 1; }
+.wordmark-sub.visible { 
+  opacity: 1; 
+  transform: translateY(0);
+  filter: blur(0px);
+}
 
 /* =====================================================
    NAV & LOGO
    ===================================================== */
 
 .top-nav {
-  position: absolute;
+  position: fixed;
   top: 40px; left: 40px; right: 40px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   z-index: 150;
   pointer-events: none;
+  display: none !important; /* Temporarily hidden */
 }
 
 .nav-group-left, .nav-group-right, .nav-group-center {
@@ -214,14 +237,12 @@ body, html {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.35em;
-  color: var(--text-dim);
+  color: #ffffff;
   text-decoration: none;
   opacity: 0;
   pointer-events: auto;
   transition: opacity var(--t-nav-reveal) ease, 
-              transform var(--t-nav-reveal) ease, 
-              color 0.4s ease,
-              letter-spacing 0.4s ease;
+              transform var(--t-nav-reveal) ease;
   transform: translateY(-5px);
 }
 
@@ -229,7 +250,6 @@ body, html {
 .nav-link:hover { 
   color: #ffffff; 
   text-shadow: 0 0 10px rgba(255,255,255,0.4); 
-  letter-spacing: 0.45em;
 }
 
 .logo-mark {
@@ -259,6 +279,39 @@ body, html {
 
 
 /* =====================================================
+   BOTTOM CONTACT
+   ===================================================== */
+.bottom-contact-container {
+  position: fixed;
+  bottom: 8%; /* Resting above the mountain peaks */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  pointer-events: none;
+}
+
+.contact-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-dim);
+  transition: all 0.4s ease;
+  pointer-events: auto;
+  opacity: 0;
+  animation: fadeIn 1.5s ease 2s forwards; /* Fades in after delay */
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+.contact-icon:hover {
+  color: #ffffff;
+  transform: translateY(-2px);
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.8));
+}
+
+/* =====================================================
    MOBILE RESPONSIVE
    ===================================================== */
 
@@ -266,4 +319,207 @@ body, html {
   .wordmark { font-size: clamp(28px, 9vw, 40px); letter-spacing: 0.15em; }
   .top-nav { top: 25px; left: 20px; right: 20px; }
   .nav-link { font-size: 9px; letter-spacing: 0.2em; }
+}
+
+@media (max-height: 700px) {
+  .wordmark-container { top: 68%; }
+}
+
+@media (max-height: 500px) {
+  .wordmark-container { top: 64%; }
+}
+
+@media (max-height: 400px) {
+  .wordmark-container { top: 60%; }
+}
+
+@media (min-aspect-ratio: 21/9) {
+  .wordmark-container { top: 70%; }
+}
+
+@media (min-aspect-ratio: 3/1) {
+  .wordmark-container { top: 66%; }
+}
+
+/* =====================================================
+   CONTACT MODAL — Cinematic Glassmorphism
+   ===================================================== */
+
+#contact-modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200000;
+  background: rgba(0, 0, 0, 0);
+  backdrop-filter: blur(0px);
+  -webkit-backdrop-filter: blur(0px);
+  justify-content: center;
+  align-items: center;
+  transition: background 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+              backdrop-filter 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+              -webkit-backdrop-filter 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#contact-modal-overlay.active {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.contact-modal {
+  position: relative;
+  width: 90%;
+  max-width: 460px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 48px 40px 40px;
+  color: rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  transform: translateY(30px) scale(0.96);
+  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s,
+              transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35),
+              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+#contact-modal-overlay.active .contact-modal {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.contact-close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 28px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: color 0.3s ease, background 0.3s ease;
+}
+
+.contact-close:hover {
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.contact-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  margin-bottom: 32px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-group {
+  position: relative;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 15px rgba(0, 0, 0, 0.05);
+  padding: 22px 16px 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+  outline: none;
+  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  resize: none;
+  letter-spacing: 0.05em;
+}
+
+.form-group textarea {
+  min-height: 100px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
+              0 0 12px rgba(255, 255, 255, 0.1),
+              0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.form-group label {
+  position: absolute;
+  top: 15px;
+  left: 16px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+.form-group input:focus ~ label,
+.form-group input:not(:placeholder-shown) ~ label,
+.form-group textarea:focus ~ label,
+.form-group textarea:not(:placeholder-shown) ~ label {
+  top: 6px;
+  left: 16px;
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.12em;
+}
+
+.contact-submit {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  padding: 12px 32px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  margin-top: 8px;
+}
+
+.contact-submit:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+}
+
+.contact-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (max-width: 480px) {
+  .contact-modal {
+    padding: 36px 24px 28px;
+    border-radius: 16px;
+  }
+  .contact-title { font-size: 14px; }
 }

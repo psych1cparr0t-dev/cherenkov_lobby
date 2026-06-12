@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/index.css">
+  <link rel="stylesheet" href="styles/index.css?v=3">
 </head>
 
 <body>
@@ -32,23 +32,18 @@
     <video id="veil-video-b" class="veil-video" muted playsinline></video>
 
 
-    <!-- Layer 2: Strategic Navigation -->
-    <nav class="top-nav" aria-label="Main Navigation">
-      <div class="nav-group-center">
-        <a href="mailto:contact@cherenkov.industries" class="nav-link" id="contact-link">Contact</a>
-      </div>
-    </nav>
+    <!-- Layer 2: Bottom Contact Icon -->
+    <div class="bottom-contact-container">
+      <a href="mailto:max@cherenkov.industries" class="contact-icon" id="contact-link" aria-label="Contact">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="feather feather-mail">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+      </a>
+    </div>
 
 
-    <!-- Layer 3: Background Patterns (Autostereogram) -->
-    <div class="background-pattern pattern-1"></div>
-    <div class="background-pattern pattern-2"></div>
-    <div class="background-pattern pattern-3"></div>
-    <div class="background-pattern pattern-4"></div>
-
-    <!-- Layer 3.5: Transition Overlay -->
-    <div id="fade-overlay"></div>
-
+    <!-- Layer 3: Background Patterns (Removed) -->
 
     <!-- Layer 4: Main Wordmark -->
     <div class="wordmark-container">
@@ -69,10 +64,16 @@
   </div>
 
   <!-- Framework with Cache Busting -->
-  <script src="scripts/coordinator.js?v=4"></script>
-  <script src="scripts/reveal.js?v=4"></script>
-  <script src="scripts/veil_ambient.js?v=5"></script>
-
+  <!-- <script src="scripts/parallax_dolly.js?v=3"></script> --><!-- Parallax disabled — re-enable when quality is ready -->
+  <script src="scripts/coordinator.js?v=3"></script>
+  <script src="scripts/veil_ambient.js?v=6"></script>
+  <script src="scripts/ambient_wind.js?v=1"></script>
+  <script src="scripts/contact_modal.js?v=1"></script>
+  
+  <!-- Local Dev Tools (all disabled for production) -->
+  <!-- <script src="scripts/dev_drag.js"></script> -->
+  <!-- <script src="scripts/dev_masking.js"></script> -->
+  <!-- <script src="scripts/dev_parallax.js"></script> -->
 
 </body>
 
