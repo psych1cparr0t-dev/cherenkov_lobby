@@ -283,8 +283,8 @@ body, html {
    ===================================================== */
 .bottom-contact-container {
   position: fixed;
-  bottom: 69.85%;
-  left: 41.3%;
+  bottom: 68.66%;
+  left: 42.76%;
   transform: translateX(-50%) scale(1.26);
   z-index: 150;
   pointer-events: none;
