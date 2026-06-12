@@ -342,7 +342,7 @@ body, html {
 }
 
 /* =====================================================
-   CONTACT MODAL — Cinematic Glassmorphism
+   CONTACT MODAL — Minimalist Stark Design
    ===================================================== */
 
 #contact-modal-overlay {
@@ -355,171 +355,99 @@ body, html {
   -webkit-backdrop-filter: blur(0px);
   justify-content: center;
   align-items: center;
-  transition: background 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-              backdrop-filter 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-              -webkit-backdrop-filter 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: all 0.4s ease;
 }
 
 #contact-modal-overlay.active {
-  background: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 .contact-modal {
   position: relative;
   width: 90%;
-  max-width: 460px;
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  padding: 48px 40px 40px;
-  color: rgba(255, 255, 255, 0.9);
+  max-width: 400px;
+  background: rgba(10, 10, 10, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 40px;
   opacity: 0;
-  transform: translateY(30px) scale(0.96);
-  transition: opacity 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s,
-              transform 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35),
-              inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 #contact-modal-overlay.active .contact-modal {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(0);
 }
 
 .contact-close {
   position: absolute;
-  top: 16px;
-  right: 20px;
+  top: 10px;
+  right: 15px;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 28px;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 24px;
+  font-weight: 300;
   cursor: pointer;
-  line-height: 1;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: color 0.3s ease, background 0.3s ease;
+  transition: color 0.2s ease;
 }
 
 .contact-close:hover {
-  color: rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.contact-title {
-  font-family: 'Orbitron', sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  margin-bottom: 32px;
-  color: rgba(255, 255, 255, 0.95);
+  color: #fff;
 }
 
 .contact-form {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 12px;
 }
 
-.form-group {
-  position: relative;
-}
-
-.form-group input,
-.form-group textarea {
+.contact-form input,
+.contact-form textarea {
   width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 4px 15px rgba(0, 0, 0, 0.05);
-  padding: 22px 16px 8px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.9);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 12px 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  color: #fff;
   outline: none;
-  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
   resize: none;
-  letter-spacing: 0.05em;
+  border-radius: 0;
+  transition: border-color 0.2s ease;
 }
 
-.form-group textarea {
-  min-height: 100px;
+.contact-form input::placeholder,
+.contact-form textarea::placeholder {
+  color: rgba(255, 255, 255, 0.3);
 }
 
-.form-group input:focus,
-.form-group textarea:focus {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05),
-              0 0 12px rgba(255, 255, 255, 0.1),
-              0 8px 24px rgba(0, 0, 0, 0.1);
-}
-
-.form-group label {
-  position: absolute;
-  top: 15px;
-  left: 16px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
-  pointer-events: none;
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  letter-spacing: 0.10em;
-  text-transform: uppercase;
-}
-
-.form-group input:focus ~ label,
-.form-group input:not(:placeholder-shown) ~ label,
-.form-group textarea:focus ~ label,
-.form-group textarea:not(:placeholder-shown) ~ label {
-  top: 6px;
-  left: 16px;
-  font-size: 8px;
-  color: rgba(255, 255, 255, 0.6);
-  letter-spacing: 0.12em;
+.contact-form input:focus,
+.contact-form textarea:focus {
+  border-bottom-color: rgba(255, 255, 255, 0.8);
 }
 
 .contact-submit {
-  align-self: flex-start;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 10px;
-  padding: 12px 32px;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 11px;
+  margin-top: 16px;
+  background: #fff;
+  color: #000;
+  border: none;
+  padding: 12px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.1em;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-  margin-top: 8px;
+  transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.contact-submit:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+.contact-submit:hover {
+  background: #ddd;
 }
-
-.contact-submit:disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
-@media (max-width: 480px) {
-  .contact-modal {
-    padding: 36px 24px 28px;
-    border-radius: 16px;
-  }
-  .contact-title { font-size: 14px; }
+.contact-submit:active {
+  transform: scale(0.98);
 }
