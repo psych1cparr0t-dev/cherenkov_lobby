@@ -53,7 +53,7 @@
         const winH = window.innerHeight;
         
         // Use the hardcoded percentages from the user's dev tool layout
-        const targetLeftPx = winW * 0.4263; 
+        const targetLeftPx = winW * 0.419; 
         const targetBottomPx = winH * 0.6985;
         const targetTopPx = winH - targetBottomPx;
 
