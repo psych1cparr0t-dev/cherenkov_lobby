@@ -279,6 +279,39 @@ body, html {
 
 
 /* =====================================================
+   BOTTOM CONTACT
+   ===================================================== */
+.bottom-contact-container {
+  position: fixed;
+  bottom: 8%; /* Resting above the mountain peaks */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  pointer-events: none;
+}
+
+.contact-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--text-dim);
+  transition: all 0.4s ease;
+  pointer-events: auto;
+  opacity: 0;
+  animation: fadeIn 1.5s ease 2s forwards; /* Fades in after delay */
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+.contact-icon:hover {
+  color: #ffffff;
+  transform: translateY(-2px);
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.8));
+}
+
+/* =====================================================
    MOBILE RESPONSIVE
    ===================================================== */
 
