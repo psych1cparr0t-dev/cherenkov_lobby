@@ -56,20 +56,10 @@
             return;
         }
 
-        // 2. Fallback to hardcoded coordinates
-        const winW = window.innerWidth;
-        const winH = window.innerHeight;
-        
+        // 2. Fallback to hardcoded native coordinates (found via dev tool)
         // (Update these numbers when swapping to a new premium video asset)
-        const targetLeftPx = winW * 0.413; 
-        const targetBottomPx = winH * 0.6985;
-        const targetTopPx = winH - targetBottomPx;
-
-        const bounds = calculateVideoBounds();
-
-        // Reverse engineer the native coordinates (0.0 to 1.0)
-        nativeX = (targetLeftPx - bounds.offsetX) / bounds.vidW;
-        nativeY = (targetTopPx - bounds.offsetY) / bounds.vidH;
+        nativeX = 0.4276; 
+        nativeY = 0.3134;
     }
 
     // Expose for the dev tool to call when dragging stops
