@@ -283,9 +283,9 @@ body, html {
    ===================================================== */
 .bottom-contact-container {
   position: fixed;
-  bottom: 8%; /* Resting above the mountain peaks */
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: 69.85%;
+  left: 42.63%;
+  transform: translateX(-50%) scale(1.26);
   z-index: 150;
   pointer-events: none;
 }
