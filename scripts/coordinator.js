@@ -48,11 +48,11 @@ window.Cherenkov = (function() {
                     const sub = document.getElementById('wordmark-sub');
                     if (sub) sub.classList.add('visible');
                     
-                    // 4. Wait, then drop down Nav
+                    // 4. Wait, then drop down Nav and fade in contact icon
                     setTimeout(() => {
                         setState(STATE.NAV_VISIBLE);
-                        document.querySelectorAll('.nav-link').forEach(link => {
-                            link.classList.add('revealed');
+                        document.querySelectorAll('.nav-link, .contact-icon').forEach(el => {
+                            el.classList.add('revealed');
                         });
                     }, TIMING.NAV_DELAY * 1000);
 
