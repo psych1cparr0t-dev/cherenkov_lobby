@@ -302,7 +302,7 @@ body, html {
   align-items: center;
   color: rgba(255, 255, 255, 0.55);
   filter: drop-shadow(0 0 4px rgba(0,0,0,0.3));
-  transition: all 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 1.5s cubic-bezier(0.22, 1, 0.36, 1) 3s, transform 1.5s cubic-bezier(0.22, 1, 0.36, 1) 3s;
   pointer-events: auto;
   opacity: 0;
   transform: translateY(-10px);
