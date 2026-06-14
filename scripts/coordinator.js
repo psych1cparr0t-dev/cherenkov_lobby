@@ -51,7 +51,7 @@ window.Cherenkov = (function() {
                     // 4. Wait a strict 5 seconds, then drop down Nav/map pin
                     setTimeout(() => {
                         setState(STATE.NAV_VISIBLE);
-                        document.querySelectorAll('.nav-link, .contact-icon').forEach(el => {
+                        document.querySelectorAll('.nav-link, .contact-icon, #top-glass-bar').forEach(el => {
                             el.classList.add('revealed');
                         });
 
