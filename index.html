@@ -27,6 +27,30 @@
 <body>
   <div id="landing-page">
 
+    <!-- Layer 0: Glassmorphism Showcase Dropdown -->
+    <div id="top-glass-bar">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-down glass-bar-arrow">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+      <div class="showcase-content">
+        <a href="#" class="showcase-item">
+          <span class="showcase-title">Liminal Veil Engine</span>
+          <span class="showcase-arrow">→</span>
+          <span class="showcase-desc">WebGL / 2026</span>
+        </a>
+        <a href="#" class="showcase-item">
+          <span class="showcase-title">Project Alpha</span>
+          <span class="showcase-arrow">→</span>
+          <span class="showcase-desc">Architecture</span>
+        </a>
+        <a href="#" class="showcase-item">
+          <span class="showcase-title">System 9</span>
+          <span class="showcase-arrow">→</span>
+          <span class="showcase-desc">Experimental</span>
+        </a>
+      </div>
+    </div>
+
     <!-- Layer 1: Liminal Veil Native Video -->
     <video id="veil-video-a" class="veil-video" muted playsinline></video>
     <video id="veil-video-b" class="veil-video" muted playsinline></video>
@@ -70,6 +94,7 @@
   <script src="scripts/ambient_wind.js?v=1"></script>
   <script src="scripts/contact_modal.js?v=1"></script>
   <script src="scripts/pin_to_video.js?v=1"></script>
+  <script src="scripts/showcase_dropdown.js?v=1"></script>
   
   <!-- Local Dev Tools (all disabled for production) -->
   <!-- <script src="scripts/dev_drag.js"></script> -->
