@@ -9,7 +9,7 @@ window.Cherenkov = (function() {
         AMBIENT_DELAY: 2.200,  // Delay before video fades in
         TITLE_DELAY: 1.500,    // Wait 1.5s, then start "CHERENKOV"
         INC_DELAY: 2.500,      // Wait 2.5s after TITLE starts, then start "Inc."
-        NAV_DELAY: 4.500       // Wait 4.5s after INC starts, then drop Contact icon
+        NAV_DELAY: 5.000       // Wait 5.0s after INC starts, then drop Contact icon
     };
 
     const STATE = {
@@ -42,23 +42,27 @@ window.Cherenkov = (function() {
                 const letters = document.querySelectorAll('.letter');
                 letters.forEach(l => l.classList.add('visible'));
 
-                // 3. Wait, then show Inc and trigger Nav (CSS handles the 3s delay)
+                // 3. Wait, then show Inc
                 setTimeout(() => {
                     setState(STATE.INC_VISIBLE);
                     const sub = document.getElementById('wordmark-sub');
                     if (sub) sub.classList.add('visible');
                     
-                    setState(STATE.NAV_VISIBLE);
-                    document.querySelectorAll('.nav-link, .contact-icon').forEach(el => {
-                        el.classList.add('revealed');
-                    });
-
-                    // 4. Wait 10s after Inc appears, then dissolve title into the mist
+                    // 4. Wait a strict 5 seconds, then drop down Nav/map pin
                     setTimeout(() => {
-                        setState('title_sinking');
-                        const wordmarkContainer = document.querySelector('.wordmark-container');
-                        if (wordmarkContainer) wordmarkContainer.classList.add('sink-into-mist');
-                    }, 10000);
+                        setState(STATE.NAV_VISIBLE);
+                        document.querySelectorAll('.nav-link, .contact-icon').forEach(el => {
+                            el.classList.add('revealed');
+                        });
+
+                        // 5. Wait 10s after map pin appears, then dissolve title into the mist
+                        setTimeout(() => {
+                            setState('title_sinking');
+                            const wordmarkContainer = document.querySelector('.wordmark-container');
+                            if (wordmarkContainer) wordmarkContainer.classList.add('sink-into-mist');
+                        }, 10000);
+
+                    }, TIMING.NAV_DELAY * 1000);
 
                 }, TIMING.INC_DELAY * 1000);
 
