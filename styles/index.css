@@ -256,9 +256,9 @@ body, html {
 /* Expanded State */
 #top-glass-bar.expanded {
   height: 60vh;
-  background: rgba(10, 10, 10, 0.7);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
+  background: rgba(10, 10, 10, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
   align-items: flex-start;
   padding-top: 60px;
@@ -317,17 +317,12 @@ body, html {
 }
 
 .showcase-title {
-  font-size: 14px;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: 15px;
   text-transform: uppercase;
   letter-spacing: 0.25em;
-  font-weight: 500;
+  font-weight: 400;
   transition: transform 0.3s ease;
-}
-
-.showcase-desc {
-  font-size: 10px;
-  letter-spacing: 0.15em;
-  color: rgba(255, 255, 255, 0.3);
 }
 
 .showcase-arrow {
