@@ -8,7 +8,7 @@ window.Cherenkov = (function() {
     const TIMING = {
         AMBIENT_DELAY: 2.200,  // Delay before video fades in
         TITLE_DELAY: 1.500,    // Wait 1.5s, then start "CHERENKOV"
-        INC_DELAY: 2.500,      // Wait 2.5s after TITLE starts, then start "Inc."
+        INC_DELAY: 1.000,      // Wait 1.0s after TITLE starts, then start "Inc."
         NAV_DELAY: 5.000       // Wait 5.0s after INC starts, then drop Contact icon
     };
 
