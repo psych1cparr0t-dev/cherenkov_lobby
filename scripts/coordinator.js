@@ -9,7 +9,7 @@ window.Cherenkov = (function() {
         AMBIENT_DELAY: 2.200,  // Delay before video fades in
         TITLE_DELAY: 1.500,    // Wait 1.5s, then start "CHERENKOV"
         INC_DELAY: 2.500,      // Wait 2.5s after TITLE starts, then start "Inc."
-        NAV_DELAY: 2.000       // Wait 2.0s after INC starts, then drop Contact icon
+        NAV_DELAY: 4.500       // Wait 4.5s after INC starts, then drop Contact icon
     };
 
     const STATE = {
