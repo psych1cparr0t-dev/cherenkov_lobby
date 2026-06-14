@@ -42,27 +42,23 @@ window.Cherenkov = (function() {
                 const letters = document.querySelectorAll('.letter');
                 letters.forEach(l => l.classList.add('visible'));
 
-                // 3. Wait, then show Inc
+                // 3. Wait, then show Inc and trigger Nav (CSS handles the 3s delay)
                 setTimeout(() => {
                     setState(STATE.INC_VISIBLE);
                     const sub = document.getElementById('wordmark-sub');
                     if (sub) sub.classList.add('visible');
                     
-                    // 4. Wait, then drop down Nav and fade in contact icon
+                    setState(STATE.NAV_VISIBLE);
+                    document.querySelectorAll('.nav-link, .contact-icon').forEach(el => {
+                        el.classList.add('revealed');
+                    });
+
+                    // 4. Wait 10s after Inc appears, then dissolve title into the mist
                     setTimeout(() => {
-                        setState(STATE.NAV_VISIBLE);
-                        document.querySelectorAll('.nav-link, .contact-icon').forEach(el => {
-                            el.classList.add('revealed');
-                        });
-
-                        // 5. Wait 10s, then dissolve title into the mist
-                        setTimeout(() => {
-                            setState('title_sinking');
-                            const wordmarkContainer = document.querySelector('.wordmark-container');
-                            if (wordmarkContainer) wordmarkContainer.classList.add('sink-into-mist');
-                        }, 10000);
-
-                    }, TIMING.NAV_DELAY * 1000);
+                        setState('title_sinking');
+                        const wordmarkContainer = document.querySelector('.wordmark-container');
+                        if (wordmarkContainer) wordmarkContainer.classList.add('sink-into-mist');
+                    }, 10000);
 
                 }, TIMING.INC_DELAY * 1000);
 
