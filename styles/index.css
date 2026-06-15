@@ -389,6 +389,7 @@ body, html {
   pointer-events: auto;
   opacity: 0;
   transform: translateY(-10px);
+  padding: 24px; /* massive invisible touch target */
 }
 
 .contact-icon.revealed {
@@ -407,8 +408,21 @@ body, html {
 
 @media (max-width: 768px) {
   .wordmark { font-size: clamp(28px, 9vw, 40px); letter-spacing: 0.15em; }
-  .top-nav { top: 25px; left: 20px; right: 20px; }
-  .nav-link { font-size: 9px; letter-spacing: 0.2em; }
+  
+  /* Mobile Dropdown Scaling */
+  #top-glass-bar.expanded {
+    height: 80vh;
+  }
+  
+  /* Thumb-friendly touch targets */
+  .showcase-item {
+    width: 90%;
+    padding: 32px 0;
+  }
+  
+  .showcase-title {
+    font-size: 13px;
+  }
 }
 
 @media (max-height: 700px) {
